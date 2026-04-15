@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DLP Advisor | Homeowner Registration</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "inverse-primary": "#b4c5ff",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "background": "#f7f9fb",
+                        "surface": "#f7f9fb",
+                        "primary": "#004ac6",
+                        "on-primary-container": "#eeefff",
+                        "surface-container": "#eceef0",
+                        "on-surface": "#191c1e",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "surface-tint": "#0053db",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-high": "#e6e8ea",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "tertiary": "#943700",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#394c84",
+                        "on-tertiary-container": "#ffede6",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-secondary": "#ffffff",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed": "#ffdbcd",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#360f00",
+                        "tertiary-container": "#bc4800",
+                        "surface-dim": "#d8dadc",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#434655",
+                        "outline": "#737686",
+                        "outline-variant": "#c3c6d7",
+                        "surface-variant": "#e0e3e5",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#2563eb",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "on-secondary-fixed": "#00174b",
+                        "surface-bright": "#f7f9fb",
+                        "on-primary-fixed": "#00174b",
+                        "secondary-container": "#acbfff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "secondary": "#495c95"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .blueprint-bg {
+            background-color: #f7f9fb;
+            background-image: radial-gradient(#004ac610 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+
+<body class="font-body bg-surface text-on-surface min-h-screen flex flex-col blueprint-bg">
+
+    <!-- Header -->
+    <header class="bg-[#f7f9fb] border-none flex justify-between items-center w-full px-8 py-6 max-w-7xl mx-auto">
+        <div class="text-2xl font-extrabold text-[#004ac6] uppercase tracking-wider font-headline">
+            DLP Advisor
+        </div>
+        <nav class="hidden md:flex items-center gap-8">
+            <a class="text-[#434655] font-medium hover:text-[#2563eb] transition-colors duration-200"
+                href="#">Features</a>
+            <a class="text-[#434655] font-medium hover:text-[#2563eb] transition-colors duration-200"
+                href="#">Support</a>
+            <a class="text-[#434655] font-medium hover:text-[#2563eb] transition-colors duration-200"
+                href="{{ url_for('auth.login') }}">Login</a>
+            <a class="bg-primary-container text-on-primary-container px-6 py-2.5 rounded-lg font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                href="{{ url_for('auth.register') }}">
+                Register
+            </a>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center px-4 py-8">
+        <div
+            class="w-full max-w-3xl bg-surface-container-lowest rounded-[2rem] shadow-[0_24px_48px_rgba(25,28,30,0.06)] p-8 md:p-10 relative overflow-hidden">
+
+            <!-- Decorative corner accent -->
+            <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full"></div>
+
+            <!-- Card Header -->
+            <div class="flex flex-col items-center mb-8">
+                <div class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                    <span class="material-symbols-outlined text-primary text-3xl">apartment</span>
+                </div>
+                <h1 class="font-headline font-extrabold text-3xl text-on-surface tracking-tight">Create Account</h1>
+                <p class="text-on-surface-variant mt-2 text-center max-w-md text-sm">Enter your details to begin
+                    managing your property's structural integrity.</p>
+            </div>
+
+            <!-- Registration Form -->
+            <form class="space-y-5" method="POST">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+
+                    <!-- Full Name -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="full_name">Full
+                            Name</label>
+                        <input
+                            class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
+                            id="full_name" name="full_name" placeholder="John Doe" type="text" />
+                    </div>
+
+                    <!-- Email Address -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="email">Email
+                            Address</label>
+                        <input
+                            class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
+                            id="email" name="email" placeholder="john@example.com" type="email" />
+                    </div>
+
+                    <!-- Housing Project -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="housing_project">Select
+                            Housing Project</label>
+                        <div class="relative">
+                            <select
+                                class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 pr-10 text-on-surface appearance-none [background-image:none] transition-all text-sm"
+                                id="housing_project" name="housing_project" onchange="handleProjectChange(this)">
+                                <option disabled selected>Choose a property...</option>
+                                <option>Skyline Residences - Phase 1</option>
+                                <option>The Orchard Commons</option>
+                                <option>Emerald Heights Tower B</option>
+                                <option>Oakwood Gardens Phase 4</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <span
+                                class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-xl">expand_more</span>
+                        </div>
+                        <!-- Shown only when "Other" is selected -->
+                        <div id="other-property-wrapper" class="hidden mt-2">
+                            <input
+                                class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
+                                id="other_property" name="other_property" placeholder="Type your property name..."
+                                type="text" />
+                        </div>
+                    </div>
+
+                    <!-- IC Number -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="ic_number">IC
+                            Number</label>
+                        <input
+                            class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
+                            id="ic_number" name="ic_number" placeholder="XXXXXX-XX-XXXX" type="text" />
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="phone">Phone
+                            Number</label>
+                        <div class="flex gap-2">
+                            <div
+                                class="flex items-center bg-[#f0f4ff] px-3 rounded-xl text-on-surface-variant font-medium text-sm">
+                                +60</div>
+                            <input
+                                class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
+                                id="phone" name="phone" placeholder="12-345 6789" type="tel" />
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-on-surface-variant ml-1"
+                            for="password">Password</label>
+                        <div class="relative">
+                            <input
+                                class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
+                                id="password" name="password" placeholder="••••••••••••" type="password" />
+                            <span
+                                class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-on-surface-variant hover:text-primary transition-colors text-xl"
+                                id="toggle-password">visibility</span>
+                        </div>
+                    </div>
+
+                    <!-- Correspondence Address -->
+                    <div class="space-y-1.5 md:col-span-2">
+                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="address">Correspondence
+                            Address</label>
+                        <textarea
+                            class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline resize-none text-sm"
+                            id="address" name="address" placeholder="Enter your full mailing address..."
+                            rows="3"></textarea>
+                    </div>
+
+                </div>
+
+                <p class="text-[10px] uppercase tracking-widest text-outline-variant mt-1 ml-1 font-bold">Minimum 8
+                    characters with one special character</p>
+
+                <!-- Submit -->
+                <div class="pt-2">
+                    <button
+                        class="w-full bg-gradient-to-b from-primary to-primary-container text-white py-3.5 rounded-xl font-bold text-base shadow-[0_8px_20px_rgba(0,74,198,0.25)] hover:shadow-[0_12px_24px_rgba(0,74,198,0.35)] hover:-translate-y-0.5 active:scale-95 active:translate-y-0 transition-all"
+                        type="submit">
+                        Register
+                    </button>
+                </div>
+
+                <!-- Already have account -->
+                <div class="text-center pt-2">
+                    <p class="text-sm text-on-surface-variant">
+                        Already have an account?
+                        <a class="text-primary font-bold hover:underline" href="{{ url_for('auth.login') }}">Log in
+                            here</a>
+                    </p>
+                </div>
+
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#f7f9fb] border-t border-[#434655]/10 py-10 w-full">
+        <div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="text-lg font-bold text-[#004ac6] font-headline uppercase tracking-tight">DLP Advisor</div>
+            <div class="flex gap-8">
+                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-all duration-300" href="#">Privacy
+                    Policy</a>
+                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-all duration-300" href="#">Terms of
+                    Service</a>
+                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-all duration-300" href="#">Contact
+                    Support</a>
+            </div>
+            <p class="text-sm text-[#434655] opacity-60">&copy; 2025 DLP Advisor. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Password visibility toggle
+        document.getElementById('toggle-password').addEventListener('click', function () {
+            const input = document.getElementById('password');
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            this.textContent = isPassword ? 'visibility_off' : 'visibility';
+        });
+
+        // Show/hide "Other" property name input
+        function handleProjectChange(select) {
+            const wrapper = document.getElementById('other-property-wrapper');
+            const otherInput = document.getElementById('other_property');
+            if (select.value === 'other') {
+                wrapper.classList.remove('hidden');
+                otherInput.required = true;
+            } else {
+                wrapper.classList.add('hidden');
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+        }
+    </script>
+
+</body>
+
+</html>

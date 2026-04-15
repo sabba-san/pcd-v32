@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DLP Chatbot - Malaysian Property Law</title>
+    <!-- Cache buster set to v7 to load the new Botify theme -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=10">
+    <!-- Store user ID for user-isolated localStorage -->
+    <meta name="user-id" content="{{ current_user.id }}">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-title">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Superchat Logo" class="chat-logo">
+                    <h1 class="sidebar-title">DLP ADVISOR</h1>
+                </div>
+                <p class="sidebar-subtitle">Malaysian Property Law</p>
+                <button id="newChatBtn" class="btn-new-chat">+ New Chat</button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-tab active" data-tab="chat">💬 Current Chat</button>
+                <button class="nav-tab" data-tab="guidelines">📋 Guidelines</button>
+                <button class="nav-tab" data-tab="assessment">⚖️ Assessment</button>
+                <button class="nav-tab" data-tab="legal">⚖️ Legal Refs</button>
+                <button class="nav-tab" data-tab="noticeLetter">📝 Notice Letter</button>
+                <button class="nav-tab" data-tab="scanner">📸 AI Scanner</button>
+                <button class="nav-tab" data-tab="pdfscanner">📄 PDF Scanner</button>
+            </nav>
+
+            <div class="conversation-history-section">
+                <h3 class="history-label">Recent Chats</h3>
+                <div id="conversationList" class="conversation-list"></div>
+            </div>
+
+            <div class="sidebar-footer">
+                {% if current_user.user_type == 'lawyer' %}
+                    <a href="{{ url_for('auth.lawyer_dashboard') }}" class="btn-back-dashboard">
+                        ← Dashboard
+                    </a>
+                {% elif current_user.user_type == 'developer' %}
+                    <a href="{{ url_for('auth.developer_dashboard') }}" class="btn-back-dashboard">
+                        ← Dashboard
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('auth.homeowner_dashboard') }}" class="btn-back-dashboard">
+                        ← Dashboard
+                    </a>
+                {% endif %}
+                <button id="clearAllData" class="btn-secondary">Clear All Data</button>
+                <button id="toggleTheme" class="btn-secondary">🌙 Theme</button>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="main-content">
+            
+            <!-- 1. CHAT TAB -->
+            <section id="chat" class="tab-content active">
+                <div class="chat-container">
+                    <div id="welcomeScreen" class="welcome-screen">
+                        <div class="welcome-orb"></div>
+                        <h1 class="welcome-greeting">Hi there, {{ current_user.full_name }}<br><span class="subtitle">How can I help you today?</span></h1>
+                        
+                        <div class="welcome-cards">
+                            <div class="action-card" onclick="window.dlpChatbot.switchTab('guidelines')">
+                                <div class="card-icon">📋</div>
+                                <div class="card-text">
+                                    <h4>Guidelines</h4>
+                                    <p>Review DLP rules</p>
+                                </div>
+                            </div>
+                            <div class="action-card" onclick="window.dlpChatbot.switchTab('scanner')">
+                                <div class="card-icon">📸</div>
+                                <div class="card-text">
+                                    <h4>AI Scanner</h4>
+                                    <p>Analyze defect photos</p>
+                                </div>
+                            </div>
+                            <div class="action-card" onclick="window.dlpChatbot.switchTab('assessment')">
+                                <div class="card-icon">⚖️</div>
+                                <div class="card-text">
+                                    <h4>Assessment</h4>
+                                    <p>Calculate liability</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="chatMessages" class="chat-messages"></div>
+                </div>
+
+                <div class="chat-input-area">
+                    <textarea 
+                        id="userInput" 
+                        class="chat-input" 
+                        placeholder="Ask a question..."
+                        rows="1"
+                    ></textarea>
+                    <button id="sendBtn" class="btn-primary">Send</button>
+                </div>
+            </section>
+
+          <!-- 2. GUIDELINES TAB -->
+            <section id="guidelines" class="tab-content">
+                <div class="guidelines-container" style="max-width: 850px; margin: 0 auto; width: 100%;">
+                    <article class="guidelines-paper" style="padding: 40px;">
+                        
+                        <header class="guidelines-header" style="text-align: center; border-bottom: 1px solid var(--border-dim); padding-bottom: 20px; margin-bottom: 30px;">
+                            <h1 style="color: var(--text-primary); font-size: 28px; margin-bottom: 10px;">User Manual & Guidelines</h1>
+                            <p style="color: var(--neon-green); font-size: 16px;">Welcome to Superchat! Your ultimate AI assistant for navigating Malaysian Property Law and claiming your repair rights.</p>
+                        </header>
+
+                        <div class="guidelines-content" style="color: var(--text-secondary); line-height: 1.7; font-size: 15px;">
+                            
+                            <!-- WHAT IS DLP -->
+                            <div class="guide-section" style="margin-bottom: 40px;">
+                                <h3 style="color: var(--text-primary); font-size: 20px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 24px;">🔑</span> What is the Defect Liability Period (DLP)?
+                                </h3>
+                                <div style="background: var(--bg-input); padding: 20px; border-radius: 8px; border-left: 4px solid var(--neon-green);">
+                                    <p style="margin: 0;">The DLP is essentially your property's <strong>"warranty period"</strong>. Under the Malaysian Housing Development Act (HDA), for <strong>24 months</strong> from the date you receive your keys (Vacant Possession or VP), the developer is legally required to fix any defects, shrinkages, or faults in your new home at their own cost.</p>
+                                </div>
+                            </div>
+
+                            <!-- QUICK START TUTORIAL -->
+                            <div class="guide-section" style="margin-bottom: 40px;">
+                                <h3 style="color: var(--text-primary); font-size: 20px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 24px;">🚀</span> Quick Start Tutorial
+                                </h3>
+                                <p style="margin-bottom: 15px;">Not sure where to begin? Follow this simple 3-step workflow:</p>
+                                <ol style="margin-left: 20px; display: flex; flex-direction: column; gap: 10px;">
+                                    <li><strong>Step 1: Discover & Document.</strong> Found a crack? Use the <strong>📸 AI Scanner</strong> to take a picture and understand how severe it is.</li>
+                                    <li><strong>Step 2: Check Your Rights.</strong> Use the <strong>⚖️ Assessment</strong> tool to calculate exactly how many days of your DLP warranty are left.</li>
+                                    <li><strong>Step 3: Take Action.</strong> Go to the <strong>📝 Notice Letter</strong> tool to auto-generate a legally structured complaint to email or hand to your developer.</li>
+                                </ol>
+                            </div>
+
+                            <!-- FEATURE GUIDE -->
+                            <div class="guide-section" style="margin-bottom: 40px;">
+                                <h3 style="color: var(--text-primary); font-size: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border-dim); padding-bottom: 10px;">
+                                    🛠️ Feature Guide: How to use this app
+                                </h3>
+                                
+                                <!-- Feature 1 -->
+                                <div style="margin-bottom: 25px;">
+                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">💬 Current Chat</h4>
+                                    <p><strong>When to use:</strong> You have a specific question about property law, your rights, or how the DLP process works.<br>
+                                    <strong>How to use:</strong> Just type your question like you are texting a lawyer.<br>
+                                    <strong>Example:</strong> <em>"My roof is leaking but the developer says it's my fault. What should I do?"</em></p>
+                                </div>
+
+                                <!-- Feature 2 -->
+                                <div style="margin-bottom: 25px;">
+                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">⚖️ Assessment Tool</h4>
+                                    <p><strong>When to use:</strong> You want to calculate your exact warranty timeline and check if you are within the 30-day developer repair limit.<br>
+                                    <strong>How to use:</strong> Enter your VP Date and property price to generate a full mathematical report.<br>
+                                    <strong>Example:</strong> Enter your VP date as "15 Jan 2023" to see if your warranty is expiring soon!</p>
+                                </div>
+
+                                <!-- Feature 3 -->
+                                <div style="margin-bottom: 25px;">
+                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">📝 Notice Letter Generator</h4>
+                                    <p><strong>When to use:</strong> You are ready to formally demand the developer to fix the defects you found.<br>
+                                    <strong>How to use:</strong> Fill in your details, the developer's details, and list your defects. The app will write the formal legal letter for you.<br>
+                                    <strong>Example:</strong> Generate the letter, print it, sign it, and hand it to the management office.</p>
+                                </div>
+
+                                <!-- Feature 4 -->
+                                <div style="margin-bottom: 25px;">
+                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">📸 AI Image Scanner</h4>
+                                    <p><strong>When to use:</strong> You see a crack or stain but don't know what to call it or if it's serious.<br>
+                                    <strong>How to use:</strong> Upload a clear photo of the damage. The AI will analyze the severity and tell you if it is covered under DLP.<br>
+                                    <strong>Example:</strong> Upload a photo of your hollow floor tiles.</p>
+                                </div>
+
+                                <!-- Feature 5 -->
+                                <div style="margin-bottom: 25px;">
+                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">📄 PDF Document Scanner</h4>
+                                    <p><strong>When to use:</strong> You have a long legal document (like your SPA or a letter from the developer) and want a quick summary.<br>
+                                    <strong>How to use:</strong> Upload the PDF. The AI will read it and highlight the red flags and important clauses.<br>
+                                    <strong>Example:</strong> Upload your 100-page SPA to instantly find your specific DLP clauses.</p>
+                                </div>
+                                
+                                <!-- Feature 6 -->
+                                <div style="margin-bottom: 25px;">
+                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">📖 Legal References</h4>
+                                    <p><strong>When to use:</strong> You want to read the actual, official Malaysian laws regarding housing.<br>
+                                    <strong>How to use:</strong> Click the quick links to visit official government portals for the HDA and Strata Acts.</p>
+                                </div>
+                            </div>
+
+                            <!-- BEST PRACTICES -->
+                            <div class="guide-section" style="margin-bottom: 40px; background: rgba(0, 255, 159, 0.05); padding: 20px; border-radius: 8px;">
+                                <h3 style="color: var(--text-primary); font-size: 18px; margin-bottom: 10px;">⭐ Best Practices & Tips</h3>
+                                <ul style="margin-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+                                    <li><strong>Find your VP Date:</strong> Keep your "Notice of Vacant Possession" letter handy. The 24-month clock starts on the date printed on that letter!</li>
+                                    <li><strong>Lighting is everything:</strong> When using the AI Image Scanner, ensure the room is brightly lit so the AI can see the cracks clearly.</li>
+                                    <li><strong>Be specific:</strong> In the Notice Letter tool, write defects clearly (e.g., <em>"Master Bedroom - Water stain on the ceiling corner"</em> instead of just <em>"Ceiling broken"</em>).</li>
+                                    <li><strong>Keep copies:</strong> Always keep a photocopy of any signed Notice Letter you give to the developer.</li>
+                                </ul>
+                            </div>
+
+                            <!-- DISCLAIMER -->
+                            <div class="guide-section" style="margin-bottom: 20px; text-align: center;">
+                                <p style="font-size: 13px; color: #ef4444; border-top: 1px solid var(--border-dim); padding-top: 20px;">
+                                    <strong>⚠️ IMPORTANT LEGAL DISCLAIMER:</strong><br>
+                                    Superchat is an AI-powered educational tool designed to help you understand your rights under Malaysian Property Law. <strong>It is NOT a human lawyer.</strong> The information, calculators, and generated letters provided by this app do not constitute official legal advice. For serious disputes, tribunal claims, or complex legal matters, please consult a qualified legal professional.
+                                </p>
+                            </div>
+
+                        </div> 
+                        
+                        <div class="guidelines-footer" style="text-align: center; margin-top: 30px;">
+                            <button id="backToChatBtn" class="btn-primary" onclick="window.dlpChatbot.switchTab('chat')" style="width: 200px;">Start Chatting</button>
+                        </div>
+                    </article> 
+                </div>
+            </section>
+            
+            <!-- 3. ASSESSMENT TAB (NEW CALCULATOR SUITE) -->
+            <section id="assessment" class="tab-content">
+                <div class="content-header">
+                    <h2>⚖️ Comprehensive DLP Assessment</h2>
+                    <p>Calculate your legal timelines, retention sums, and repair limits.</p>
+                </div>
+                
+                <form id="dlpCalculatorForm" class="assessment-form" style="max-width: 800px;">
+                    
+                    <!-- SECTION 1: DLP Timeline -->
+                    <h3 style="color: var(--neon-green); margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">
+                        1. DLP Timeline
+                    </h3>
+                    <div class="form-group">
+                        <label for="vpDate">Vacant Possession (VP) Date:</label>
+                        <input type="date" id="vpDate" required>
+                    </div>
+
+                    <!-- SECTION 2: Repair Notice Deadline -->
+                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">
+                        2. Repair Notice Deadline
+                    </h3>
+                    <div class="form-group">
+                        <label for="noticeDate">Date Written Notice Sent to Developer (Leave blank if not sent yet):</label>
+                        <input type="date" id="noticeDate">
+                    </div>
+
+                    <!-- SECTION 3: Stakeholder Retention Sum -->
+                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">
+                        3. Stakeholder Retention Sum
+                    </h3>
+                    <div class="form-group">
+                        <label for="purchasePrice">Property Purchase Price from SPA (RM):</label>
+                        <input type="number" id="purchasePrice" min="0" placeholder="e.g., 500000" required>
+                    </div>
+
+                    <!-- SECTION 4: Repair Cost Estimator -->
+                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">
+                        4. Repair Cost Estimator
+                    </h3>
+                    <div id="defectItemsContainer">
+                        <!-- Dynamic defect rows will be added here -->
+                        <div class="form-group defect-row" style="display: flex; gap: 15px;">
+                            <input type="text" class="defect-desc" placeholder="Defect Description (e.g. Leaking Roof)" style="flex: 2;" required>
+                            <input type="number" class="defect-cost" placeholder="Est. Cost (RM)" style="flex: 1;" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="addDefectBtn" class="btn-secondary" style="margin-bottom: 30px; margin-top: 10px;">
+                        + Add Another Defect
+                    </button>
+
+                    <!-- SUBMIT BUTTON -->
+                    <button type="submit" class="btn-primary" style="width: 100%;">
+                        Generate Full Report
+                    </button>
+
+                </form>
+
+                <!-- The Report Container -->
+                <div id="assessmentReportArea" class="scanner-result" style="display: none; max-width: 800px; margin: 30px auto;"></div>
+            </section>
+
+            <!-- 4. LEGAL REFERENCES TAB -->
+            <section id="legal" class="tab-content">
+                <div class="content-header">
+                    <h2>Legal References</h2>
+                    <p>Official sources and acts related to Malaysian Property Law</p>
+                </div>
+                <div class="legal-grid">
+                    <a href="https://www.iproperty.com.my/guides/what-is-hda-housing-development-act-malaysia-53570" target="_blank" class="legal-card">
+                        <div class="legal-icon">🏠</div>
+                        <div class="legal-info">
+                            <h4>Housing Development Act (HDA) ↗</h4>
+                            <p>The primary act governing residential property development.</p>
+                        </div>
+                    </a>
+                    <a href="https://www.ppj.gov.my/en/second-page/akta-pengurusan-strata-2013-akta-757" target="_blank" class="legal-card">
+                        <div class="legal-icon">🏢</div>
+                        <div class="legal-info">
+                            <h4>Strata Management Act 2013 ↗</h4>
+                            <p>Governs the maintenance of buildings and common property.</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <section id="noticeLetter" class="tab-content">
+                <div class="content-header">
+                    <h2>📝 Auto-Generate Formal Notice</h2>
+                    <p>Instantly draft a legally structured defect notice to send to your developer.</p>
+                </div>
+                
+                <form id="noticeLetterForm" class="assessment-form" style="max-width: 850px;">
+                    
+                    <h3 style="color: var(--neon-green); margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">A. Your Details (Purchaser)</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label>Full Name:</label>
+                            <input type="text" id="nlBuyerName" required placeholder="e.g. Ali Bin Ahmad">
+                        </div>
+                        <div class="form-group">
+                            <label>IC / Passport No:</label>
+                            <input type="text" id="nlBuyerIC" required placeholder="e.g. 900101-14-5555">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Your Mailing Address:</label>
+                        <textarea id="nlBuyerAddress" rows="2" required placeholder="Where should the developer send their reply?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Number:</label>
+                        <input type="text" id="nlBuyerContact" required placeholder="e.g. 012-3456789">
+                    </div>
+
+                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">B. Developer Details</h3>
+                    <div class="form-group">
+                        <label>Developer Company Name:</label>
+                        <input type="text" id="nlDevName" required placeholder="e.g. Mega Build Sdn Bhd">
+                    </div>
+                    <div class="form-group">
+                        <label>Developer Address:</label>
+                        <textarea id="nlDevAddress" rows="2" required placeholder="HQ or Management Office Address"></textarea>
+                    </div>
+
+                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">C. Property Details</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label>Project Name:</label>
+                            <input type="text" id="nlProjectName" required placeholder="e.g. Cyber Residences">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Number:</label>
+                            <input type="text" id="nlUnitNo" required placeholder="e.g. A-12-04">
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Vacant Possession (VP):</label>
+                            <input type="date" id="nlVPDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>SPA Reference / Date:</label>
+                            <input type="text" id="nlSPARef" required placeholder="e.g. Ref: SPA/2023/123">
+                        </div>
+                    </div>
+
+                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">D. Schedule of Defects</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 10px;">List the specific defects to be included in the formal letter.</p>
+                    
+                    <div id="noticeDefectsContainer">
+                        <div class="form-group defect-notice-row" style="display: flex; gap: 15px;">
+                            <input type="text" class="nl-defect-location" placeholder="Location (e.g. Master Bath)" style="flex: 1;" required>
+                            <input type="text" class="nl-defect-desc" placeholder="Issue (e.g. Cracked floor tiles)" style="flex: 2;" required>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="addNoticeDefectBtn" class="btn-secondary" style="margin-bottom: 30px; margin-top: 10px;">+ Add Another Defect</button>
+
+                    <button type="submit" class="btn-primary" style="width: 100%;">📄 Generate Formal Notice Letter</button>
+                </form>
+
+                <div id="noticeLetterOutputArea" class="scanner-result" style="display: none; max-width: 850px; margin: 30px auto; background: var(--bg-sidebar); padding: 50px;">
+                    <div id="letterContent" style="color: var(--text-primary); font-family: 'Times New Roman', serif; font-size: 16px; line-height: 1.5;">
+                        </div>
+                    
+                    <div style="margin-top: 40px; display: flex; gap: 15px; justify-content: center; border-top: 1px solid var(--border-dim); padding-top: 20px;">
+                        <button class="btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('letterContent').innerText); alert('Letter copied to clipboard!');">📋 Copy to Clipboard</button>
+                        <button class="btn-secondary" onclick="window.print()">🖨️ Print / Save as PDF</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. AI IMAGE SCANNER TAB -->
+            <section id="scanner" class="tab-content">
+                <div class="content-header">
+                    <h2>📸 AI Defect Scanner</h2>
+                    <p>Upload a photo of the defect for an instant DLP analysis.</p>
+                </div>
+                <div class="scanner-container">
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="defectImage" accept="image/*" hidden>
+                        <div class="upload-icon">📥</div>
+                        <h3>Drag & Drop your image here</h3>
+                        <p>or <span class="browse-link">browse</span> to choose a file</p>
+                    </div>
+                    <div class="preview-area" id="previewArea" style="display: none;">
+                        <img id="imagePreview" src="" alt="Defect Preview">
+                        <div class="preview-actions">
+                            <button id="removeImageBtn" class="btn-secondary">🗑️ Remove</button>
+                            <button id="scanBtn" class="btn-primary">✨ Analyze Defect</button>
+                        </div>
+                    </div>
+                    <div id="loadingIndicator" class="loading-state" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Analyzing defect severity...</p>
+                    </div>
+                    <div id="scanResult" class="scanner-result" style="display: none;"></div>
+                </div>
+            </section>
+
+            <!-- 7. PDF SCANNER TAB -->
+            <section id="pdfscanner" class="tab-content">
+                <div class="content-header">
+                    <h2>📄 AI Document Scanner</h2>
+                    <p>Upload a legal PDF (like your SPA) for an instant AI summary.</p>
+                </div>
+                <div class="scanner-container">
+                    <div class="upload-area" id="pdfUploadArea">
+                        <input type="file" id="pdfFile" accept="application/pdf" hidden>
+                        <div class="upload-icon">📄</div>
+                        <h3>Drag & Drop your PDF here</h3>
+                        <p>or <span class="browse-link">browse</span> to choose a file</p>
+                    </div>
+                    <div class="preview-area" id="pdfPreviewArea" style="display: none;">
+                        <div style="font-size: 50px; margin-bottom: 15px;">📑</div>
+                        <h3 id="pdfFileName" style="color: var(--neon-cyan); margin-bottom: 20px;">document.pdf</h3>
+                        <div class="preview-actions">
+                            <button id="removePdfBtn" class="btn-secondary">🗑️ Remove</button>
+                            <button id="scanPdfBtn" class="btn-primary">✨ Summarize PDF</button>
+                        </div>
+                    </div>
+                    <div id="pdfLoadingIndicator" class="loading-state" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Reading legal document and extracting clauses...</p>
+                    </div>
+                    <div id="pdfScanResult" class="scanner-result" style="display: none;"></div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="notification" class="notification"></div>
+    
+    <!-- Cache buster set to v7 here as well -->
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=8"></script>
+</body>
+</html>

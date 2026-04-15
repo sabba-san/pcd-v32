@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>DLP Advisor | Lawyer Dashboard</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-error-container": "#93000a",
+                        "background": "#f7f9fb",
+                        "surface-bright": "#f7f9fb",
+                        "on-secondary-fixed": "#00174b",
+                        "outline-variant": "#c3c6d7",
+                        "on-tertiary-container": "#ffede6",
+                        "on-secondary-container": "#394c84",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "secondary-container": "#acbfff",
+                        "primary": "#004ac6",
+                        "tertiary-fixed": "#ffdbcd",
+                        "outline": "#737686",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-primary": "#ffffff",
+                        "on-background": "#191c1e",
+                        "surface-variant": "#e0e3e5",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "inverse-on-surface": "#eff1f3",
+                        "error": "#ba1a1a",
+                        "tertiary": "#943700",
+                        "surface-tint": "#0053db",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "inverse-primary": "#b4c5ff",
+                        "inverse-surface": "#2d3133",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d8dadc",
+                        "surface": "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "on-primary-fixed": "#00174b",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#dbe1ff",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-surface-variant": "#434655",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#495c95",
+                        "on-primary-container": "#eeefff",
+                        "tertiary-container": "#bc4800",
+                        "on-surface": "#191c1e",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#2563eb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .glass-nav {
+            background: rgba(247, 249, 251, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+
+<body class="text-on-surface">
+    <!-- TopNavBar -->
+    <header
+        class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-8 py-3 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md">
+        <div class="flex items-center gap-8">
+            <span class="text-xl font-black tracking-tight text-slate-900 dark:text-white">DLP Advisor</span>
+            <nav class="hidden md:flex items-center gap-6">
+                <a class="text-blue-700 dark:text-blue-400 font-bold border-b-2 border-blue-700 dark:border-blue-400 pb-1"
+                    href="#">Dashboard</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                    href="#">Cases</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                    href="#">Reports</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            <div
+                class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all cursor-pointer">
+                <div class="flex flex-col items-end">
+                    <span class="text-sm font-bold text-slate-900 dark:text-white">{{ current_user.law_firm_name or current_user.full_name }}</span>
+                    <span class="text-[10px] uppercase tracking-wider font-bold text-primary px-1.5 py-0.5 bg-primary/10 rounded">Lawyer</span>
+                </div>
+                <img alt="Zulaikha & Partners (Tester)" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuArWeYXz0ZZMuLwT8KKAMb_Tr7728aUKJsmZvC4cTqKmysuL4VA2MaKuvl3mrnrchnvNhFNMgVw6n6PZEpVdvjs8vTcj4-uuhHlb_dHPCrw04B0K1wAusvFFreT4nLBhFD_3tnmttGfPNyQh_DXHt-3DAzyAI3nhgvpYsWiEPCtMiyFQjUqm-ISMWZTcgBdsPXAI2hXg2NNVU3BPk12y7LcXVuGULT96QbBTTRdwFcP_vcv01EqnU_OfAtELK37dk_mOHQYpg5ulA">
+            </div>
+            <div class="flex items-center gap-1 border-l pl-4 border-slate-200 ml-2">
+                <button class="p-2 text-slate-500 hover:bg-slate-200/50 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+                <button class="p-2 text-slate-500 hover:bg-slate-200/50 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">help</span>
+                </button>
+                <a class="p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors" href="{{ url_for('auth.logout') }}" title="Logout">
+                    <span class="material-symbols-outlined">logout</span>
+                </a>
+            </div>
+        </div>
+    </header>
+    <main class="pt-24 pb-12 px-8 max-w-7xl mx-auto">
+        <!-- Dashboard Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+            <div class="flex-1">
+                <span class="text-xs font-bold tracking-[0.2em] text-primary uppercase mb-2 block">LEGAL CONSOLE</span>
+                <h1 class="text-3xl md:text-4xl font-extrabold text-on-surface mb-2 tracking-tight">
+                    Welcome, <span class="text-teal-600 dark:text-teal-400">{{ current_user.full_name }}</span>
+                </h1>
+                <p class="text-on-surface-variant font-medium">Here is your case overview for today.</p>
+            </div>
+            <div class="flex items-stretch gap-4">
+                <!-- Metrics -->
+                <div
+                    class="bg-surface-container-lowest p-4 rounded-xl border-l-4 border-primary shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] min-w-[140px]">
+                    <span class="text-xs font-bold text-on-surface-variant block mb-1">Total Defects</span>
+                    <span class="text-2xl font-black text-on-surface">0</span>
+                </div>
+                <div
+                    class="bg-surface-container-lowest p-4 rounded-xl border-l-4 border-error shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] min-w-[140px]">
+                    <span class="text-xs font-bold text-on-surface-variant block mb-1">Action Required</span>
+                    <span class="text-2xl font-black text-on-surface">--</span>
+                </div>
+                <button
+                    class="bg-gradient-to-b from-primary to-primary-container text-white px-6 py-4 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary/20 self-center">
+                    <span class="material-symbols-outlined text-sm">analytics</span>
+                    Reporting Dashboard
+                </button>
+            </div>
+        </div>
+        <!-- Action Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <!-- Evidence Review -->
+            <div
+                class="group relative bg-surface-container-lowest p-6 rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] overflow-hidden transition-all hover:-translate-y-1">
+                <span
+                    class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">folder_managed</span>
+                <div class="relative z-10 flex flex-col h-full">
+                    <h3 class="font-bold text-lg text-on-surface mb-2">Evidence Review</h3>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Validate photographic and document
+                        evidence submitted by homeowners.</p>
+                    <button
+                        class="mt-auto border-2 border-primary text-primary font-bold py-2 px-4 rounded-lg text-sm hover:bg-primary hover:text-white transition-all w-fit">
+                        Launch Review
+                    </button>
+                </div>
+            </div>
+            <!-- Virtual Inspection -->
+            <div
+                class="group relative bg-surface-container-lowest p-6 rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] overflow-hidden transition-all hover:-translate-y-1">
+                <span
+                    class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">videocam</span>
+                <div class="relative z-10 flex flex-col h-full">
+                    <h3 class="font-bold text-lg text-on-surface mb-2">Virtual Inspection</h3>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Initiate a remote structural
+                        inspection via synchronized video link.</p>
+                    <button
+                        class="mt-auto border-2 border-slate-200 text-slate-400 font-bold py-2 px-4 rounded-lg text-sm cursor-not-allowed w-fit"
+                        disabled="">
+                        Offline
+                    </button>
+                </div>
+            </div>
+            <!-- Clause Retrieval -->
+            <div
+                class="group relative bg-surface-container-lowest p-6 rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] overflow-hidden transition-all hover:-translate-y-1">
+                <span
+                    class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">gavel</span>
+                <div class="relative z-10 flex flex-col h-full">
+                    <h3 class="font-bold text-lg text-on-surface mb-2">Clause Retrieval</h3>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Automated matching of defect types
+                        to relevant SPA legal clauses.</p>
+                    <a href="{{ url_for('core_features.chatbot_ui') }}"
+                        class="mt-auto border-2 border-primary text-primary font-bold py-2 px-4 rounded-lg text-sm hover:bg-primary hover:text-white transition-all w-fit">ask
+                        DLP Chatbot</a>
+                </div>
+            </div>
+            <!-- Lock Evidence -->
+            <div
+                class="group relative bg-surface-container-lowest p-6 rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] overflow-hidden transition-all hover:-translate-y-1">
+                <span
+                    class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">lock</span>
+                <div class="relative z-10 flex flex-col h-full">
+                    <h3 class="font-bold text-lg text-on-surface mb-2">Lock Evidence</h3>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Seal current case records to prevent
+                        further modifications during litigation.</p>
+                    <button
+                        class="mt-auto border-2 border-slate-200 text-slate-400 font-bold py-2 px-4 rounded-lg text-sm cursor-not-allowed w-fit"
+                        disabled="">
+                        Locked
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Pending Cases Queue -->
+        <div class="bg-surface-container-low rounded-2xl p-8 mb-8 overflow-hidden">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary p-2 bg-white rounded-lg shadow-sm">list_alt</span>
+                    <h2 class="text-xl font-bold text-on-surface">Pending Cases Queue</h2>
+                </div>
+                <div class="relative">
+                    <select
+                        class="appearance-none bg-surface-container-lowest border-none px-6 py-2.5 pr-10 rounded-xl text-sm font-semibold text-on-surface-variant shadow-sm focus:ring-2 focus:ring-primary/20">
+                        <option>Filter by Priority</option>
+                        <option>Urgent</option>
+                        <option>Scheduled</option>
+                        <option>Low Priority</option>
+                    </select>
+                    <span
+                        class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-lg">expand_more</span>
+                </div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.02)] overflow-hidden">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-surface-container-highest/30">
+                            <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+                                Reference</th>
+                            <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+                                Client Name</th>
+                            <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+                                Defect Status</th>
+                            <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+                                Assigned Date</th>
+                            <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+                                Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5">
+                                <div class="py-32 flex flex-col items-center justify-center opacity-40">
+                                    <span class="material-symbols-outlined text-7xl mb-4 font-extralight">inbox_customize</span>
+                                    <p class="text-xl font-medium tracking-tight">No active cases found in the database</p>
+                                    <p class="text-sm mt-2">New cases will appear here as they are filed by users.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer
+            class="mt-20 border-t border-slate-200 pt-8 flex justify-between items-center text-on-surface-variant text-sm font-medium">
+            <p>© 2024 DLP Advisor. Legal Document Processing & Defect Tracking Platform.</p>
+            <div class="flex gap-8">
+                <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+                <a class="hover:text-primary transition-colors" href="#">API Access</a>
+                <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+            </div>
+        </footer>
+    </main>
+    <!-- SideNavBar (Mobile Trigger/Hidden) -->
+    <aside
+        class="hidden lg:flex flex-col fixed left-0 top-0 h-full border-r border-transparent w-64 translate-x-[-100%] transition-transform">
+        <!-- Structural placeholder as per Shared Components but suppressed on this specific view for minimalism -->
+    </aside>
+</body>
+
+</html>

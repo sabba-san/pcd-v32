@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DLP Advisor | Developer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "primary": "#004ac6",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#b4c5ff",
+                        "primary-fixed": "#dbe1ff",
+                        "on-background": "#191c1e",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-primary-container": "#eeefff",
+                        "on-tertiary-container": "#ffede6",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "tertiary": "#943700",
+                        "on-tertiary-fixed": "#360f00",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container": "#eceef0",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "surface-dim": "#d8dadc",
+                        "surface-container-high": "#e6e8ea",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "primary-container": "#2563eb",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#ffdbcd",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-tint": "#0053db",
+                        "surface": "#f7f9fb",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#00174b",
+                        "inverse-surface": "#2d3133",
+                        "background": "#f7f9fb",
+                        "on-surface-variant": "#434655",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#191c1e",
+                        "secondary-container": "#acbfff",
+                        "on-secondary-container": "#394c84",
+                        "surface-container-low": "#f2f4f6",
+                        "outline-variant": "#c3c6d7",
+                        "secondary-fixed": "#dbe1ff",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#bc4800",
+                        "secondary": "#495c95",
+                        "on-primary": "#ffffff",
+                        "outline": "#737686"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+
+        .font-headline {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .ambient-shadow {
+            box-shadow: 0 24px 40px -10px rgba(25, 28, 30, 0.04);
+        }
+    </style>
+</head>
+
+<body class="bg-surface text-on-surface">
+    <header
+        class="bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md font-['Manrope'] font-bold text-lg tracking-tight top-0 sticky z-50 flex justify-between items-center px-6 py-3 w-full border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-700 dark:text-blue-500 text-2xl">domain</span>
+            <h1 class="text-xl font-extrabold text-blue-700 dark:text-blue-500 tracking-tighter uppercase">DLP Advisor</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right hidden sm:block">
+                <p class="text-sm font-bold text-on-surface">{{ current_user.company_name or current_user.full_name }}</p>
+                <p class="text-[10px] font-medium text-on-surface-variant tracking-widest uppercase">Developer</p>
+            </div>
+            <div class="flex items-center gap-2 group cursor-pointer">
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                    T
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+            </div>
+        </div>
+    </header>
+    <div class="flex min-h-screen">
+        <aside
+            class="bg-slate-100 dark:bg-slate-950 w-16 fixed left-0 top-[65px] h-[calc(100vh-65px)] flex flex-col items-center border-r border-slate-200 dark:border-slate-800 z-40">
+            <div class="py-6 flex flex-col gap-4 w-full items-center">
+                <a class="p-2 text-blue-700 dark:text-blue-400 bg-white dark:bg-slate-900 rounded-lg shadow-sm" href="#"
+                    title="ASMARINDA12">
+                    <span class="material-symbols-outlined">domain</span>
+                </a>
+                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    href="#" title="Dashboard">
+                    <span class="material-symbols-outlined">dashboard</span>
+                </a>
+                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    href="#" title="Defect Tracker">
+                    <span class="material-symbols-outlined">build</span>
+                </a>
+                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    href="#" title="Inspections">
+                    <span class="material-symbols-outlined">fact_check</span>
+                </a>
+                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    href="#" title="Reports">
+                    <span class="material-symbols-outlined">analytics</span>
+                </a>
+            </div>
+            <div class="mt-auto pb-6 flex flex-col items-center gap-4">
+                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    href="{{ url_for('auth.logout') }}" title="Logout">
+                    <span class="material-symbols-outlined">logout</span>
+                </a>
+                <button
+                    class="w-10 h-10 bg-primary-container text-white rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity shadow-md"
+                    title="New Project">
+                    <span class="material-symbols-outlined text-xl">add</span>
+                </button>
+            </div>
+        </aside>
+        <main class="flex-1 ml-16 p-8 bg-[#F8FAFC]">
+            <div class="mb-6">
+                <h2 class="text-3xl font-headline font-extrabold text-on-surface tracking-tight uppercase">{{ current_user.full_name }}</h2>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="material-symbols-outlined text-primary text-lg">build</span>
+                    <span class="text-primary font-bold text-sm tracking-wide">Contractor Rectification Job Sheet</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div
+                    class="bg-surface-container-lowest ambient-shadow rounded-xl p-5 border-l-4 border-primary flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">PENDING</p>
+                        <p class="text-3xl font-headline font-extrabold text-on-surface">0</p>
+                    </div>
+                    <span class="material-symbols-outlined text-primary/20 text-4xl">pending_actions</span>
+                </div>
+                <div
+                    class="bg-surface-container-lowest ambient-shadow rounded-xl p-5 border-l-4 border-orange-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">WIP</p>
+                        <p class="text-3xl font-headline font-extrabold text-on-surface">0</p>
+                    </div>
+                    <span class="material-symbols-outlined text-orange-500/20 text-4xl">construction</span>
+                </div>
+                <div
+                    class="bg-surface-container-lowest ambient-shadow rounded-xl p-5 border-l-4 border-green-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">DONE</p>
+                        <p class="text-3xl font-headline font-extrabold text-on-surface">0</p>
+                    </div>
+                    <span class="material-symbols-outlined text-green-500/20 text-4xl">task_alt</span>
+                </div>
+            </div>
+            <section
+                class="bg-surface-container-lowest rounded-xl border border-slate-200/60 overflow-hidden ambient-shadow">
+                <div class="flex justify-between items-center px-8 py-6 bg-slate-50/50">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">list</span>
+                        <h3 class="text-lg font-headline font-bold text-on-surface">Prioritized Task List</h3>
+                    </div>
+                    <button
+                        class="flex items-center gap-2 border border-primary text-primary px-5 py-2 rounded-lg font-bold text-sm hover:bg-primary/5 transition-colors">
+                        <span class="material-symbols-outlined text-sm">bar_chart</span>
+                        Report
+                    </button>
+                </div>
+                <div class="w-full overflow-x-auto">
+                    <table class="w-full text-left min-w-max">
+                        <thead>
+                            <tr class="bg-surface-container-highest/30">
+                                <th
+                                    class="px-8 py-4 text-[10px] font-bold text-on-surface-variant tracking-[0.15em] uppercase">
+                                    Ref ID</th>
+                                <th
+                                    class="px-4 py-4 text-[10px] font-bold text-on-surface-variant tracking-[0.15em] uppercase">
+                                    Owner / Unit</th>
+                                <th
+                                    class="px-4 py-4 text-[10px] font-bold text-on-surface-variant tracking-[0.15em] uppercase">
+                                    Defect Detail</th>
+                                <th
+                                    class="px-4 py-4 text-[10px] font-bold text-on-surface-variant tracking-[0.15em] uppercase">
+                                    Photos</th>
+                                <th
+                                    class="px-4 py-4 text-[10px] font-bold text-on-surface-variant tracking-[0.15em] uppercase">
+                                    Severity</th>
+                                <th
+                                    class="px-4 py-4 text-[10px] font-bold text-on-surface-variant tracking-[0.15em] uppercase">
+                                    Status</th>
+                                <th
+                                    class="px-4 py-4 text-[10px] font-bold text-on-surface-variant tracking-[0.15em] uppercase">
+                                    Verification</th>
+                                <th
+                                    class="px-8 py-4 text-[10px] font-bold text-on-surface-variant tracking-[0.15em] uppercase text-right">
+                                    Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="py-40 text-center" colspan="8">
+                                    <div class="flex flex-col items-center justify-center opacity-30">
+                                        <span class="material-symbols-outlined text-8xl mb-6">fact_check</span>
+                                        <p class="text-xl font-headline font-bold text-on-surface">No active work orders for
+                                            {{ current_user.full_name }}</p>
+                                        <p class="text-sm mt-2 text-on-surface-variant">All tasks have been processed or no
+                                            entries found.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    <div class="fixed bottom-8 right-8 flex flex-col gap-4">
+        <button
+            class="bg-primary hover:bg-primary-container text-white p-4 rounded-full shadow-2xl transition-all active:scale-95 group">
+            <span class="material-symbols-outlined text-2xl">help</span>
+        </button>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,453 @@
+/* ====================
+   ROOT STYLES & VARIABLES (BOTIFY CYBER-GREEN THEME)
+   ==================== */
+:root {
+    --bg-darkest: #040705; /* Deep cyber black with a hint of green */
+    --bg-sidebar: #080D0A;
+    --bg-input: #0A120E;
+    --neon-green: #00FF9F; /* Botify Electric Green */
+    --neon-green-glow: rgba(0, 255, 159, 0.4);
+    --neon-green-dim: rgba(0, 255, 159, 0.1);
+    --text-primary: #FFFFFF;
+    --text-secondary: #8A9990; /* Gray with a subtle green tint */
+    --border-dim: rgba(0, 255, 159, 0.15);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+    background-color: var(--bg-darkest);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow: hidden;
+}
+
+.app-container { display: flex; height: 100vh; width: 100vw; position: relative; z-index: 1; }
+
+/* ====================
+   SIDEBAR
+   ==================== */
+.sidebar {
+    width: 280px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-dim);
+    display: flex; flex-direction: column; padding: 24px 0; overflow-y: auto; z-index: 10;
+}
+.sidebar-header { padding: 0 20px 24px; border-bottom: 1px solid var(--border-dim); }
+.brand-title { display: flex; align-items: center; gap: 12px; margin-bottom: 5px; }
+
+/* Glowing Logo & Title */
+.chat-logo { width: 40px; height: 40px; border-radius: 8px; box-shadow: 0 0 15px var(--neon-green-glow); border: 1px solid var(--neon-green); object-fit: contain; align-self: center; flex-shrink: 0; background: var(--bg-input); }
+.sidebar-title { font-size: 22px; font-weight: 700; color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green-glow); }
+.sidebar-subtitle { font-size: 11px; color: var(--text-secondary); letter-spacing: 0.5px; }
+
+/* New Chat Button */
+.btn-new-chat { width: 100%; margin-top: 20px; padding: 12px; background: var(--neon-green-dim); border: 1px solid var(--neon-green); color: var(--neon-green); border-radius: 8px; cursor: pointer; transition: all 0.3s; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.btn-new-chat:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 20px var(--neon-green-glow); }
+
+.sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 24px 16px; }
+.nav-tab { padding: 14px 18px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; text-align: left; }
+.nav-tab:hover { background: var(--neon-green-dim); color: var(--text-primary); }
+.nav-tab.active { background: var(--neon-green-dim); border-left: 4px solid var(--neon-green); color: var(--neon-green); box-shadow: inset 20px 0 20px -20px var(--neon-green-glow); }
+
+.sidebar-footer { padding: 20px 16px; border-top: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 12px; }
+
+/* ====================
+   MAIN CONTENT & BACKGROUND (BOTIFY AURORA EFFECT)
+   ==================== */
+.main-content {
+    flex: 1; display: flex; flex-direction: column; position: relative;
+    background-color: var(--bg-darkest);
+    z-index: 10;
+}
+
+/* Cyber Aurora / Mesh Gradient Background */
+.main-content::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle at 50% 30%, rgba(0, 255, 159, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(0, 255, 159, 0.05) 0%, transparent 30%);
+    pointer-events: none; z-index: -2;
+}
+
+/* Subtle Tech Grid overlay */
+.main-content::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+        linear-gradient(rgba(0, 255, 159, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 159, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: -1;
+}
+
+/* ====================
+   TAB MANAGEMENT & CENTERING
+   ==================== */
+.tab-content { display: none; flex: 1; flex-direction: column; overflow-y: auto; width: 100%; padding-bottom: 40px; }
+.tab-content.active { display: flex; }
+
+#assessment, #legal, #feedback, #scanner, #pdfscanner, #guidelines { align-items: center; }
+#chat { align-items: stretch; }
+
+/* ====================
+   CHAT INTERFACE
+   ==================== */
+.chat-container { flex: 1; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; gap: 20px; width: 100%; }
+.chat-message { display: flex; gap: 12px; margin-bottom: 12px; }
+.chat-message.user { justify-content: flex-end; }
+.chat-message.bot { justify-content: flex-start; }
+.chat-avatar { width: 36px; height: 36px; border-radius: 8px; background: var(--bg-sidebar); border: 1px solid var(--neon-green); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; box-shadow: 0 0 10px var(--neon-green-glow); color: var(--neon-green); }
+.message-bubble { max-width: 75%; padding: 14px 18px; border-radius: 8px; font-size: 14.5px; line-height: 1.6; word-wrap: break-word; }
+
+/* User Message: Solid Neon Green */
+.chat-message.user .message-bubble { background: var(--neon-green); color: #000; font-weight: 500; border-bottom-right-radius: 2px; box-shadow: 0 4px 15px var(--neon-green-glow); }
+/* Bot Message: Dark with Green Border */
+.chat-message.bot .message-bubble { background: var(--bg-sidebar); color: var(--text-primary); border: 1px solid var(--border-dim); border-bottom-left-radius: 2px; }
+
+/* TYPING INDICATOR */
+.typing-indicator { padding: 15px 20px; background: var(--bg-sidebar); border: 1px solid var(--border-dim); border-radius: 8px; border-bottom-left-radius: 2px; display: flex; align-items: center; gap: 5px; width: fit-content; }
+.dot { width: 8px; height: 8px; background-color: var(--neon-green); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+.dot:nth-child(1) { animation-delay: -0.32s; }
+.dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); opacity: 0.3; } 40% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px var(--neon-green); } }
+
+/* ====================
+   INPUT AREA
+   ==================== */
+.chat-input-area { padding: 20px 40px; display: flex; gap: 16px; background: transparent; align-items: flex-end; position: relative; z-index: 5; width: 100%; border-top: 1px solid var(--border-dim); }
+.chat-input { flex: 1; padding: 16px 20px; background: var(--bg-input); border: 1px solid var(--border-dim); border-radius: 8px; color: var(--text-primary); font-size: 15px; transition: all 0.3s ease; resize: none; min-height: 55px; max-height: 200px; }
+.chat-input:focus { outline: none; border-color: var(--neon-green); box-shadow: 0 0 15px var(--neon-green-dim); }
+
+/* The Send Button */
+.btn-primary { padding: 12px 32px; background: var(--neon-green); color: #000; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; height: 55px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 15px var(--neon-green-glow); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 25px var(--neon-green); background: #33FFB3; }
+
+/* ====================
+   WELCOME SCREEN & ORB
+   ==================== */
+.welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; animation: fadeInUp 0.5s ease; }
+.welcome-orb { width: 100px; height: 100px; background: radial-gradient(circle at 50% 50%, var(--neon-green), transparent 70%); border-radius: 50%; box-shadow: 0 0 60px var(--neon-green), inset 0 0 20px #000; margin-bottom: 30px; animation: pulseOrb 3s ease-in-out infinite; opacity: 0.8; }
+@keyframes pulseOrb { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 80px var(--neon-green); } }
+.welcome-greeting { font-size: 36px; font-weight: 700; margin-bottom: 40px; color: var(--text-primary); line-height: 1.4; letter-spacing: -0.5px; }
+.welcome-greeting .subtitle { font-size: 24px; font-weight: 400; color: var(--neon-green); }
+
+.welcome-cards { display: flex; gap: 20px; justify-content: center; max-width: 800px; flex-wrap: wrap; }
+.action-card { background: var(--bg-sidebar); border: 1px solid var(--border-dim); padding: 24px; border-radius: 12px; width: 220px; cursor: pointer; transition: all 0.3s ease; text-align: left; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
+.action-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--neon-green); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; }
+.action-card:hover::before { transform: scaleX(1); }
+.action-card:hover { border-color: var(--neon-green); box-shadow: 0 10px 30px var(--neon-green-dim); transform: translateY(-5px); background: #0A140F; }
+.action-card .card-icon { font-size: 24px; color: var(--neon-green); }
+.action-card h4 { color: var(--text-primary); font-size: 16px; margin: 0; font-weight: 600; }
+.action-card p { color: var(--text-secondary); font-size: 13px; margin: 0; }
+
+/* ====================
+   CENTERED FORMS & CONTENT (SCANNER, ASSESSMENT)
+   ==================== */
+.content-header { padding: 60px 20px 30px; text-align: center; width: 100%; }
+.content-header h2 { color: var(--text-primary); font-size: 32px; margin-bottom: 8px; font-weight: 700; letter-spacing: -1px; }
+.content-header p { color: var(--neon-green); font-size: 16px; }
+
+.assessment-form, .feedback-form, .scanner-container, .guidelines-paper {
+    width: 100%; max-width: 650px; background: var(--bg-sidebar); border: 1px solid var(--border-dim); 
+    border-radius: 12px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: 0 auto;
+}
+
+.legal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; width: 100%; max-width: 900px; margin: 0 auto; padding: 20px; }
+.legal-card { background: var(--bg-sidebar); border: 1px solid var(--border-dim); padding: 24px; border-radius: 12px; display: flex; gap: 20px; transition: all 0.3s; position: relative; overflow: hidden; }
+.legal-card:hover { border-color: var(--neon-green); transform: translateY(-5px); box-shadow: 0 10px 30px var(--neon-green-dim); }
+.legal-icon { font-size: 2rem; color: var(--neon-green); background: var(--neon-green-dim); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid rgba(0,255,159,0.2); }
+.legal-info h4 { color: var(--text-primary); margin-bottom: 5px; font-weight: 600;}
+.legal-info p { color: var(--text-secondary); font-size: 0.9rem;}
+
+.form-group label { color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; font-size: 14px;}
+.form-group input, .form-group select, .form-group textarea { padding: 16px; background: var(--bg-input); border: 1px solid var(--border-dim); border-radius: 8px; color: var(--text-primary); width: 100%; transition: all 0.3s; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--neon-green); outline: none; box-shadow: 0 0 15px var(--neon-green-dim); background: #050A08; }
+
+.upload-area { border: 2px dashed var(--border-dim); border-radius: 12px; padding: 60px 20px; text-align: center; background: var(--bg-input); cursor: pointer; transition: all 0.3s ease; margin-bottom: 24px; }
+.upload-area:hover { border-color: var(--neon-green); background: rgba(0, 255, 159, 0.05); box-shadow: 0 0 20px var(--neon-green-dim); }
+.upload-icon { font-size: 48px; margin-bottom: 15px; color: var(--neon-green); filter: drop-shadow(0 0 10px var(--neon-green-glow)); }
+.browse-link { color: var(--neon-green); font-weight: bold; text-decoration: underline; text-underline-offset: 4px; }
+
+/* Spinners & Loading */
+.spinner { width: 40px; height: 40px; border: 3px solid var(--border-dim); border-top: 3px solid var(--neon-green); border-radius: 50%; margin: 0 auto 15px auto; animation: spin 1s linear infinite; box-shadow: 0 0 15px var(--neon-green-dim); }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Scrollbars - Stealth Green */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-darkest); }
+::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
+
+/* History Row Tweaks */
+.history-item-row.active { background-color: var(--neon-green-dim); border-left-color: var(--neon-green); }
+.history-item-row:hover .btn-icon-action { color: var(--neon-green); }
+
+/* ====================
+   SECONDARY BUTTONS (Clear Data, Theme, Remove)
+   ==================== */
+.btn-secondary {
+    padding: 12px 16px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-dim);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.btn-secondary:hover {
+    background: var(--neon-green-dim);
+    color: var(--neon-green);
+    border-color: var(--neon-green);
+    box-shadow: 0 0 10px var(--neon-green-dim);
+}
+
+/* ====================
+   BACK TO DASHBOARD BUTTON
+   ==================== */
+.btn-back-dashboard {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--neon-green-dim);
+    color: var(--neon-green);
+    border: 1px solid var(--neon-green);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+.btn-back-dashboard:hover {
+    background: var(--neon-green);
+    color: #000;
+    box-shadow: 0 0 20px var(--neon-green-glow);
+}
+
+/* ====================
+   HISTORY LIST & ACTIONS (Sidebar)
+   ==================== */
+.conversation-history-section { margin-top: 10px; }
+.history-label { padding: 0 16px; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+.history-item-row { 
+    display: flex; align-items: center; justify-content: space-between; 
+    padding: 10px 16px; cursor: pointer; transition: all 0.2s; 
+    border-left: 4px solid transparent; color: var(--text-secondary); 
+}
+.history-item-row:hover { background-color: var(--neon-green-dim); color: var(--text-primary); }
+.history-item-row.active { background-color: var(--neon-green-dim); border-left-color: var(--neon-green); color: var(--neon-green); }
+
+.history-title-text { font-size: 13px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.history-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s; }
+.history-item-row:hover .history-actions, .history-item-row.active .history-actions { opacity: 1; }
+
+.btn-icon-action { 
+    background: transparent; border: none; color: var(--text-secondary); 
+    cursor: pointer; font-size: 14px; padding: 4px; border-radius: 4px; transition: all 0.2s; 
+}
+.btn-icon-action:hover { background-color: rgba(0, 255, 159, 0.2); color: var(--neon-green); }
+
+.history-rename-input { 
+    width: 100%; background: var(--bg-input); border: 1px solid var(--neon-green); 
+    color: var(--text-primary); padding: 4px 8px; border-radius: 4px; 
+    font-size: 13px; outline: none; box-shadow: 0 0 5px var(--neon-green-dim); 
+}
+
+/* ====================
+   READ ALOUD BUTTON (Speaker Icon)
+   ==================== */
+.btn-read-aloud { 
+    background: transparent; border: none; cursor: pointer; font-size: 1.2rem; 
+    padding: 0 8px; opacity: 0.5; transition: all 0.2s ease; 
+    display: flex; align-items: center; color: var(--text-secondary); 
+}
+.btn-read-aloud:hover { 
+    opacity: 1; transform: scale(1.1); color: var(--neon-green); 
+    filter: drop-shadow(0 0 8px var(--neon-green-glow)); 
+}
+.btn-read-aloud.hidden { display: none; }
+
+/* ====================
+   SCANNER PREVIEW BUTTONS LAYOUT
+   ==================== */
+.preview-actions { 
+    display: flex; gap: 15px; justify-content: center; margin-top: 20px; 
+}
+
+/* ====================
+   IMAGE PREVIEW - RESPONSIVE FIT FOR ANY RESOLUTION
+   ==================== */
+.preview-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+#imagePreview {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    max-height: 420px;
+    object-fit: contain;       /* Shows full image, no cropping */
+    border-radius: 10px;
+    border: 1px solid var(--border-dim);
+    background: var(--bg-input);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ====================
+   AI SCANNER & PDF RESULTS (REPORT STYLE)
+   ==================== */
+.scanner-result {
+    margin-top: 30px;
+    padding: 30px;
+    background: rgba(0, 255, 159, 0.03); /* Very subtle Botify green tint */
+    border: 1px solid var(--border-dim);
+    border-left: 4px solid var(--neon-green); /* Cyber accent line on the left */
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.8;
+    text-align: left;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3), 0 5px 15px rgba(0,0,0,0.2);
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Style the headings generated by the AI */
+.scanner-result h3 {
+    color: var(--neon-green);
+    font-size: 18px;
+    margin-top: 25px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Remove margin from the very first heading so it sits flush at the top */
+.scanner-result h3:first-child {
+    margin-top: 0;
+}
+
+/* Make bold/important text stand out with a high-tech highlight */
+.scanner-result strong {
+    color: #ffffff;
+    font-weight: 600;
+    background: rgba(0, 255, 159, 0.15);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 159, 0.3);
+}
+
+/* Add a nice glow effect when the user hovers over the report */
+.scanner-result:hover {
+    border-color: rgba(0, 255, 159, 0.4);
+    box-shadow: 0 0 20px var(--neon-green-dim), inset 0 0 20px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+/* ====================
+   LIGHT MODE (WHITE, CLEAN, MODERN, PROFESSIONAL)
+   ==================== */
+body.light-mode {
+    /* Swap the core colors to bright, clean values */
+    --bg-darkest: #F8FAFC; /* Very light slate gray background */
+    --bg-sidebar: #FFFFFF; /* Pure white sidebar and cards */
+    --bg-input: #FFFFFF; 
+    
+    /* Change the neon green to a Professional Corporate Blue */
+    --neon-green: #2563EB; 
+    --neon-green-glow: rgba(37, 99, 235, 0.15); /* Soft shadow, no neon glow */
+    --neon-green-dim: rgba(37, 99, 235, 0.08); /* Very light blue tint */
+    
+    /* Swap text colors for white backgrounds */
+    --text-primary: #1E293B; /* Deep sharp charcoal */
+    --text-secondary: #64748B; /* Clean medium gray */
+    --border-dim: #E2E8F0; /* Soft light gray borders */
+}
+
+/* Remove the cyber aurora and grid in light mode for a clean look */
+body.light-mode .main-content::before,
+body.light-mode .main-content::after {
+    display: none; 
+}
+
+/* Fix specific elements that had heavy dark styling */
+body.light-mode .chat-logo {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Remove glow */
+    background: #FFFFFF;
+}
+
+/* Soften all the boxes and cards (Assessment, Scanner, Feedback) */
+body.light-mode .action-card,
+body.light-mode .legal-card,
+body.light-mode .assessment-form, 
+body.light-mode .feedback-form, 
+body.light-mode .scanner-container, 
+body.light-mode .guidelines-paper {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03); /* Soft, premium shadow */
+}
+
+/* Hover effects for cards in light mode */
+body.light-mode .action-card:hover,
+body.light-mode .legal-card:hover {
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
+    background: #FFFFFF;
+}
+
+/* Adjust the chat bubbles for light mode */
+body.light-mode .chat-message.bot .message-bubble {
+    background: #FFFFFF;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+body.light-mode .chat-message.user .message-bubble {
+    color: #FFFFFF; /* White text on the blue user bubble */
+}
+
+/* Primary buttons need white text in light mode */
+body.light-mode .btn-primary,
+body.light-mode .btn-new-chat:hover {
+    color: #FFFFFF; 
+}
+
+body.light-mode .btn-primary:hover {
+    background: #1D4ED8; /* Slightly darker blue on hover */
+    box-shadow: 0 6px 15px rgba(29, 78, 216, 0.3);
+}
+
+/* Format the AI Report box for light mode */
+body.light-mode .scanner-result {
+    background: #FFFFFF;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+body.light-mode .scanner-result strong {
+    color: #0F172A; /* Dark text for highlighted terms */
+}
+
+/* Welcome screen orb adjustments */
+body.light-mode .welcome-orb {
+    opacity: 0.3;
+}
+
+/* Fix the input boxes turning black when clicked (focus state) */
+body.light-mode .form-group input:focus, 
+body.light-mode .form-group select:focus, 
+body.light-mode .form-group textarea:focus,
+body.light-mode .history-rename-input:focus {
+    background: #FFFFFF; /* Keeps the background bright white */
+    color: #1E293B; /* Keeps the text dark charcoal */
+    border-color: var(--neon-green); /* Highlights the border in your corporate blue */
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.15); /* Soft blue shadow */
+}
