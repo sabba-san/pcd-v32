@@ -39,7 +39,7 @@ def logout():
 
 @auth.route('/register')
 def register():
-    return render_template('role/selection.html')
+    return render_template('role/register/selection.html')
 
 
 # ── Homeowner Registration ────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ def reg_homeowner():
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('role/reg_homeowner.html')
+    return render_template('role/register/reg_homeowner.html')
 
 
 # ── Lawyer Registration ───────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ def reg_lawyer():
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('role/reg_lawyer.html')
+    return render_template('role/register/reg_lawyer.html')
 
 
 # ── Housing Developer Registration ───────────────────────────────────────────
@@ -139,7 +139,7 @@ def reg_housedeveloper():
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('role/reg_housedeveloper.html')
+    return render_template('role/register/reg_housedeveloper.html')
 
 
 # ── Dashboards ────────────────────────────────────────────────────────────────
