@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile # You can specify a different Dockerfile name if necessary
     container_name: flask_app # Name of the running container
     working_dir: /usr/src/app # Add this line
+    env_file:
+      - .env
     environment:
       - PYTHONPATH=/usr/src/app
       - FLASK_APP=app:app # Assuming your Flask app instance is named 'app' in app/__init__.py

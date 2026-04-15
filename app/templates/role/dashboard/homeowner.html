@@ -162,9 +162,9 @@
                     <span>Overview</span>
                 </a>
                 <a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 px-4 py-3 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl font-manrope text-sm font-semibold duration-150 ease-in-out"
-                    href="#">
+                    href="{{ url_for('module2.list_projects') }}">
                     <span class="material-symbols-outlined">architecture</span>
-                    <span>Add Defect</span>
+                    <span>Lidar Scans</span>
                 </a>
                 <a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 px-4 py-3 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl font-manrope text-sm font-semibold duration-150 ease-in-out"
                     href="{{ url_for('core_features.chatbot_ui') }}">
@@ -226,8 +226,7 @@
                     </div>
                     <span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span>
                 </a>
-                <!-- Card 2 -->
-                <div
+                <a href="{{ url_for('module2.list_projects') }}"
                     class="bg-surface-container-lowest p-6 rounded-lg shadow-[0_24px_40px_rgba(25,28,30,0.04)] border-transparent flex justify-between items-center group cursor-pointer hover:bg-surface-container-low transition-colors duration-200">
                     <div class="flex items-center gap-4">
                         <div
@@ -240,9 +239,9 @@
                         </div>
                     </div>
                     <span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span>
-                </div>
+                </a>
                 <!-- Card 3 -->
-                <div
+                <a href="{{ url_for('module2.upload_scan') }}"
                     class="bg-surface-container-lowest p-6 rounded-lg shadow-[0_24px_40px_rgba(25,28,30,0.04)] border-transparent flex justify-between items-center group cursor-pointer hover:bg-surface-container-low transition-colors duration-200">
                     <div class="flex items-center gap-4">
                         <div
@@ -255,9 +254,9 @@
                         </div>
                     </div>
                     <span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span>
-                </div>
+                </a>
                 <!-- Card 4 -->
-                <div
+                <a href="{{ url_for('module2.list_projects') }}"
                     class="bg-surface-container-lowest p-6 rounded-lg shadow-[0_24px_40px_rgba(25,28,30,0.04)] border-transparent flex justify-between items-center group cursor-pointer hover:bg-surface-container-low transition-colors duration-200">
                     <div class="flex items-center gap-4">
                         <div
@@ -270,7 +269,7 @@
                         </div>
                     </div>
                     <span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span>
-                </div>
+                </a>
             </div>
             <!-- Recent Activity -->
             <section>
@@ -313,7 +312,7 @@
             <span class="material-symbols-outlined">dashboard</span>
             <span class="text-[10px] font-bold">Dashboard</span>
         </a>
-        <a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+        <a class="flex flex-col items-center gap-1 text-slate-400" href="{{ url_for('module2.list_projects') }}">
             <span class="material-symbols-outlined">architecture</span>
             <span class="text-[10px] font-bold">Defects</span>
         </a>

@@ -237,6 +237,20 @@
                     </button>
                 </div>
             </div>
+            <!-- Lidar Scans -->
+            <div
+                class="group relative bg-surface-container-lowest p-6 rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] overflow-hidden transition-all hover:-translate-y-1">
+                <span
+                    class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-teal-50 transition-colors pointer-events-none">deployed_code</span>
+                <div class="relative z-10 flex flex-col h-full">
+                    <h3 class="font-bold text-lg text-on-surface mb-2">Lidar Scans</h3>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">View 3D defect visualization and
+                        scan projects.</p>
+                    <a href="{{ url_for('module2.list_projects') }}"
+                        class="mt-auto border-2 border-teal-600 text-teal-600 font-bold py-2 px-4 rounded-lg text-sm hover:bg-teal-600 hover:text-white transition-all w-fit">View
+                        Scans</a>
+                </div>
+            </div>
         </div>
         <!-- Pending Cases Queue -->
         <div class="bg-surface-container-low rounded-2xl p-8 mb-8 overflow-hidden">
