@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Register | DLP Advisor Lawyer</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#f7f9fb",
+                        "inverse-on-surface": "#eff1f3",
+                        "tertiary-container": "#bc4800",
+                        "surface-bright": "#f7f9fb",
+                        "outline": "#737686",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-surface": "#191c1e",
+                        "on-tertiary": "#ffffff",
+                        "inverse-primary": "#b4c5ff",
+                        "surface-variant": "#e0e3e5",
+                        "on-primary-container": "#eeefff",
+                        "surface-container-high": "#e6e8ea",
+                        "primary-fixed": "#dbe1ff",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-primary-fixed": "#00174b",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#191c1e",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-tint": "#0053db",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container": "#eceef0",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "surface-dim": "#d8dadc",
+                        "secondary": "#495c95",
+                        "on-surface-variant": "#434655",
+                        "primary-container": "#2563eb",
+                        "on-tertiary-container": "#ffede6",
+                        "tertiary": "#943700",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#acbfff",
+                        "surface-container-highest": "#e0e3e5",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-secondary-fixed": "#00174b",
+                        "inverse-surface": "#2d3133",
+                        "primary": "#004ac6",
+                        "surface": "#f7f9fb",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#394c84"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        .brand-font {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .dot-pattern {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 0);
+            background-size: 24px 24px;
+            background-position: -19px -19px;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+
+<body class="bg-background dot-pattern min-h-screen flex flex-col">
+    <!-- TopNavBar -->
+    <header class="bg-[#f7f9fb] dark:bg-slate-900 sticky top-0 z-50">
+        <nav class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+            <div class="text-2xl font-bold tracking-tight text-[#191c1e] dark:text-white brand-font uppercase">
+                DLP Advisor</div>
+            <div class="hidden md:flex items-center gap-8">
+                <a class="text-[#434655] dark:text-slate-400 hover:text-[#191c1e] font-medium transition-colors duration-200"
+                    href="#">Features</a>
+                <a class="text-[#434655] dark:text-slate-400 hover:text-[#191c1e] font-medium transition-colors duration-200"
+                    href="#">Support</a>
+                <a class="text-[#434655] dark:text-slate-400 hover:text-[#191c1e] font-medium transition-colors duration-200"
+                    href="{{ url_for('auth.login') }}">Login</a>
+                <a class="bg-primary text-on-primary px-6 py-2 rounded-full font-bold shadow-lg hover:opacity-90 transition-all scale-100 active:scale-95"
+                    href="{{ url_for('auth.register') }}">Register</a>
+            </div>
+            <!-- Mobile Menu Toggle (Simplified for Design) -->
+            <button class="md:hidden text-on-surface">
+                <span class="material-symbols-outlined" data-icon="menu">menu</span>
+            </button>
+        </nav>
+    </header>
+    <main class="flex-grow flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        <!-- Decorative subtle gradient elements per design system -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"></div>
+        <!-- Registration Card -->
+        <div
+            class="relative w-full max-w-2xl bg-surface-container-lowest rounded-xl shadow-[0_40px_100px_-20px_rgba(0,74,198,0.08)] overflow-hidden border border-outline-variant/20">
+            <!-- Decorative circle fading in top-right -->
+            <div
+                class="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16 pointer-events-none">
+            </div>
+            <div class="p-8 md:p-12 relative z-10">
+                <!-- Card Header -->
+                <div class="flex flex-col items-center text-center mb-10">
+                    <div
+                        class="w-14 h-14 bg-primary rounded-lg flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-white text-3xl"
+                            data-icon="corporate_fare">corporate_fare</span>
+                    </div>
+                    <h1 class="text-3xl font-extrabold text-on-surface mb-2">Create Account as Legal</h1>
+                    <p class="text-on-surface-variant text-base">Join the DLP Advisor Platform.</p>
+                </div>
+                <!-- Registration Form -->
+                <form class="space-y-6" method="POST">
+                    <!-- Row 1: 2-Column Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label
+                                class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Full
+                                Name</label>
+                            <input
+                                class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="full_name" name="full_name" placeholder="John Doe" type="text">
+                        </div>
+                        <div class="space-y-2">
+                            <label
+                                class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Email</label>
+                            <input
+                                class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="email" name="email" placeholder="john@example.com" type="email">
+                        </div>
+                    </div>
+                   
+                    <!-- Row 3: 2-Column Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label
+                                class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Law
+                                Firm Name</label>
+                            <input
+                                class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="firm_name" name="firm_name" placeholder="Global Legal Associates" type="text">
+                        </div>
+                        <div class="space-y-2">
+                            <label
+                                class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Bar
+                                Council ID</label>
+                            <input
+                                class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="bar_id" name="bar_id" placeholder="BC-99283-X" type="text">
+                        </div>
+                    </div>
+                    <!-- Row 4: Full Width Password -->
+                    <div class="space-y-2">
+                        <label
+                            class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Password</label>
+                        <div class="relative">
+                            <input
+                                class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="password" name="password" placeholder="••••••••" type="password">
+                            <button
+                                class="absolute right-5 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors"
+                                type="button" id="toggle-password">
+                                <span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+                            </button>
+                        </div>
+                        <p class="text-[10px] font-bold text-outline px-4 tracking-widest uppercase">MINIMUM 8
+                            CHARACTERS
+                            WITH ONE SPECIAL CHARACTER</p>
+                    </div>
+                    <!-- Submit Button -->
+                    <div class="pt-4">
+                        <button
+                            class="w-full py-4 rounded-full bg-gradient-to-b from-primary to-primary-container text-on-primary font-bold text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            type="submit">
+                            Register
+                        </button>
+                    </div>
+                </form>
+                <!-- Bottom Text -->
+                <div class="mt-8 text-center">
+                    <p class="text-on-surface-variant">
+                        Already have an account? <a class="text-primary font-bold hover:underline"
+                            href="{{ url_for('auth.login') }}">Log in here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer class="bg-[#f7f9fb] dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-12 mt-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-8">
+            <div class="flex flex-col items-center md:items-start gap-2">
+                <div class="text-lg font-bold text-[#191c1e] dark:text-white brand-font uppercase">
+                    Dlp advisor</div>
+                <p class="text-sm font-normal text-on-surface-variant max-w-xs text-center md:text-left">
+                    Professional defect management for modern legal and property advisors.
+                </p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-6 md:gap-12">
+                <a class="text-sm text-[#434655] dark:text-slate-500 hover:text-[#004ac6] dark:hover:text-blue-300 transition-colors"
+                    href="#">Privacy Policy</a>
+                <a class="text-sm text-[#434655] dark:text-slate-500 hover:text-[#004ac6] dark:hover:text-blue-300 transition-colors"
+                    href="#">Terms of Service</a>
+                <a class="text-sm text-[#434655] dark:text-slate-500 hover:text-[#004ac6] dark:hover:text-blue-300 transition-colors"
+                    href="#">Cookie Policy</a>
+                <a class="text-sm text-[#434655] dark:text-slate-500 hover:text-[#004ac6] dark:hover:text-blue-300 transition-colors"
+                    href="#">Legal Disclaimer</a>
+            </div>
+            <div class="text-sm text-[#434655] dark:text-slate-500 text-center md:text-right">
+                &copy; 2025 DLP Advisor Defect Management. <br class="hidden md:block"> All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('toggle-password').addEventListener('click', function () {
+            const input = document.getElementById('password');
+            const icon = this.querySelector('.material-symbols-outlined');
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            icon.textContent = isPassword ? 'visibility_off' : 'visibility';
+        });
+    </script>
+</body>
+
+</html>
