@@ -9,5 +9,6 @@ langchain-community
 langchain-groq
 langchain-huggingface
 chromadb
-pypdf
+pypdf[image]
 sentence-transformers
+pygltflib

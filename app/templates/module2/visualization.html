@@ -208,9 +208,20 @@
 <!-- Right Slim Sidebar (Defect List) -->
 <aside class="w-80 bg-slate-50 flex flex-col border-l border-slate-200 shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-20">
 <div class="p-6 pb-2">
-<div class="flex items-center justify-between mb-4">
+<div class="flex items-center justify-between mb-3">
 <h2 class="font-headline font-bold text-lg text-slate-800">Defects</h2>
-<span class="bg-primary/10 text-primary px-2.5 py-1 rounded-md text-xs font-bold">{{ defects|length }} items</span>
+<span class="bg-primary/10 text-primary px-2.5 py-1 rounded-md text-xs font-bold" id="defectCount">{{ defects|length }} items</span>
+</div>
+<!-- Filter Bar -->
+<div class="flex gap-2 mb-2">
+  <input id="filterSearch" type="text" placeholder="Search defects..." oninput="applyFilters()" class="flex-1 text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30">
+  <select id="filterSeverity" onchange="applyFilters()" class="text-xs px-2 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30">
+    <option value="">All</option>
+    <option value="Critical">Critical</option>
+    <option value="High">High</option>
+    <option value="Medium">Medium</option>
+    <option value="Low">Low</option>
+  </select>
 </div>
 </div>
 
@@ -311,7 +322,81 @@
     let currentDefectId = null;
     let engine, scene, camera, wireframeMode = false, xrayMode = false, defectsVisible = true;
     let loadedMeshes = [];
-    let markers = [];
+    let markers = []; // each entry: { mesh, defectId }
+    let maxModelDim = 10;
+    let modelCenterGlobal = null;
+
+    // ── Defect data baked in from the server ────────────────────────────────
+    const ALL_DEFECTS = [
+        {% for defect in defects %}
+        {
+            id: {{ defect.id }},
+            defect_type: {{ defect.defect_type | tojson }},
+            description: {{ defect.description | tojson }},
+            severity: {{ defect.severity | tojson }},
+            status: {{ defect.status | tojson }},
+            x: {{ defect.x | tojson }},
+            y: {{ defect.y | tojson }},
+            z: {{ defect.z | tojson }}
+        },
+        {% endfor %}
+    ];
+    let filteredDefects = ALL_DEFECTS.slice(); // starts as full list
+
+    // ── Filter Logic ────────────────────────────────────────────────────────
+    function applyFilters() {
+        const query    = (document.getElementById('filterSearch').value || '').toLowerCase();
+        const severity = document.getElementById('filterSeverity').value;
+
+        filteredDefects = ALL_DEFECTS.filter(d => {
+            const matchSeverity = !severity || d.severity === severity;
+            const matchQuery    = !query ||
+                (d.defect_type  || '').toLowerCase().includes(query) ||
+                (d.description  || '').toLowerCase().includes(query) ||
+                String(d.id).includes(query);
+            return matchSeverity && matchQuery;
+        });
+
+        // Update HTML list
+        renderDefectList(filteredDefects);
+
+        // Sync 3D markers: show only defects in the filtered set
+        const filteredIds = new Set(filteredDefects.map(d => d.id));
+        markers.forEach(m => {
+            m.mesh.isVisible = defectsVisible && filteredIds.has(m.defectId);
+        });
+
+        // Update count badge
+        document.getElementById('defectCount').textContent = filteredDefects.length + ' items';
+    }
+
+    // ── Render sidebar list dynamically ─────────────────────────────────────
+    function renderDefectList(defects) {
+        const list = document.getElementById('defectList');
+        if (!defects.length) {
+            list.innerHTML = `
+                <div class="text-center py-8">
+                    <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">search_off</span>
+                    <p class="text-slate-500 text-sm">No defects match the filter.</p>
+                </div>`;
+            return;
+        }
+        const sevClass = { Critical: 'border-l-red-500', High: 'border-l-orange-500', Medium: 'border-l-blue-500', Low: 'border-l-green-500' };
+        const badgeClass = { Critical: 'bg-red-50 text-red-700', High: 'bg-orange-50 text-orange-700', Medium: 'bg-blue-50 text-blue-700', Low: 'bg-green-50 text-green-700' };
+        list.innerHTML = defects.map(d => `
+            <div class="bg-white p-4 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-all group border border-slate-200 border-l-4 ${sevClass[d.severity] || 'border-l-slate-300'}" onclick="openDefectModal(${d.id})">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-[10px] font-mono font-bold text-slate-500">#DFT-${d.id}</span>
+                    <span class="px-2 py-0.5 rounded-full ${badgeClass[d.severity] || ''} text-[10px] font-bold">${(d.severity || '').toUpperCase()}</span>
+                </div>
+                <h3 class="text-sm font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors">${d.defect_type || 'Unknown'}</h3>
+                <p class="text-xs text-slate-500 line-clamp-1 mb-3">${d.description || 'No detail provided.'}</p>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
+                    <span class="text-[10px] font-medium text-slate-400">${d.status || 'Reported'}</span>
+                </div>
+            </div>`).join('');
+    }
 
     // Modal Operations
     function openDefectModal(id) {
@@ -348,12 +433,18 @@
                 modal.classList.add('pointer-events-auto', 'opacity-100');
                 content.classList.remove('scale-95');
                 content.classList.add('scale-100');
-                
-                // Focus Camera
-                if (data.x && camera) {
-                    const targetPosition = new BABYLON.Vector3(data.x, data.y, data.z);
-                    BABYLON.Animation.CreateAndStartAnimation('camMove', camera, 'target', 60, 40, camera.target, targetPosition, 2, new BABYLON.CubicEase());
-                    BABYLON.Animation.CreateAndStartAnimation('camZoom', camera, 'radius', 60, 40, camera.radius, 5, 2, new BABYLON.CubicEase());
+                // Focus Camera using the actual 3D marker's absolute world position
+                if (camera) {
+                    const markerMesh = scene.getMeshByName("marker-" + id);
+                    if (markerMesh) {
+                        const targetPosition = markerMesh.getAbsolutePosition();
+                        const offsetMulti = maxModelDim > 0 ? maxModelDim * 0.15 : 2;
+                        const newPos = targetPosition.clone().add(new BABYLON.Vector3(offsetMulti, offsetMulti, -offsetMulti));
+                        
+                        BABYLON.Animation.CreateAndStartAnimation('camMove', camera, 'position', 60, 40, camera.position, newPos, 2, new BABYLON.CubicEase());
+                        // Snap the camera to look at the exact defect after it moves near it
+                        setTimeout(() => camera.setTarget(targetPosition), 650);
+                    }
                 }
             })
             .catch(err => alert("Failed to fetch defect data."));
@@ -392,18 +483,19 @@
 
     // View Controls
     function resetCamera() {
-        camera.alpha = -Math.PI / 2;
-        camera.beta = Math.PI / 2.5;
-        camera.radius = 25;
-        camera.target = BABYLON.Vector3.Zero();
+        if (!modelCenterGlobal) return;
+        camera.position = new BABYLON.Vector3(modelCenterGlobal.x, modelCenterGlobal.y + maxModelDim, modelCenterGlobal.z - maxModelDim * 1.5);
+        camera.setTarget(modelCenterGlobal);
     }
     function setTopView() {
-        camera.alpha = Math.PI / 2;
-        camera.beta = 0.01;
+        if (!modelCenterGlobal) return;
+        camera.position = new BABYLON.Vector3(modelCenterGlobal.x, modelCenterGlobal.y + maxModelDim * 2, modelCenterGlobal.z);
+        camera.setTarget(modelCenterGlobal);
     }
     function setSideView() {
-        camera.alpha = 0;
-        camera.beta = Math.PI / 2;
+        if (!modelCenterGlobal) return;
+        camera.position = new BABYLON.Vector3(modelCenterGlobal.x + maxModelDim * 1.5, modelCenterGlobal.y, modelCenterGlobal.z);
+        camera.setTarget(modelCenterGlobal);
     }
 
     function toggleWireframe() {
@@ -431,7 +523,11 @@
 
     function toggleDefects() {
         defectsVisible = !defectsVisible;
-        markers.forEach(m => m.isVisible = defectsVisible);
+        // Only show markers that are currently in the filtered set
+        const filteredIds = new Set(filteredDefects.map(d => d.id));
+        markers.forEach(m => {
+            m.mesh.isVisible = defectsVisible && filteredIds.has(m.defectId);
+        });
         const iconContainer = document.getElementById('toggleDefectsBtn');
         if(defectsVisible) {
             iconContainer.querySelector('.material-symbols-outlined').classList.add('text-primary');
@@ -449,9 +545,20 @@
         scene = new BABYLON.Scene(engine);
         scene.clearColor = BABYLON.Color4.FromHexString("#f1f5f9ff");
 
-        camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 3, 20, BABYLON.Vector3.Zero(), scene);
+        // UniversalCamera allows WASD free-roam
+        camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 10, -20), scene);
+        camera.setTarget(BABYLON.Vector3.Zero());
         camera.attachControl(canvas, true);
-        camera.wheelPrecision = 40;
+        
+        // Add WASD/QE controls
+        camera.keysUp.push(87);    // W
+        camera.keysDown.push(83);  // S
+        camera.keysLeft.push(65);  // A
+        camera.keysRight.push(68); // D
+        camera.keysUpward.push(69); // E
+        camera.keysDownward.push(81); // Q
+        
+        camera.speed = 1.0; 
         camera.minZ = 0.1;
 
         const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
@@ -462,49 +569,149 @@
         // Model Loading
         const modelUrl = "{{ model_url }}";
         if (modelUrl && modelUrl !== 'None') {
-            BABYLON.SceneLoader.Append("", modelUrl, scene, function (scene) {
+            BABYLON.SceneLoader.Append("", modelUrl, scene, function (loadedScene) {
                 document.getElementById('loadingOverlay').classList.add('opacity-0');
                 setTimeout(() => document.getElementById('loadingOverlay').classList.add('hidden'), 300);
 
-                scene.meshes.forEach(mesh => {
-                    loadedMeshes.push(mesh);
+                loadedScene.meshes.forEach(mesh => { loadedMeshes.push(mesh); });
+
+                // ── Compute world-space bounding box of ALL meshes ───────────────
+                // We need this to calculate the same scale/offset the model lives at
+                // so defect markers can be placed in the same coordinate space.
+                loadedScene.meshes[0] && loadedScene.meshes[0].computeWorldMatrix(true);
+                let globalMin = null;
+                let globalMax = null;
+                loadedScene.meshes.forEach(mesh => {
+                    if (mesh.name.startsWith('marker')) return;
+                    mesh.computeWorldMatrix(true);
+                    const bi = mesh.getBoundingInfo();
+                    if (!bi) return;
+                    const wMin = bi.boundingBox.minimumWorld;
+                    const wMax = bi.boundingBox.maximumWorld;
+                    if (!globalMin) {
+                        globalMin = wMin.clone();
+                        globalMax = wMax.clone();
+                    } else {
+                        globalMin = BABYLON.Vector3.Minimize(globalMin, wMin);
+                        globalMax = BABYLON.Vector3.Maximize(globalMax, wMax);
+                    }
                 });
 
-                // Auto-center camera framing
-                if (scene.meshes.length > 0) {
-                    scene.activeCamera.alpha += Math.PI;
-                    scene.meshes[0].normalizeToUnitCube();
-                }
+                // Extent and center of the model in world space
+                modelCenterGlobal = globalMin && globalMax ? globalMin.add(globalMax).scale(0.5) : BABYLON.Vector3.Zero();
+                const modelExtent  = globalMin && globalMax ? globalMax.subtract(globalMin) : new BABYLON.Vector3(1, 1, 1);
+                maxModelDim        = Math.max(modelExtent.x, modelExtent.y, modelExtent.z);
 
-                // Plot Defect Markers
-                {% for defect in defects %}
-                if ({{ defect.x | tojson }} !== null) {
-                    var marker = BABYLON.MeshBuilder.CreateSphere("marker-{{ defect.id }}", {diameter: 0.3, segments: 16}, scene);
-                    marker.position = new BABYLON.Vector3({{ defect.x | tojson }}, {{ defect.y | tojson }}, {{ defect.z | tojson }});
-                    
-                    var mat = new BABYLON.StandardMaterial("mat-{{ defect.id }}", scene);
-                    
-                    {% if defect.severity == 'Critical' %}
-                        mat.diffuseColor = new BABYLON.Color3(0.9, 0.1, 0.1); 
-                        mat.emissiveColor = new BABYLON.Color3(0.5, 0, 0);
-                    {% elif defect.severity == 'High' %}
-                        mat.diffuseColor = new BABYLON.Color3(0.9, 0.5, 0.1);
-                    {% else %}
-                        mat.diffuseColor = new BABYLON.Color3(0.2, 0.5, 0.9);
-                    {% endif %}
-                    
-                    marker.material = mat;
-                    markers.push(marker);
-                    
-                    marker.actionManager = new BABYLON.ActionManager(scene);
-                    marker.actionManager.registerAction(
-                        new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, function () {
-                            openDefectModal({{ defect.id }});
-                        })
+                // Auto-frame camera on the model and tune speed based on model size
+                resetCamera();
+                camera.speed = maxModelDim * 0.015; // Set WASD walking speed proportional to the house
+
+                // ── Plot Defect Markers ──────────────────────────────────────────
+                const rawDefects = [
+                    {% for defect in defects %}
+                    { 
+                        id: {{ defect.id }}, 
+                        x: {{ defect.x | tojson }}, 
+                        y: {{ defect.y | tojson }}, 
+                        z: {{ defect.z | tojson }}, 
+                        description: {{ defect.description | tojson }},
+                        element: {{ defect.element | tojson }},
+                        severity: {{ defect.severity | tojson }} 
+                    },
+                    {% endfor %}
+                ];
+
+                // Native Mesh Extraction: 
+                // Scan the imported GLB for 'Snapshot' proxy nodes to inherit native rotations
+                const snapshotMeshes = [];
+                loadedScene.meshes.forEach(mesh => {
+                    if (mesh.name === '__root__') return;
+                    if (mesh.name && mesh.name.toLowerCase().includes('snapshot')) {
+                        mesh.computeWorldMatrix(true);
+                        snapshotMeshes.push({
+                            mesh: mesh,
+                            name: mesh.name,
+                            position: mesh.absolutePosition.clone()
+                        });
+                        mesh.isVisible = false; // Hide the raw proxy node
+                    }
+                });
+
+                const markerSize = maxModelDim * 0.025;
+
+                rawDefects.forEach(function(d, index) {
+                    // Safety check
+                    if (d.id === undefined) return;
+
+                    let finalPosition = null;
+
+                    // Locate native snapshot node explicitly or implicitly
+                    if (snapshotMeshes.length > 0) {
+                        let snap = snapshotMeshes.find(s => 
+                            s.name === d.element || 
+                            s.name === d.description || 
+                            (d.description && s.name.includes(d.description))
+                        );
+                        // Fallback proxy-node sequential matching
+                        if (!snap && index < snapshotMeshes.length) snap = snapshotMeshes[index];
+                        if (snap) finalPosition = snap.position; 
+                    }
+
+                    // Raw Database Fallback:
+                    // If no proxy node exists, render using raw IFC (Z-UP) coordinates via LHS transposition
+                    if (!finalPosition) {
+                        if (d.x === null || d.x === undefined) return;
+                        const scaleFactor = 1; 
+                        finalPosition = new BABYLON.Vector3(d.x * scaleFactor, d.z * scaleFactor, d.y * scaleFactor);
+                    }
+
+                    const mesh = BABYLON.MeshBuilder.CreateSphere(
+                        "marker-" + d.id,
+                        { diameter: markerSize, segments: 16 },
+                        loadedScene
                     );
-                }
-                {% endfor %}
-            }, null, function(scene, message) {
+                    
+                    mesh.position = finalPosition;
+
+                    // explicit ID Binding
+                    mesh.metadata = { defectId: d.id };
+
+                    // Color-Coded Hotspots based on Priority/Status
+                    const mat = new BABYLON.StandardMaterial("mat-" + d.id, loadedScene);
+                    const severity = (d.severity || '').toLowerCase();
+                    
+                    if (severity.includes('critical') || severity.includes('high') || severity.includes('urgent')) {
+                        // High/Critical/Urgent -> Render as Red/Error color
+                        mat.diffuseColor  = new BABYLON.Color3(0.9, 0.1, 0.1); 
+                        mat.emissiveColor = new BABYLON.Color3(0.5, 0, 0);
+                    } else if (severity.includes('medium')) {
+                        // Medium -> Render as Yellow/Warning color
+                        mat.diffuseColor = new BABYLON.Color3(0.95, 0.75, 0.1); 
+                        mat.emissiveColor = mat.diffuseColor.scale(0.35);
+                    } else {
+                        // Low/Stable/Resolved -> Render as Blue/Primary color
+                        mat.diffuseColor = new BABYLON.Color3(0.15, 0.45, 0.95); 
+                        mat.emissiveColor = mat.diffuseColor.scale(0.35);
+                    }
+                    mesh.material = mat;
+
+                    // Store for UI filtering
+                    markers.push({ mesh, defectId: d.id });
+
+                    // Click handler tied dynamically to the explicitly bound metadata ID
+                    mesh.actionManager = new BABYLON.ActionManager(loadedScene);
+                    mesh.actionManager.registerAction(
+                        new BABYLON.ExecuteCodeAction(
+                            BABYLON.ActionManager.OnPickTrigger,
+                            function (evt) { 
+                                const boundId = evt.meshUnderPointer.metadata.defectId;
+                                openDefectModal(boundId); 
+                            }
+                        )
+                    );
+                });
+
+            }, null, function(loadedScene, message) {
                 document.getElementById('loadingOverlay').innerHTML = `<p class="text-error font-bold">Failed to load mesh.</p>`;
             });
         } else {

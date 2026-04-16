@@ -27,6 +27,7 @@ def extract_pdf_images(pdf_path: str, output_dir: str) -> List[Dict[str, Any]]:
     counter = 0
 
     for page_number, page in enumerate(reader.pages, start=1):
+        page_text = page.extract_text() or ""
         images = getattr(page, "images", []) or []
         for image_index, image in enumerate(images, start=1):
             counter += 1
@@ -45,6 +46,7 @@ def extract_pdf_images(pdf_path: str, output_dir: str) -> List[Dict[str, Any]]:
                     "id": f"img_{counter}",
                     "file": filename,
                     "page": page_number,
+                    "page_text": page_text,
                     "width": getattr(image, "width", None),
                     "height": getattr(image, "height", None),
                 }

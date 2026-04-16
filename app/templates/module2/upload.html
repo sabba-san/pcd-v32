@@ -252,13 +252,18 @@ h1, h2, h3, .brand-font { font-family: 'Manrope', sans-serif; }
           <div class="flex flex-col h-full">
             <label class="block text-sm font-semibold text-on-surface mb-3">
               PDF Defect Report <span class="text-on-surface-variant font-normal">(Optional)</span>
+              <!-- Status badge: shown after user picks a file -->
+              <span id="pdf-badge" class="hidden ml-2 inline-flex items-center gap-1 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full align-middle">
+                <span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1">check_circle</span>
+                <span id="pdf-badge-name">PDF ready</span>
+              </span>
             </label>
-            <label for="pdf_report" class="cursor-pointer flex-grow group relative border-2 border-dashed border-surface-container-highest rounded-2xl bg-surface-container-low hover:bg-surface-container-lowest hover:border-primary transition-all p-8 flex flex-col items-center justify-center text-center">
-              <div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <label for="pdf_report" id="pdf-label" class="cursor-pointer flex-grow group relative border-2 border-dashed border-surface-container-highest rounded-2xl bg-surface-container-low hover:bg-surface-container-lowest hover:border-primary transition-all p-8 flex flex-col items-center justify-center text-center">
+              <div id="pdf-icon-wrap" class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <span class="material-symbols-outlined text-on-surface-variant text-3xl">picture_as_pdf</span>
               </div>
-              <p class="text-sm font-medium text-on-surface mb-1">Upload Inspection PDF</p>
-              <p class="text-xs text-on-surface-variant">Max file size 25MB</p>
+              <p id="pdf-label-primary" class="text-sm font-medium text-on-surface mb-1">Upload Inspection PDF</p>
+              <p id="pdf-label-sub" class="text-xs text-on-surface-variant">Max file size 25MB</p>
               <input id="pdf_report" name="pdf_report" accept=".pdf" class="absolute inset-0 opacity-0 cursor-pointer" type="file">
             </label>
           </div>
@@ -310,6 +315,47 @@ h1, h2, h3, .brand-font { font-family: 'Manrope', sans-serif; }
           modelViewer.src = url;
           placeholder.classList.add('hidden');
           modelViewer.classList.remove('hidden');
+        }
+      });
+    }
+
+    // PDF file selection indicator
+    const pdfInput   = document.getElementById('pdf_report');
+    const pdfBadge   = document.getElementById('pdf-badge');
+    const pdfBadgeName = document.getElementById('pdf-badge-name');
+    const pdfLabel   = document.getElementById('pdf-label');
+    const pdfIconWrap= document.getElementById('pdf-icon-wrap');
+    const pdfPrimary = document.getElementById('pdf-label-primary');
+    const pdfSub     = document.getElementById('pdf-label-sub');
+
+    if (pdfInput) {
+      pdfInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          // Show badge with filename
+          const shortName = file.name.length > 28 ? file.name.substring(0, 25) + '...' : file.name;
+          pdfBadgeName.textContent = shortName;
+          pdfBadge.classList.remove('hidden');
+          // Update drop-zone appearance to confirmed state
+          pdfLabel.classList.remove('border-surface-container-highest');
+          pdfLabel.classList.add('border-green-400', 'bg-green-50');
+          pdfIconWrap.classList.remove('bg-surface-container-highest');
+          pdfIconWrap.classList.add('bg-green-100');
+          pdfIconWrap.innerHTML = '<span class="material-symbols-outlined text-green-600 text-3xl" style="font-variation-settings:\'FILL\' 1">task</span>';
+          pdfPrimary.textContent = 'PDF selected & ready';
+          pdfPrimary.classList.add('text-green-700');
+          pdfSub.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+        } else {
+          // Reset
+          pdfBadge.classList.add('hidden');
+          pdfLabel.classList.add('border-surface-container-highest');
+          pdfLabel.classList.remove('border-green-400', 'bg-green-50');
+          pdfIconWrap.classList.add('bg-surface-container-highest');
+          pdfIconWrap.classList.remove('bg-green-100');
+          pdfIconWrap.innerHTML = '<span class="material-symbols-outlined text-on-surface-variant text-3xl">picture_as_pdf</span>';
+          pdfPrimary.textContent = 'Upload Inspection PDF';
+          pdfPrimary.classList.remove('text-green-700');
+          pdfSub.textContent = 'Max file size 25MB';
         }
       });
     }
