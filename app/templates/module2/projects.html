@@ -1,695 +1,285 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html class="light" lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>LDMS — Projects</title>
-  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "secondary-dim": "#44546a",
+            "surface-container-highest": "#d9e4ea",
+            "surface-dim": "#cfdce3",
+            "on-surface": "#2a3439",
+            "error-container": "#fe8983",
+            "primary-fixed": "#dbe1ff",
+            "primary-dim": "#0048c1",
+            "surface-container-low": "#f0f4f7",
+            "tertiary-fixed-dim": "#cecfef",
+            "inverse-on-surface": "#9a9d9f",
+            "on-error-container": "#752121",
+            "primary-fixed-dim": "#c7d3ff",
+            "tertiary-container": "#ddddfe",
+            "on-secondary-container": "#435368",
+            "primary-container": "#dbe1ff",
+            "surface-tint": "#0053db",
+            "on-secondary-fixed-variant": "#4d5d73",
+            "on-tertiary-container": "#4c4e69",
+            "background": "#f7f9fb",
+            "surface-variant": "#d9e4ea",
+            "outline": "#717c82",
+            "surface-container-lowest": "#ffffff",
+            "error": "#9f403d",
+            "primary": "#0053db",
+            "surface-bright": "#f7f9fb",
+            "on-secondary-fixed": "#314055",
+            "tertiary": "#5b5d78",
+            "secondary-fixed": "#d3e4fe",
+            "on-primary-container": "#0048bf",
+            "on-primary": "#f8f7ff",
+            "inverse-primary": "#618bff",
+            "on-tertiary": "#fbf8ff",
+            "on-error": "#fff7f6",
+            "on-secondary": "#f7f9ff",
+            "secondary-container": "#d3e4fe",
+            "surface-container-high": "#e1e9ee",
+            "surface-container": "#e8eff3",
+            "outline-variant": "#a9b4b9",
+            "on-primary-fixed": "#003798",
+            "inverse-surface": "#0b0f10",
+            "error-dim": "#4e0309",
+            "on-surface-variant": "#566166",
+            "on-tertiary-fixed": "#3a3c55",
+            "on-primary-fixed-variant": "#0050d4",
+            "tertiary-fixed": "#ddddfe",
+            "surface": "#f7f9fb",
+            "secondary-fixed-dim": "#c5d6f0",
+            "tertiary-dim": "#4f516c",
+            "secondary": "#506076",
+            "on-background": "#2a3439",
+            "on-tertiary-fixed-variant": "#565873"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            "headline": ["Manrope"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
-    :root {
-      --bg: #0b1020;
-      --panel: rgba(255, 255, 255, 0.05);
-      --ink: #e2e8f0;
-      --muted: #94a3b8;
-      --edge: rgba(255, 255, 255, 0.08);
-      --accent: #7c3aed;
-      --accent-2: #22d3ee;
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
-
-    body.light-mode {
-      --bg: #f5f5f5;
-      --panel: rgba(0, 0, 0, 0.04);
-      --ink: #0f172a;
-      --muted: #475569;
-      --edge: rgba(0, 0, 0, 0.1);
-      --accent: #7c3aed;
-      --accent-2: #0ea5e9;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      padding: 1.5rem 1rem 3rem;
-      font-family: 'Space Grotesk', 'Manrope', system-ui, -apple-system, sans-serif;
-      background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15), transparent 35%),
-        radial-gradient(circle at 80% 0%, rgba(34, 211, 238, 0.12), transparent 30%),
-        linear-gradient(135deg, #0b1020 0%, #0f172a 45%, #0a101d 100%);
-      color: var(--ink);
-      min-height: 100vh;
-    }
-
-    body.light-mode {
-      background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), transparent 35%),
-        radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.08), transparent 30%),
-        linear-gradient(135deg, #f8fafc 0%, #e2e8f0 45%, #f5f5f5 100%);
-    }
-
-    .bento-grid {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1rem;
-      align-items: start;
-    }
-
-    .bento-card {
-      position: relative;
-      padding: 1.25rem 1.35rem;
-      border-radius: 18px;
-      background: linear-gradient(150deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
-      border: 1px solid var(--edge);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
-      overflow: hidden;
-    }
-
-    .bento-card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(120% 120% at 100% 0%, rgba(59, 130, 246, 0.12), transparent 60%);
-      pointer-events: none;
-    }
-
-    body.light-mode .bento-card {
-      background: linear-gradient(150deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
-      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
-    }
-
-    body.light-mode .bento-card::after {
-      background: radial-gradient(120% 120% at 100% 0%, rgba(59, 130, 246, 0.08), transparent 60%);
-    }
-
-    .span-2 {
-      grid-column: span 2;
-    }
-
-    @media (max-width: 960px) {
-      .span-2 {
-        grid-column: span 1;
-      }
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 2rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--ink);
-    }
-
-    h1 i {
-      color: var(--accent-2);
-    }
-
-    .subtitle {
-      margin: 0.35rem 0 1rem;
-      color: var(--muted);
-      max-width: 780px;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0.35rem 0.75rem;
-      border-radius: 999px;
-      background: rgba(59, 130, 246, 0.14);
-      color: #c4b5fd;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      font-size: 0.8rem;
-    }
-
-    body.light-mode .eyebrow {
-      color: #2563eb;
-    }
-
-    .theme-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0.45rem 0.9rem;
-      border-radius: 999px;
-      border: 1px solid var(--edge);
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--ink);
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .theme-toggle:hover {
-      transform: translateY(-1px);
-      border-color: rgba(59, 130, 246, 0.45);
-      box-shadow: 0 10px 18px rgba(0, 0, 0, 0.25);
-    }
-
-    body.light-mode .theme-toggle {
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
-    }
-
-    .action-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      align-items: flex-end;
-    }
-
-    .search-box {
-      position: relative;
-      width: 100%;
-      flex: 1 1 260px;
-    }
-
-    .search-box input {
-      width: 100%;
-      padding: 0.75rem 0.9rem 0.75rem 2.75rem;
-      border-radius: 12px;
-      border: 1px solid var(--edge);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--ink);
-      font-size: 0.95rem;
-    }
-
-    body.light-mode .search-box input {
-      background: rgba(255, 255, 255, 0.85);
-    }
-
-    .search-box i {
-      position: absolute;
-      left: 0.95rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted);
-    }
-
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-      flex: 0 0 200px;
-    }
-
-    .filter-label {
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      color: var(--muted);
-      text-transform: uppercase;
-    }
-
-    .filter-select {
-      width: 100%;
-      padding: 0.7rem 0.75rem;
-      border-radius: 12px;
-      border: 1px solid var(--edge);
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--ink);
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    body.light-mode .filter-select {
-      background: rgba(255, 255, 255, 0.92);
-      color: #0f172a;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
-    }
-
-    .btn {
-      padding: 0.6rem 1.05rem;
-      border-radius: 10px;
-      border: 1px solid rgba(99, 102, 241, 0.35);
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 700;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
-      color: #fff;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
-    }
-
-    .chip-row {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      padding: 0.5rem 0.75rem;
-      border-radius: 12px;
-      border: 1px solid var(--edge);
-      background: rgba(255, 255, 255, 0.05);
-      font-weight: 700;
-      color: var(--ink);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .chip i {
-      color: var(--accent-2);
-    }
-
-    .projects-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1rem;
-    }
-
-    .project-card {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
-      border: 1px solid var(--edge);
-      border-radius: 14px;
-      padding: 1.1rem;
-      cursor: pointer;
-      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-    }
-
-    .project-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(59, 130, 246, 0.4);
-      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.35);
-    }
-
-    body.light-mode .project-card {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
-    }
-
-    .project-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-      margin-bottom: 0.9rem;
-    }
-
-    .project-title {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--ink);
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .project-title i {
-      color: var(--accent);
-    }
-
-    .project-id {
-      font-size: 0.78rem;
-      color: var(--ink);
-      background: rgba(255, 255, 255, 0.06);
-      padding: 0.3rem 0.6rem;
-      border-radius: 8px;
-      border: 1px solid var(--edge);
-    }
-
-    body.light-mode .project-id {
-      background: rgba(0, 0, 0, 0.05);
-    }
-
-    .project-meta {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.65rem;
-      margin-bottom: 0.85rem;
-    }
-
-    .meta-item {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-    }
-
-    .meta-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-
-    .meta-value {
-      font-size: 0.9rem;
-      color: var(--ink);
-      font-weight: 600;
-    }
-
-    .project-stats {
-      display: flex;
-      gap: 1rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid var(--edge);
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .stat {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .stat i {
-      color: var(--accent-2);
-    }
-
-    .stat-value {
-      font-weight: 700;
-      color: var(--ink);
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 3.5rem 2rem;
-      color: var(--muted);
-      border: 1px dashed var(--edge);
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 14px;
-    }
-
-    .empty-state i {
-      font-size: 3rem;
-      color: rgba(255, 255, 255, 0.35);
-      margin-bottom: 1rem;
-    }
-
-    body.light-mode .empty-state i {
-      color: rgba(0, 0, 0, 0.3);
-    }
-
-    .empty-state h3 {
-      font-size: 1.2rem;
-      color: var(--ink);
-      margin-bottom: 0.5rem;
-    }
-
-    .empty-state p {
-      margin-bottom: 1.5rem;
-    }
-
-    /* Loading overlay */
-    #ldms-loader {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      background: rgba(11, 16, 32, 0.8);
-      backdrop-filter: blur(4px);
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    #ldms-loader.active {
-      display: flex;
-    }
-
-    .loader-spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid rgba(255, 255, 255, 0.1);
-      border-top-color: #3b82f6;
-      border-radius: 50%;
-      animation: ldms-spin 0.8s linear infinite;
-    }
-
-    .loader-text {
-      color: #94a3b8;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    @keyframes ldms-spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-  
-        body.light-mode h1, body.light-mode h2, body.light-mode h3, 
-        body.light-mode h4, body.light-mode h5, body.light-mode h6,
-        body.light-mode .defect-title, body.light-mode .info-value, 
-        body.light-mode .count, body.light-mode label, body.light-mode .field-value {
-            color: #0f172a !important;
-        }
-        body.light-mode input, body.light-mode select, body.light-mode textarea,
-        body.light-mode .coordinates, body.light-mode .defect-id {
-            color: #0f172a !important;
-            border-color: rgba(0,0,0,0.15) !important;
-        }
-        body.light-mode .form-group label {
-            color: #475569 !important;
-        }
-
-
-        body.light-mode #ldms-loader {
-            background: rgba(248, 250, 252, 0.85);
-        }
-        body.light-mode .loader-spinner {
-            border-color: rgba(0, 0, 0, 0.1);
-            border-top-color: #3b82f6;
-        }
-        body.light-mode .loader-text {
-            color: #334155;
-        }
-    </style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    .ghost-border { outline: 1px solid rgba(169, 180, 185, 0.15); }
+  </style>
 </head>
 
-<body>
-  <div id="ldms-loader">
-    <div class="loader-spinner"></div>
-    <span class="loader-text"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-  </div>
-  {% set total_projects = projects|length %}
-  {% set total_defects = projects|sum(attribute='defect_count') %}
-  <main class="bento-grid">
-    <section class="bento-card span-2">
-      <div
-        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; gap: 0.75rem; flex-wrap: wrap;">
-        <span class="eyebrow"><i class="fas fa-bolt"></i> Portfolio</span>
-        <div class="chip-row">
-          <span class="chip"><i class="fas fa-folder-open"></i> {{ total_projects }} projects</span>
-          <span class="chip"><i class="fas fa-exclamation-triangle"></i> {{ total_defects }} defects</span>
+<body class="bg-background text-on-surface">
+
+  {% set dashboard_url = url_for('auth.homeowner_dashboard') %}
+  {% if current_user.user_type == 'developer' %}
+    {% set dashboard_url = url_for('auth.developer_dashboard') %}
+  {% elif current_user.user_type == 'lawyer' %}
+    {% set dashboard_url = url_for('auth.lawyer_dashboard') %}
+  {% endif %}
+
+  <!-- SideNavBar Anchor -->
+  <aside class="fixed left-0 top-0 h-full flex flex-col p-4 gap-2 bg-slate-100 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 w-64 z-50">
+    <div class="flex items-center gap-3 mb-8 px-2">
+      <div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+        <span class="material-symbols-outlined">folder_managed</span>
+      </div>
+      <div>
+        <div class="font-manrope font-bold text-slate-900 dark:text-slate-50 text-base leading-tight">DLP ADVISOR</div>
+        <div class="text-[10px] text-on-surface-variant tracking-wider uppercase">Defect Management</div>
+      </div>
+    </div>
+    
+    <nav class="flex-1 flex flex-col gap-1">
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 hover:translate-x-1" href="{{ dashboard_url }}">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="font-inter text-sm">Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 font-bold rounded-lg shadow-sm transition-all duration-200" href="{{ url_for('module2.list_projects') }}">
+        <span class="material-symbols-outlined">folder_open</span>
+        <span class="font-inter text-sm">Projects</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 hover:translate-x-1" href="{{ url_for('module2.list_projects') }}">
+        <span class="material-symbols-outlined">view_in_ar</span>
+        <span class="font-inter text-sm">3D Visualizer</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 hover:translate-x-1" href="{{ url_for('module2.upload_scan') }}">
+        <span class="material-symbols-outlined">upload_file</span>
+        <span class="font-inter text-sm">Upload glb model</span>
+      </a>
+    </nav>
+    
+    <div class="mt-auto flex flex-col gap-1 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200" href="#">
+        <span class="material-symbols-outlined">help</span>
+        <span class="font-inter text-sm">Help</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200" href="{{ url_for('auth.logout') }}">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-inter text-sm">Sign Out</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content Canvas -->
+  <main class="ml-64 min-h-screen p-8 lg:p-12">
+    <!-- Header Section -->
+    <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <div>
+        <h1 class="text-4xl font-extrabold tracking-tight text-on-surface mb-2">Projects</h1>
+        <p class="text-on-surface-variant max-w-md">Manage and monitor defect scans across your active infrastructure portfolio.</p>
+      </div>
+      <a href="{{ url_for('module2.upload_scan') }}" class="bg-gradient-to-r from-primary to-primary-dim text-on-primary px-6 py-3 rounded-lg font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+        <span class="material-symbols-outlined">add_circle</span>
+        New Project
+      </a>
+    </header>
+
+    <!-- Toolbar: Search & Filters -->
+    <section class="flex flex-wrap items-center gap-4 mb-10">
+      <div class="flex-1 min-w-[300px] relative group">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+        <input class="w-full pl-12 pr-4 py-3 rounded-xl bg-surface-container-low border-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all text-sm" placeholder="Search projects by name, ID or address..." type="text">
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 bg-surface-container-low px-4 py-3 rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+          <span class="material-symbols-outlined text-on-surface-variant text-xl">calendar_today</span>
+          <span class="text-sm font-medium">Last 30 Days</span>
+          <span class="material-symbols-outlined text-outline text-lg">expand_more</span>
         </div>
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <button id="themeToggle" class="theme-toggle" type="button">
-            <i class="fas fa-moon"></i>
-            <span>Dark</span>
-          </button>
-          <a href="{{ url_for('auth.logout') }}" class="theme-toggle"
-            style="text-decoration: none; background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #fca5a5;">
-            <i class="fas fa-user"></i>
-            <span>{{ current_user.username }}</span>
-            <i class="fas fa-sign-out-alt"></i>
+        <div class="flex items-center gap-2 bg-surface-container-low px-4 py-3 rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+          <span class="material-symbols-outlined text-on-surface-variant text-xl">sort</span>
+          <span class="text-sm font-medium">Sort by Date</span>
+          <span class="material-symbols-outlined text-outline text-lg">expand_more</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+      {% if projects %}
+        {% for project in projects %}
+          {% set accent_color = 'bg-slate-300' %}
+          {% set status_text = 'Completed' %}
+          {% set status_class = 'bg-surface-container-low text-on-surface-variant' %}
+
+          {% if project.defect_count > 100 %}
+            {% set accent_color = 'bg-error' %}
+            {% set status_text = 'Urgent' %}
+            {% set status_class = 'bg-error/10 text-error' %}
+          {% elif project.defect_count > 0 %}
+            {% set accent_color = 'bg-primary' %}
+            {% set status_text = 'Active' %}
+            {% set status_class = 'bg-secondary-container text-on-secondary-container' %}
+          {% endif %}
+
+          <a href="{{ url_for('module2.visualize_scan', scan_id=project.id) }}" class="group bg-surface-container-lowest p-6 rounded-xl ghost-border hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 relative overflow-hidden block">
+            <div class="absolute left-0 top-0 bottom-0 w-1 {{ accent_color }}"></div>
+            
+            <div class="flex justify-between items-start mb-6">
+              <div class="flex flex-col">
+                <span class="text-[10px] font-bold text-primary tracking-widest uppercase mb-1">ID: PRJ-{{ project.id }}</span>
+                <h3 class="text-xl font-bold text-on-surface group-hover:text-primary transition-colors">{{ project.name }}</h3>
+              </div>
+              <span class="{{ status_class }} px-3 py-1 rounded-full text-xs font-bold">{{ status_text }}</span>
+            </div>
+
+            <div class="space-y-4 mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center">
+                  <span class="material-symbols-outlined text-on-surface-variant text-lg">location_on</span>
+                </div>
+                <div class="text-sm text-on-surface">
+                  {% if project.metadata.address %}
+                    {{ project.metadata.address }}
+                  {% elif project.metadata.unit_no %}
+                    Unit: {{ project.metadata.unit_no }}
+                  {% else %}
+                    Location not specified
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center">
+                  <span class="material-symbols-outlined text-on-surface-variant text-lg">event</span>
+                </div>
+                <div class="text-sm text-on-surface">
+                  Last Scanned: 
+                  {% if project.metadata.scan_date %}
+                    {{ project.metadata.scan_date }}
+                  {% else %}
+                    {{ project.created_at.strftime('%Y-%m-%d') if project.created_at else 'Unknown' }}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-6 border-t border-surface-container-low">
+              <div class="flex flex-col">
+                <span class="text-xs text-on-surface-variant font-medium">Total Defects</span>
+                <span class="text-2xl font-extrabold {% if project.defect_count > 0 %}text-error{% else %}text-on-surface{% endif %}">
+                  {{ project.defect_count }}
+                </span>
+              </div>
+
+              {% if project.defect_count == 0 %}
+                <div class="text-green-600 flex items-center gap-1 font-bold text-sm">
+                  <span class="material-symbols-outlined">verified</span> Resolved
+                </div>
+              {% else %}
+                <button class="text-primary font-bold text-sm flex items-center gap-1 hover:gap-2 transition-all">
+                  View Details <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+              {% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      {% else %}
+        <div class="col-span-full bg-surface-container-lowest p-12 rounded-xl ghost-border text-center flex flex-col items-center justify-center">
+          <span class="material-symbols-outlined text-6xl text-outline-variant mb-4">deployed_code</span>
+          <h3 class="text-2xl font-bold text-on-surface mb-2">No Projects Uploaded Yet</h3>
+          <p class="text-on-surface-variant max-w-md mb-6">You don't have any defect scans assigned. Upload your first GLB model and PDF report to get started.</p>
+          <a href="{{ url_for('module2.upload_scan') }}" class="bg-primary text-on-primary px-6 py-3 rounded-lg font-bold">
+            Upload First Scan
           </a>
         </div>
-      </div>
-      <h1><i class="fas fa-folder-open"></i> Projects</h1>
-      <p class="subtitle">Select a project to view and manage defects in the 3D visualization viewer.</p>
-      <div class="action-bar">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" id="searchInput" placeholder="Search projects..." onkeyup="filterProjects()">
-        </div>
-        <div class="filter-group">
-          <label class="filter-label" for="dateFilter">Date range</label>
-          <select id="dateFilter" class="filter-select" onchange="filterProjects()">
-            <option value="all">All time</option>
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label class="filter-label" for="sortOrder">Sort</label>
-          <select id="sortOrder" class="filter-select" onchange="filterProjects()">
-            <option value="newest">Newest to oldest</option>
-            <option value="oldest">Oldest to newest</option>
-          </select>
-        </div>
-        <a href="/upload-data" class="btn"><i class="fas fa-plus"></i> New Project</a>
-      </div>
-    </section>
+      {% endif %}
+    </div>
 
-    {% if projects %}
-    <section class="bento-card span-2">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-        <h2 style="margin: 0; color: var(--ink);">Project List</h2>
-        <span class="chip" style="color: var(--muted); background: rgba(255,255,255,0.05);">{{ total_projects }}
-          items</span>
+    <!-- Pagination Footer -->
+    <footer class="mt-12 flex items-center justify-between">
+      <p class="text-sm text-on-surface-variant font-medium">Showing {{ projects|length }} projects</p>
+      <div class="flex gap-2">
+        <button class="p-2 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-colors">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <button class="px-4 py-2 rounded-lg bg-primary text-on-primary font-bold text-sm">1</button>
+        <button class="p-2 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-colors">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
       </div>
-      <div class="projects-grid" id="projectsGrid">
-        {% for project in projects %}
-        <a href="/scans/{{ project.id }}/visualize" class="project-card" data-name="{{ project.name|lower }}"
-          data-date="{{ project.created_at.isoformat() if project.created_at else '' }}">
-          <div class="project-header">
-            <h3 class="project-title">
-              <i class="fas fa-cube"></i>
-              {{ project.name }}
-            </h3>
-            <span class="project-id">#{{ project.id }}</span>
-          </div>
-
-          <div class="project-meta">
-            {% if project.metadata %}
-            <div class="meta-item">
-              <div class="meta-label">Scan Date</div>
-              <div class="meta-value">{{ project.metadata.scan_date or 'N/A' }}</div>
-            </div>
-            <div class="meta-item">
-              <div class="meta-label">Unit</div>
-              <div class="meta-value">{{ project.metadata.unit_no or 'N/A' }}</div>
-            </div>
-            {% if project.metadata.address %}
-            <div class="meta-item" style="grid-column: span 2;">
-              <div class="meta-label">Address</div>
-              <div class="meta-value" style="font-size: 0.85rem;">{{ project.metadata.address }}</div>
-            </div>
-            {% endif %}
-            {% else %}
-            <div class="meta-item">
-              <div class="meta-label">Created</div>
-              <div class="meta-value">{{ project.created_at.strftime('%Y-%m-%d') }}</div>
-            </div>
-            {% endif %}
-          </div>
-
-          <div class="project-stats">
-            <div class="stat">
-              <i class="fas fa-exclamation-triangle"></i>
-              <span class="stat-value">{{ project.defect_count }}</span> defects
-            </div>
-            {% if project.model_path %}
-            <div class="stat">
-              <i class="fas fa-cube"></i>
-              <span>3D Model</span>
-            </div>
-            {% endif %}
-          </div>
-        </a>
-        {% endfor %}
-      </div>
-    </section>
-    {% else %}
-    <section class="bento-card span-2 empty-state">
-      <i class="fas fa-folder-open"></i>
-      <h3>No Projects Yet</h3>
-      <p>Upload your first scan to get started with defect detection and visualization.</p>
-      <a href="/upload-data" class="btn">
-        <i class="fas fa-upload"></i> Upload First Scan
-      </a>
-    </section>
-    {% endif %}
+    </footer>
   </main>
-
-  <script>
-    function applyTheme(theme) {
-      const body = document.body;
-      const toggle = document.getElementById('themeToggle');
-      const icon = toggle.querySelector('i');
-      const label = toggle.querySelector('span');
-
-      if (theme === 'light') {
-        body.classList.add('light-mode');
-        icon.className = 'fas fa-sun';
-        label.textContent = 'Light';
-      } else {
-        body.classList.remove('light-mode');
-        icon.className = 'fas fa-moon';
-        label.textContent = 'Dark';
-        theme = 'dark';
-      }
-
-      localStorage.setItem('projects-theme', theme);
-    }
-
-    function toggleTheme() {
-      const current = localStorage.getItem('projects-theme') || 'light';
-      applyTheme(current === 'dark' ? 'light' : 'dark');
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      applyTheme(localStorage.getItem('projects-theme') || 'light');
-      const toggle = document.getElementById('themeToggle');
-      if (toggle) {
-        toggle.addEventListener('click', toggleTheme);
-      }
-    });
-
-    function filterProjects() {
-      const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase();
-      const dateRange = document.getElementById('dateFilter')?.value || 'all';
-      const sortOrder = document.getElementById('sortOrder')?.value || 'newest';
-      const grid = document.getElementById('projectsGrid');
-      const cards = Array.from(document.querySelectorAll('.project-card'));
-
-      const now = new Date();
-      const rangeDays = dateRange === 'all' ? null : parseInt(dateRange, 10);
-
-      const filtered = cards.filter(card => {
-        const name = card.getAttribute('data-name') || '';
-        if (!name.includes(searchTerm)) return false;
-
-        if (!rangeDays) return true;
-
-        const dateStr = card.getAttribute('data-date');
-        const projectDate = dateStr ? new Date(dateStr) : null;
-        if (!projectDate || isNaN(projectDate)) return true;
-
-        const diffDays = (now - projectDate) / (1000 * 60 * 60 * 24);
-        return diffDays <= rangeDays;
-      });
-
-      const timeValue = card => {
-        const dateStr = card.getAttribute('data-date');
-        const dt = dateStr ? new Date(dateStr) : null;
-        return dt && !isNaN(dt) ? dt.getTime() : 0;
-      };
-
-      filtered.sort((a, b) => {
-        const diff = timeValue(b) - timeValue(a);
-        return sortOrder === 'oldest' ? -diff : diff;
-      });
-
-      cards.forEach(card => { card.style.display = 'none'; });
-      filtered.forEach(card => { card.style.display = 'block'; grid.appendChild(card); });
-    }
-  </script>
-  <script>
-    document.querySelectorAll('a[href]').forEach(link => {
-      const href = link.getAttribute('href') || '';
-      if (!href.startsWith('#') && !href.startsWith('javascript') && href !== '') {
-        link.addEventListener('click', () => {
-          document.getElementById('ldms-loader').classList.add('active');
-        });
-      }
-    });
-  </script>
 </body>
-
 </html>

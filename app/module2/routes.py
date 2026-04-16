@@ -4,7 +4,8 @@ import json
 import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Optional, Tuple
+import re
+from typing import List, Optional, Set, Tuple
 
 from flask import (Blueprint, abort, current_app, flash, jsonify, redirect,
                    render_template, request, send_from_directory, url_for)
@@ -14,6 +15,7 @@ from werkzeug.utils import secure_filename
 from ..extensions import db
 from ..models import Defect, Scan
 from .utils import load_upload_metadata, upload_root, metadata_path, scan_metadata_path
+from .pdf_utils import extract_pdf_images
 
 from ..chatbot_component.dlp_knowledge_base import DLP_RULES
 
@@ -77,6 +79,82 @@ def _extract_snapshots_from_glb(glb_path: str) -> list:
     except Exception as exc:
         current_app.logger.warning("GLB snapshot extraction failed: %s", exc)
         return []
+
+def _tokenize_text(value: Optional[str]) -> Set[str]:
+    if not value:
+        return set()
+    return set(re.findall(r"[a-z0-9]+", value.lower()))
+
+
+def _auto_assign_images(metadata: dict, defects: List[Defect]) -> bool:
+    if not metadata or not defects:
+        return False
+
+    assignments = metadata.setdefault("assignments", {}).setdefault("defect_to_image", {})
+    images = metadata.get("images", [])
+    if not images:
+        return False
+
+    assigned = False
+    used_images: Set[str] = set()
+
+    def _assign(defect_id: str, image_id: str) -> None:
+        nonlocal assigned
+        assignments[defect_id] = image_id
+        used_images.add(image_id)
+        assigned = True
+
+    defect_tokens: dict[str, Set[str]] = {}
+    for defect in defects:
+        key = str(defect.id)
+        # Tokenize id, description, and element for robust matching
+        defect_tokens[key] = (
+            _tokenize_text(str(defect.id))
+            | _tokenize_text(getattr(defect, "description", ""))
+            | _tokenize_text(getattr(defect, "element", ""))
+        )
+
+    # 1. Exact string matching against snapshot name in the filename
+    for image in images:
+        image_id = str(image.get("id", ""))
+        if not image_id or image_id in used_images:
+            continue
+        filename = (image.get("file") or "").lower()
+        for defect in defects:
+            defect_id = str(defect.id)
+            if not defect_id or defect_id in assignments:
+                continue
+            desc = getattr(defect, "description", "").lower()
+            if desc and desc in filename:
+                _assign(defect_id, image_id)
+                break
+
+    # 2. Token overlap logic
+    for image in images:
+        image_id = str(image.get("id", ""))
+        if not image_id or image_id in used_images:
+            continue
+        image_tokens = _tokenize_text(image.get("file"))
+        if not image_tokens:
+            continue
+        for defect in defects:
+            defect_id = str(defect.id)
+            if not defect_id or defect_id in assignments:
+                continue
+            if defect_tokens.get(defect_id) and image_tokens & defect_tokens[defect_id]:
+                _assign(defect_id, image_id)
+                break
+
+    # 3. Greedy fallback: pair any remaining sequentially
+    remaining_images = [img for img in images if str(img.get("id", "")) not in used_images]
+    remaining_defects = [defect for defect in defects if str(defect.id) not in assignments]
+    for image, defect in zip(remaining_images, remaining_defects):
+        image_id = str(image.get("id", ""))
+        defect_id = str(defect.id)
+        if image_id and defect_id:
+            _assign(defect_id, image_id)
+
+    return assigned
 
 @module2.route('/dlp_info', methods=['GET'])
 def dlp_info():
@@ -295,6 +373,11 @@ def upload_scan():
             flash('Invalid GLB file content. The file does not appear to be a valid 3D model.', 'error')
             return redirect(request.url)
 
+        upload_id = f'upload_{timestamp}'
+        image_dir_name = f'{upload_id}_images'
+        image_dir = os.path.join(root, image_dir_name)
+        extracted_images = []
+
         # Handle optional PDF
         pdf_name = None
         if pdf_file and pdf_file.filename and _allowed_file(pdf_file.filename, ALLOWED_PDF_EXT):
@@ -304,6 +387,11 @@ def upload_scan():
             if not _validate_file_magic(pdf_path, b'%PDF'):
                 os.remove(pdf_path)
                 pdf_name = None
+            else:
+                try:
+                    extracted_images = extract_pdf_images(pdf_path, image_dir)
+                except Exception as e:
+                    current_app.logger.warning("Failed to extract PDF images: %s", e)
 
         # Extract Snapshot defects from GLB
         snapshots = _extract_snapshots_from_glb(glb_path)
@@ -315,6 +403,7 @@ def upload_scan():
         db.session.flush()  # get scan.id before commit
 
         # Create Defect records from snapshots
+        db_defects = []
         for snap in snapshots:
             coords = snap.get('coordinates', {})
             defect = Defect(
@@ -329,12 +418,13 @@ def upload_scan():
                 status='Reported',
             )
             db.session.add(defect)
+            db_defects.append(defect)
 
-        db.session.commit()
+        db.session.flush() # ensure defect IDs are present
 
         # Persist metadata for visualization
         meta = {
-            'id': f'upload_{timestamp}',
+            'id': upload_id,
             'created_at': timestamp,
             'project_name': project_name,
             'scan_date': scan_date,
@@ -344,8 +434,28 @@ def upload_scan():
             'unit_no': unit_no,
             'glb_path': glb_path,
             'pdf_path': pdf_name,
+            'image_dir': image_dir_name if extracted_images else None,
+            'images': extracted_images,
+            'assignments': {'defect_to_image': {}},
             'notes': notes,
         }
+
+        # Auto-assign extracted images to the defects
+        if extracted_images and db_defects:
+            _auto_assign_images(meta, db_defects)
+            # Update database with assigned image paths
+            assignments = meta.get('assignments', {}).get('defect_to_image', {})
+            for defect in db_defects:
+                assigned_img_id = assignments.get(str(defect.id))
+                if assigned_img_id:
+                    # Find the physical image file
+                    for img in extracted_images:
+                        if img.get("id") == assigned_img_id:
+                            defect.image_path = os.path.join(image_dir_name, img.get("file", ""))
+                            break
+
+        db.session.commit()
+
         _persist_upload_metadata(meta)
         _save_scan_metadata(scan.id, meta)
 
