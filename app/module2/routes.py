@@ -16,6 +16,7 @@ from ..extensions import db
 from ..models import Defect, Scan
 from .utils import load_upload_metadata, upload_root, metadata_path, scan_metadata_path
 from .pdf_utils import extract_pdf_images
+from .glb_snapshot import extract_snapshots
 
 from ..chatbot_component.dlp_knowledge_base import DLP_RULES
 
@@ -54,31 +55,6 @@ def _save_scan_metadata(scan_id: int, meta: dict) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(meta, fh, indent=2)
-
-
-def _extract_snapshots_from_glb(glb_path: str) -> list:
-    """Extract snapshot metadata from a GLB, returns list of dicts."""
-    try:
-        from pygltflib import GLTF2
-        gltf = GLTF2().load(glb_path)
-        snapshots = []
-        for i, node in enumerate(gltf.nodes or []):
-            name = (node.name or "").lower()
-            if "snapshot" in name and node.translation:
-                snapshots.append({
-                    "id": f"Snapshot-{i}",
-                    "label": node.name,
-                    "element": node.name,
-                    "coordinates": {
-                        "x": node.translation[0],
-                        "y": node.translation[1],
-                        "z": node.translation[2],
-                    }
-                })
-        return snapshots
-    except Exception as exc:
-        current_app.logger.warning("GLB snapshot extraction failed: %s", exc)
-        return []
 
 def _tokenize_text(value: Optional[str]) -> Set[str]:
     if not value:
@@ -129,12 +105,13 @@ def _auto_assign_images(metadata: dict, defects: List[Defect]) -> bool:
                 _assign(defect_id, image_id)
                 break
 
-    # 2. Token overlap logic
+    # 2. Token overlap logic using filename and page_text
     for image in images:
         image_id = str(image.get("id", ""))
         if not image_id or image_id in used_images:
             continue
-        image_tokens = _tokenize_text(image.get("file"))
+        # Tokens from filename + text extracted from the PDF page
+        image_tokens = _tokenize_text(image.get("file")) | _tokenize_text(image.get("page_text"))
         if not image_tokens:
             continue
         for defect in defects:
@@ -394,7 +371,11 @@ def upload_scan():
                     current_app.logger.warning("Failed to extract PDF images: %s", e)
 
         # Extract Snapshot defects from GLB
-        snapshots = _extract_snapshots_from_glb(glb_path)
+        try:
+            snapshots = extract_snapshots(glb_path)
+        except Exception as exc:
+            current_app.logger.warning("GLB snapshot extraction failed: %s", exc)
+            snapshots = []
 
         # Create Scan record
         scan_label = project_name or f'Scan {timestamp}'
@@ -405,14 +386,13 @@ def upload_scan():
         # Create Defect records from snapshots
         db_defects = []
         for snap in snapshots:
-            coords = snap.get('coordinates', {})
             defect = Defect(
                 scan_id=scan.id,
-                x=float(coords.get('x', 0)),
-                y=float(coords.get('y', 0)),
-                z=float(coords.get('z', 0)),
-                element=snap.get('element', ''),
-                description=snap.get('label', ''),
+                x=float(snap.coordinates[0]),
+                y=float(snap.coordinates[1]),
+                z=float(snap.coordinates[2]),
+                element=snap.element or '',
+                description=snap.label or snap.snapshot_id or '',
                 defect_type='Unknown',
                 severity='Medium',
                 status='Reported',
@@ -459,7 +439,10 @@ def upload_scan():
         _persist_upload_metadata(meta)
         _save_scan_metadata(scan.id, meta)
 
-        flash(f'Project "{scan_label}" uploaded successfully with {len(snapshots)} defects detected.', 'success')
+        if extracted_images:
+            flash(f'Project "{scan_label}" uploaded. Detected {len(snapshots)} defects and successfully extracted {len(extracted_images)} images from PDF.', 'success')
+        else:
+            flash(f'Project "{scan_label}" uploaded successfully with {len(snapshots)} defects detected.', 'success')
         return redirect(url_for('module2.list_projects'))
 
     except Exception as exc:
