@@ -177,7 +177,7 @@
                     <span>Visualizer</span>
                 </a>
                 <a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 px-4 py-3 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl font-manrope text-sm font-semibold duration-150 ease-in-out"
-                    href="#">
+                    href="{{ url_for('module3.dashboard') }}">
                     <span class="material-symbols-outlined">description</span>
                     <span>Reporting Dashboard</span>
                 </a>
@@ -203,11 +203,11 @@
                     <h1 class="text-4xl font-headline font-extrabold text-on-surface tracking-tight">Dashboard</h1>
                     <p class="text-lg text-on-surface-variant font-medium mt-1">Welcome back, {{ current_user.full_name }}.</p>
                 </div>
-                <button
+                <a href="{{ url_for('module3.dashboard') }}"
                     class="bg-gradient-to-b from-primary to-primary-container text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 shadow-sm transition-all duration-200 active:scale-95">
                     <span class="material-symbols-outlined text-lg">bar_chart</span>
                     Reporting Dashboard
-                </button>
+                </a>
             </div>
             <!-- Features Row -->
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-16">

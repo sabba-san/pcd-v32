@@ -24,5 +24,6 @@ dependencies:
     - pymupdf
     - pypdf[image]
     - pygltflib
+    - reportlab
   
     # add other pip deps here

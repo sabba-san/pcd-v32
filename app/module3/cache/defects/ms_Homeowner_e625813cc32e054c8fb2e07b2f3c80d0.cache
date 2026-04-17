@@ -1,0 +1,16 @@
+[
+  {
+    "id": 101,
+    "unit": "A-10-1",
+    "desc": "Retros pada dinding bilik tidur utama",
+    "remarks": "tiada apa-apa tindakan dari pihak pemaju",
+    "priority": "Tinggi"
+  },
+  {
+    "id": 103,
+    "unit": "A-10-1",
+    "desc": "Jubin pecah di bilik air",
+    "remarks": "jubin tersebut telah dibaiki",
+    "priority": "Rendah"
+  }
+]

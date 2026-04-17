@@ -1,0 +1,44 @@
+[
+  {
+    "id": 101,
+    "unit": "A-10-1",
+    "desc": "Retak dilihat pada dinding bilik tidur utama",
+    "remarks": "tiada tindakan",
+    "priority": "Tinggi"
+  },
+  {
+    "id": 102,
+    "unit": "B-05-2",
+    "desc": "Paip bocor di bawah sinki dapur",
+    "remarks": "",
+    "priority": "Tinggi"
+  },
+  {
+    "id": 103,
+    "unit": "A-10-1",
+    "desc": "Jubin di bilik air rosak",
+    "remarks": "jubin telah dibaiki",
+    "priority": "Rendah"
+  },
+  {
+    "id": 104,
+    "unit": "C-01-5",
+    "desc": "Wayar elektrik yang rosak di ruang tamu",
+    "remarks": "",
+    "priority": "Tinggi"
+  },
+  {
+    "id": 105,
+    "unit": "B-05-2",
+    "desc": "Pintu gelangsar balkoni terjek",
+    "remarks": "",
+    "priority": "Rendah"
+  },
+  {
+    "id": 106,
+    "unit": "D-12-8",
+    "desc": "Tompokan air pada siling berhampiran penghawa dingin",
+    "remarks": "",
+    "priority": "Tinggi"
+  }
+]

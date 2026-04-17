@@ -1,0 +1,44 @@
+[
+  {
+    "id": 101,
+    "unit": "A-10-1",
+    "desc": "A crack has been observed on the wall of the master bedroom",
+    "remarks": "No action has been taken",
+    "priority": "High"
+  },
+  {
+    "id": 102,
+    "unit": "B-05-2",
+    "desc": "There is a leaking pipe located under the kitchen sink",
+    "remarks": "",
+    "priority": "High"
+  },
+  {
+    "id": 103,
+    "unit": "A-10-1",
+    "desc": "The tile in the bathroom has been damaged",
+    "remarks": "The tile has already been repaired",
+    "priority": "Low"
+  },
+  {
+    "id": 104,
+    "unit": "C-01-5",
+    "desc": "The electrical wire in the living room has been damaged",
+    "remarks": "",
+    "priority": "High"
+  },
+  {
+    "id": 105,
+    "unit": "B-05-2",
+    "desc": "The sliding door of the balcony is jammed",
+    "remarks": "",
+    "priority": "Low"
+  },
+  {
+    "id": 106,
+    "unit": "D-12-8",
+    "desc": "A water stain is visible on the ceiling near the air conditioner",
+    "remarks": "",
+    "priority": "High"
+  }
+]
