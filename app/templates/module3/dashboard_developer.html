@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporting Dashboard | Developer</title>
+    <meta name="description" content="Review status, update defect cases, and generate tribunal compliance reports.">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode:"class",
+            theme:{extend:{
+                colors:{
+                    "primary":"#004ac6","primary-container":"#2563eb","on-primary":"#ffffff",
+                    "surface":"#f7f9fb","surface-container-lowest":"#ffffff","surface-container-low":"#f2f4f6",
+                    "surface-container":"#eceef0","surface-container-highest":"#e0e3e5",
+                    "on-surface":"#191c1e","on-surface-variant":"#434655","outline-variant":"#c3c6d7",
+                },
+                fontFamily:{headline:["Manrope","sans-serif"],body:["Inter","sans-serif"]},
+                borderRadius:{DEFAULT:"0.5rem",lg:"1rem",xl:"1.25rem",full:"9999px"},
+            }},
+        }
+    </script>
+    <style>
+        .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;display:inline-block;line-height:1;text-transform:none;white-space:nowrap;direction:ltr;}
+        body{background-color:#f7f9fb;}
+        .m3-badge{display:inline-flex;align-items:center;border-radius:999px;padding:.3rem .75rem;font-size:.8rem;font-weight:700;}
+        .badge-pending{background:#fde68a;color:#92400e;}
+        .badge-completed{background:#dcfce7;color:#166534;}
+        .badge-closed{background:#f3f4f6;color:#6b7280;}
+        .badge-overdue{background:#fee2e2;color:#991b1b;}
+        .m3-td{padding:14px 18px;border-bottom:1px solid #f1f5f9;font-size:.9rem;vertical-align:middle;}
+        .m3-row:hover{background:#f8fbff;}
+        .m3-modal-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.52);padding:16px;z-index:1000;}
+        .m3-modal-overlay.m3-modal-show{display:flex;}
+        .m3-modal-box{width:100%;max-width:500px;background:#fff;padding:28px;border-radius:20px;box-shadow:0 24px 60px rgba(15,23,42,.12);max-height:85vh;overflow-y:auto;}
+        .stat-grad{border-radius:20px;padding:20px 24px;color:#fff;display:flex;align-items:center;gap:16px;box-shadow:0 12px 32px rgba(15,23,42,.08);transition:transform .2s,box-shadow .2s;}
+        .stat-grad:hover{transform:translateY(-4px);box-shadow:0 20px 45px rgba(15,23,42,.14);}
+        .m3-report-preview{background:#f8fafc;border-radius:14px;padding:18px;white-space:pre-wrap;overflow-x:auto;min-height:100px;font-size:.91rem;color:#191c1e;}
+    </style>
+</head>
+<body class="font-body text-on-surface">
+
+<!-- Top Nav -->
+<header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <div class="flex justify-between items-center w-full px-6 py-3">
+        <div class="flex items-center gap-4">
+            <div class="bg-primary p-1.5 rounded-lg">
+                <span class="material-symbols-outlined text-white text-xl">grid_view</span>
+            </div>
+            <span class="text-xl font-black tracking-tight text-slate-900 font-headline">DLP Advisor</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
+                {{ (user_info.company_name or user_info.name)[0].upper() }}
+            </div>
+            <p class="hidden sm:block text-sm font-semibold text-slate-900">{{ user_info.company_name or user_info.name }}</p>
+        </div>
+    </div>
+</header>
+
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="h-screen w-64 fixed left-0 top-16 hidden md:flex flex-col bg-slate-50 p-4 space-y-2 border-r border-slate-200/60">
+        <div class="flex items-center gap-3 p-4 mb-2">
+            <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                {{ (user_info.company_name or user_info.name)[0].upper() }}
+            </div>
+            <div>
+                <h3 class="font-headline text-sm font-bold text-slate-900 leading-tight">{{ user_info.company_name or user_info.name }}</h3>
+                <p class="text-xs text-slate-500">Developer</p>
+            </div>
+        </div>
+        <nav class="space-y-1 flex-1">
+            <a href="{{ url_for('auth.developer_dashboard') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">dashboard</span><span>Overview</span>
+            </a>
+            <a href="{{ url_for('module2.list_projects') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">architecture</span><span>Lidar Scans</span>
+            </a>
+            <a href="{{ url_for('module3.dashboard') }}"
+               class="flex items-center gap-3 bg-white text-blue-700 rounded-xl px-4 py-3 shadow-sm text-sm font-bold">
+                <span class="material-symbols-outlined">description</span><span>Reporting Dashboard</span>
+            </a>
+        </nav>
+        <div class="pt-4 space-y-1 border-t border-slate-200">
+            <a href="{{ url_for('auth.logout') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">logout</span><span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 md:ml-64 p-8 md:p-12">
+
+        <div class="mb-10">
+            <h1 class="text-4xl font-headline font-extrabold text-on-surface tracking-tight">Developer Dashboard</h1>
+            <p class="text-lg text-on-surface-variant font-medium mt-1">Review defect status, update cases, and generate compliance reports.</p>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-4 mb-10">
+            {% set cards = [
+                ('0f172a','1e293b','description','Total'),
+                ('0284c7','2563eb','pending_actions','Pending'),
+                ('f97316','fb923c','manage_search','In Progress'),
+                ('c2410c','ea580c','timer_off','Delayed'),
+                ('db2777','ec4899','warning','Overdue'),
+                ('16a34a','22c55e','task_alt','Completed'),
+                ('6b7280','9ca3af','lock','Closed'),
+            ] %}
+            {% for from_c, to_c, icon, label in cards %}
+            <div class="stat-grad" style="background:linear-gradient(135deg,#{{ from_c }} 0%,#{{ to_c }} 100%);">
+                <div class="flex flex-col">
+                    <span class="m3-value text-2xl font-extrabold font-headline">0</span>
+                    <span class="text-white/90 text-xs font-semibold mt-1">{{ label }}</span>
+                </div>
+                <span class="material-symbols-outlined text-white/20 text-3xl ml-auto">{{ icon }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-wrap items-end gap-4 mb-8 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60">
+            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                Language
+                <select id="m3-language-select" onchange="invalidateReportExport()"
+                    class="mt-1 rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none min-w-[160px]">
+                    <option value="ms">Bahasa Malaysia</option>
+                    <option value="en">English</option>
+                </select>
+            </label>
+            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                Claimant
+                <select id="m3-claimant-select" onchange="invalidateReportExport()"
+                    class="mt-1 rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none min-w-[200px]">
+                    {% if homeowner_claimants %}
+                        {% for c in homeowner_claimants %}
+                        <option value="{{ c.homeowner_id }}">{{ c.name }} ({{ c.unit }})</option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="">No homeowners available</option>
+                    {% endif %}
+                </select>
+            </label>
+            <button onclick="generateReport()"
+                class="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-primary-container transition-colors">
+                <span class="material-symbols-outlined text-lg">auto_awesome</span>Generate Report
+            </button>
+            <form id="m3-pdf-form" action="{{ url_for('module3.export_pdf') }}" method="POST" class="inline-flex">
+                <input type="hidden" name="role" value="{{ role }}">
+                <input type="hidden" name="language" id="m3-pdf-language" value="ms">
+                <input type="hidden" name="claimant_user_id" id="m3-pdf-claimant-user-id" value="">
+                <input type="hidden" name="ai_report" id="m3-pdf-ai-report" value="">
+                <button id="m3-export-btn" class="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-6 py-2.5 rounded-xl font-bold hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                    <span class="material-symbols-outlined text-lg">picture_as_pdf</span>Export PDF
+                </button>
+            </form>
+        </div>
+
+        <!-- AI Report preview -->
+        <div id="m3-report-output" class="mb-8 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60" style="display:none;">
+            <h2 class="font-headline text-lg font-bold text-on-surface mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">article</span>AI Report Preview
+            </h2>
+            <div class="m3-report-preview" id="m3-report-preview"></div>
+        </div>
+
+        <!-- Defect table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+            <div class="flex flex-wrap justify-between items-center px-6 py-5 bg-slate-50/50 gap-4">
+                <h2 class="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">build</span>Defect Overview
+                </h2>
+                <div class="flex flex-wrap gap-3 items-center">
+                    <select id="m3-filter-status" onchange="applyFilters()"
+                        class="rounded-xl border border-slate-300 py-1.5 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none min-w-[140px]">
+                        <option value="">All Status</option>
+                        <option>Pending</option><option>In Progress</option>
+                        <option>Completed</option><option>Delayed</option><option>Closed</option>
+                    </select>
+                    <select id="m3-filter-unit" onchange="applyFilters()"
+                        class="rounded-xl border border-slate-300 py-1.5 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none min-w-[140px]">
+                        <option value="">All Units</option>
+                        {% for unit in defects | map(attribute='unit') | unique | list %}
+                        <option value="{{ unit }}">{{ unit }}</option>
+                        {% endfor %}
+                    </select>
+                    <button onclick="resetFilters()" class="text-sm text-slate-600 border border-slate-300 px-4 py-1.5 rounded-xl hover:bg-slate-100 font-semibold">Reset</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-max">
+                    <thead>
+                        <tr class="bg-surface-container-highest/30">
+                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">ID</th>
+                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Unit</th>
+                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Description</th>
+                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Deadline</th>
+                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Status</th>
+                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="m3-defect-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Status update modal -->
+<div id="m3-update-modal" class="m3-modal-overlay">
+    <div class="m3-modal-box">
+        <h2 class="font-headline text-lg font-bold mb-1">Update Status</h2>
+        <p class="text-sm text-slate-500 mb-4">Defect ID: <strong id="m3-modal-defect-id"></strong></p>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">New Status</label>
+        <select id="m3-new-status-select" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none mb-4">
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Delayed">Delayed</option>
+        </select>
+        <div id="m3-completion-date-wrapper" style="display:none;" class="mb-4">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Completion Date</label>
+            <input type="date" id="m3-completion-date" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+        </div>
+        <div class="flex justify-end gap-3">
+            <button onclick="closeUpdateModal()" class="px-5 py-2 rounded-xl border border-slate-300 font-semibold text-sm hover:bg-slate-50">Cancel</button>
+            <button onclick="confirmUpdate()" class="px-5 py-2 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-container">Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+window.M3_CONFIG = { base_url: '/module3', role: {{ role | tojson }} };
+window.M3_TABLE_COLS = 6;
+window.allDefects = [
+{% for d in defects %}
+{
+    id: {{ d.id }},
+    unit: {{ d.unit | tojson }},
+    desc: {{ d.desc | tojson }},
+    status: {{ d.status | tojson }},
+    display_status: {{ ('Closed' if d.closed else d.status) | tojson }},
+    deadline: {{ (d.deadline or '') | tojson }},
+    closed: {{ d.closed | lower }},
+    is_overdue: {{ d.is_overdue | lower }},
+},
+{% endfor %}
+];
+
+window.buildRow = function(d, statusClass) {
+    const btn = d.closed
+        ? `<button disabled class="text-xs font-semibold border border-slate-200 px-3 py-1.5 rounded-lg text-slate-400 cursor-not-allowed">Closed</button>`
+        : `<button onclick="openUpdateModal(${d.id})" class="text-xs font-semibold border border-primary text-primary px-3 py-1.5 rounded-lg hover:bg-primary/5 flex items-center gap-1">
+               <span class="material-symbols-outlined" style="font-size:14px;">edit</span>Update
+           </button>`;
+    return `
+        <td class="m3-td">#${d.id}</td>
+        <td class="m3-td">${d.unit||'-'}</td>
+        <td class="m3-td" style="max-width:240px;">${d.desc||'-'}</td>
+        <td class="m3-td">${d.deadline||'-'}</td>
+        <td class="m3-td"><span class="m3-badge ${statusClass}">${d.display_status}</span></td>
+        <td class="m3-td">${btn}</td>`;
+};
+</script>
+<script src="{{ url_for('static', filename='js/dashboard_module3.js') }}"></script>
+</body>
+</html>

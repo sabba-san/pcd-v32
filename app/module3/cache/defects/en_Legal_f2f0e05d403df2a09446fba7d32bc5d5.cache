@@ -1,0 +1,44 @@
+[
+  {
+    "id": 101,
+    "unit": "A-10-1",
+    "desc": "Crack in the wall of the master bedroom",
+    "remarks": "still not repaired",
+    "priority": "High"
+  },
+  {
+    "id": 102,
+    "unit": "B-05-2",
+    "desc": "Leakage from the pipe underneath the kitchen sink",
+    "remarks": "",
+    "priority": "High"
+  },
+  {
+    "id": 103,
+    "unit": "A-10-1",
+    "desc": "Broken tile in the bathroom",
+    "remarks": "the tile has already been repaired",
+    "priority": "Low"
+  },
+  {
+    "id": 104,
+    "unit": "C-01-5",
+    "desc": "Defective electrical wiring in the living room",
+    "remarks": "",
+    "priority": "High"
+  },
+  {
+    "id": 105,
+    "unit": "B-05-2",
+    "desc": "The sliding door of the balcony is stuck",
+    "remarks": "",
+    "priority": "Low"
+  },
+  {
+    "id": 106,
+    "unit": "D-12-8",
+    "desc": "Water stain on the ceiling near the air-conditioner",
+    "remarks": "",
+    "priority": "High"
+  }
+]

@@ -8,12 +8,29 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=10">
     <!-- Store user ID for user-isolated localStorage -->
     <meta name="user-id" content="{{ current_user.id }}">
+    <style>
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 20mm;
+            }
+            body {
+                background: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            /* Prevent page breaks inside important sections */
+            .avoid-page-break {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
         
         <!-- ==================== SIDEBAR ==================== -->
-        <aside class="sidebar">
+        <aside class="sidebar print:hidden">
             <div class="sidebar-header">
                 <div class="brand-title">
                     <img src="{{ url_for('static', filename='logo.png') }}" alt="Superchat Logo" class="chat-logo">
@@ -58,7 +75,7 @@
         </aside>
 
         <!-- ==================== MAIN CONTENT ==================== -->
-        <main class="main-content">
+        <main class="main-content print:w-full print:max-w-none print:m-0 print:p-0 print:shadow-none print:border-none print:bg-white">
             
             <!-- 1. CHAT TAB -->
             <section id="chat" class="tab-content active">
@@ -94,7 +111,7 @@
                     <div id="chatMessages" class="chat-messages"></div>
                 </div>
 
-                <div class="chat-input-area">
+                <div class="chat-input-area print:hidden">
                     <textarea 
                         id="userInput" 
                         class="chat-input" 
@@ -386,7 +403,7 @@
                     <div id="letterContent" style="color: var(--text-primary); font-family: 'Times New Roman', serif; font-size: 16px; line-height: 1.5;">
                         </div>
                     
-                    <div style="margin-top: 40px; display: flex; gap: 15px; justify-content: center; border-top: 1px solid var(--border-dim); padding-top: 20px;">
+                    <div style="margin-top: 40px; display: flex; gap: 15px; justify-content: center; border-top: 1px solid var(--border-dim); padding-top: 20px;" class="print:hidden">
                         <button class="btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('letterContent').innerText); alert('Letter copied to clipboard!');">📋 Copy to Clipboard</button>
                         <button class="btn-secondary" onclick="window.print()">🖨️ Print / Save as PDF</button>
                     </div>

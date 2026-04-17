@@ -36,6 +36,10 @@ class User(db.Model, UserMixin):
     housing_project        = db.Column(db.String(150))
     ic_number              = db.Column(db.String(20))
     correspondence_address = db.Column(db.Text)
+    unit                   = db.Column(db.String(100))
+
+    # ── Compliance role alias (used by Nabilah module seed logic) ─────────────
+    role                   = db.Column(db.String(50))
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     def set_password(self, password: str) -> None:
@@ -99,6 +103,15 @@ class Defect(db.Model):
     image_path = db.Column(db.String(500))  # Path to snapshot image
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=db.func.now())
+    completed_date = db.Column(db.Date)
+    
+    # ── Compliance Module (Nabilah) Fields ───────────────────────────────────
+    unit = db.Column(db.String(100))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Linking defect to homeowner
+    reported_date = db.Column(db.DateTime, default=db.func.now())
+    urgency = db.Column(db.String(50))
+    deadline = db.Column(db.Date)
+    remarks = db.Column(db.Text)
     activities = db.relationship('ActivityLog', backref='defect', lazy=True)
 
 class ActivityLog(db.Model):
@@ -113,4 +126,45 @@ class ActivityLog(db.Model):
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     scan = db.relationship('Scan', backref='activities')
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
+
+# ── Compliance Module Models (Nabilah) ───────────────────────────────────────
+
+class ReportHomeownerProfile(db.Model):
+    __tablename__ = 'report_homeowner_profile'
+    homeowner_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    ic_number = db.Column(db.String(100))
+    email = db.Column(db.String(255))
+    phone_number = db.Column(db.String(100))
+    address = db.Column(db.String(255))
+    court_location = db.Column(db.String(255))
+    state_name = db.Column(db.String(100))
+    claim_amount = db.Column(db.String(100))
+    item_service = db.Column(db.String(255))
+    transaction_date = db.Column(db.Date)
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
+
+class ReportRespondentProfile(db.Model):
+    __tablename__ = 'report_respondent_profile'
+    respondent_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    company_name = db.Column(db.String(255), nullable=False)
+    registration_number = db.Column(db.String(100))
+    email = db.Column(db.String(255))
+    phone_number = db.Column(db.String(100))
+    address = db.Column(db.String(255))
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
+
+class ReportClaimRegistry(db.Model):
+    __tablename__ = 'report_claim_registry'
+    claim_id = db.Column(db.String(64), primary_key=True)
+    case_key = db.Column(db.String(255), unique=True, nullable=False)
+    case_number = db.Column(db.String(6), nullable=False)
+    claim_year = db.Column(db.Integer, nullable=False)
+    date_filed = db.Column(db.DateTime, default=db.func.now())
+    state = db.Column(db.String(100), nullable=False)
+    state_code = db.Column(db.String(20), nullable=False)
+    homeowner_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    respondent_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
+    created_at = db.Column(db.DateTime, default=db.func.now())
     updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())

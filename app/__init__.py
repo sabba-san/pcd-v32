@@ -28,7 +28,7 @@ def create_app():
     # ── Blueprints ────────────────────────────────────────────────────────────
     app.register_blueprint(module1)
     app.register_blueprint(module2)
-    app.register_blueprint(module3)
+    app.register_blueprint(module3, url_prefix='/module3')
     app.register_blueprint(module4)
     app.register_blueprint(auth)
     app.register_blueprint(core_features)

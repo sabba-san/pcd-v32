@@ -1,0 +1,44 @@
+[
+  {
+    "id": 101,
+    "unit": "A-10-1",
+    "desc": "Noticeable fracture in the wall of the master bedroom",
+    "remarks": "",
+    "priority": "High"
+  },
+  {
+    "id": 102,
+    "unit": "B-05-2",
+    "desc": "Pipe leakage underneath the kitchen sink",
+    "remarks": "",
+    "priority": "High"
+  },
+  {
+    "id": 103,
+    "unit": "A-10-1",
+    "desc": "Damaged ceramic tile in the bathroom",
+    "remarks": "",
+    "priority": "Low"
+  },
+  {
+    "id": 104,
+    "unit": "C-01-5",
+    "desc": "Malfunctioning electrical wiring system in the living room",
+    "remarks": "",
+    "priority": "High"
+  },
+  {
+    "id": 105,
+    "unit": "B-05-2",
+    "desc": "Balcony sliding door experiencing operational difficulties",
+    "remarks": "",
+    "priority": "Low"
+  },
+  {
+    "id": 106,
+    "unit": "D-12-8",
+    "desc": "Visible water stain on the ceiling in close proximity to the air-conditioning unit",
+    "remarks": "",
+    "priority": "High"
+  }
+]

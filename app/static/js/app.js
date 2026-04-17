@@ -629,7 +629,7 @@ class DLPChatbotApp {
             <p style="font-size: 1.2em; margin-top: 10px;"><strong>Total Estimated Claim:</strong> RM ${totalClaim.toLocaleString()}</p>
             ${tribunalWarning}
             
-            <div style="margin-top: 30px; text-align: center;">
+            <div style="margin-top: 30px; text-align: center;" class="print:hidden">
                 <button class="btn-secondary" onclick="window.print()" style="width: 100%;">🖨️ Print / Save as PDF</button>
             </div>
         `;
@@ -739,23 +739,25 @@ class DLPChatbotApp {
 
             ${defectListHTML}
 
-            <p style="margin-bottom: 15px; text-align: justify;">
+            <p class="avoid-page-break" style="margin-bottom: 15px; text-align: justify;">
                 Kindly arrange for your representatives or contractors to inspect the property and carry out the necessary rectification works within <strong>thirty (30) days</strong> from the date of this notice.
             </p>
 
-            <p style="margin-bottom: 15px; text-align: justify;">
+            <p class="avoid-page-break" style="margin-bottom: 15px; text-align: justify;">
                 Please be reminded that in the event you fail to rectify the said defects within the stipulated thirty (30) days, I/we reserve the right to carry out the rectification works ourselves and recover the costs from the stakeholder holding the retention sum, as provided under the SPA.
             </p>
 
-            <p style="margin-bottom: 40px;">
+            <p class="avoid-page-break" style="margin-bottom: 40px;">
                 We look forward to your prompt response and action. Please contact me at <strong>${buyerContact}</strong> to arrange an appointment for inspection.
             </p>
 
-            <p style="margin-bottom: 60px;">Yours faithfully,</p>
+            <div class="avoid-page-break">
+                <p style="margin-bottom: 60px;">Yours faithfully,</p>
 
-            <p style="margin-bottom: 5px;">______________________________</p>
-            <p style="margin-bottom: 2px;"><strong>${buyerName.toUpperCase()}</strong></p>
-            <p>NRIC / Passport: ${buyerIC}</p>
+                <p style="margin-bottom: 5px;">______________________________</p>
+                <p style="margin-bottom: 2px;"><strong>${buyerName.toUpperCase()}</strong></p>
+                <p>NRIC / Passport: ${buyerIC}</p>
+            </div>
 
             <hr style="margin-top: 50px; margin-bottom: 20px; border: 0; border-top: 1px solid var(--border-dim);">
             

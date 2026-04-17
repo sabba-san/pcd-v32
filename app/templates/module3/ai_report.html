@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Report</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>{{ role }} AI Report</h1>
+
+    <pre style="white-space: pre-wrap;">{{ report }}</pre>
+
+    <form action="{{ url_for('module3.export_pdf') }}" method="POST">
+        <input type="hidden" name="role" value="{{ role }}">
+        <button class="btn btn-success">Export PDF</button>
+    </form>
+</div>
+
+</body>
+</html>

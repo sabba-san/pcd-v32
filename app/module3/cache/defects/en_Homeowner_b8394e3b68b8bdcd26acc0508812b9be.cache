@@ -1,0 +1,16 @@
+[
+  {
+    "id": 101,
+    "unit": "A-10-1",
+    "desc": "Crack on the master bedroom wall",
+    "remarks": "none",
+    "priority": "High"
+  },
+  {
+    "id": 103,
+    "unit": "A-10-1",
+    "desc": "Broken tile in the bathroom",
+    "remarks": "the tile has already been repaired",
+    "priority": "Low"
+  }
+]

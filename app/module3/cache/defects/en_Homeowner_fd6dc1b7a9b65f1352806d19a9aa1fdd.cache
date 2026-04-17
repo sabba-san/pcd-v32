@@ -1,0 +1,16 @@
+[
+  {
+    "id": 101,
+    "unit": "A-10-1",
+    "desc": "Crack in the wall of the master bedroom",
+    "remarks": "No action has been taken by the developer to date",
+    "priority": "High"
+  },
+  {
+    "id": 103,
+    "unit": "A-10-1",
+    "desc": "Broken tile in the bathroom",
+    "remarks": "The cracked tile in the bathroom has already been repaired",
+    "priority": "Low"
+  }
+]
