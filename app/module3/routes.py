@@ -727,35 +727,59 @@ def get_defects_for_role(role):
             user_id = _current_user_id()
             cur.execute(
                 """
-                SELECT id, unit, description, reported_date, status, completed_date, user_id, urgency, deadline, remarks
-                FROM defects
-                WHERE user_id = %s
-                ORDER BY id
+                SELECT d.id, d.unit, d.description, d.reported_date, d.status, d.completed_date,
+                       d.user_id, d.urgency, d.deadline, d.remarks,
+                       COALESCE(d.element, '') AS element, COALESCE(d.location, '') AS location,
+                       COALESCE(s.name, '') AS scan_name
+                FROM defects d
+                LEFT JOIN scans s ON d.scan_id = s.id
+                WHERE d.user_id = %s
+                ORDER BY d.id
                 """,
                 (user_id,)
             )
         else:
             cur.execute(
                 """
-                SELECT id, unit, description, reported_date, status, completed_date, user_id, urgency, deadline, remarks
-                FROM defects
-                ORDER BY id
+                SELECT d.id, d.unit, d.description, d.reported_date, d.status, d.completed_date,
+                       d.user_id, d.urgency, d.deadline, d.remarks,
+                       COALESCE(d.element, '') AS element, COALESCE(d.location, '') AS location,
+                       COALESCE(s.name, '') AS scan_name
+                FROM defects d
+                LEFT JOIN scans s ON d.scan_id = s.id
+                ORDER BY d.id
                 """
             )
 
         defects = []
         for row in cur.fetchall():
+            element   = row[10] or ''
+            location  = row[11] or ''
+            scan_name = row[12] or ''
+            raw_unit  = row[1]
+            # project_name: explicit unit first, then scan name (taman), then location/element
+            project_name = (
+                raw_unit
+                or scan_name
+                or location
+                or (element[:30] if element else None)
+                or None
+            )
             defect = {
-                "id": row[0],
-                "unit": row[1],
-                "desc": row[2],
-                "reported_date": _to_iso(row[3]),
-                "status": row[4],
+                "id":             row[0],
+                "unit":           project_name,        # kept as "unit" for JS compat
+                "project_name":   project_name,        # explicit alias for templates
+                "scan_name":      scan_name,
+                "desc":           row[2],
+                "reported_date":  _to_iso(row[3]),
+                "status":         row[4] or "Reported",
                 "completed_date": _to_iso(row[5]),
-                "owner_id": row[6],
-                "urgency": row[7],
-                "deadline": _to_iso(row[8]),
-                "remarks": row[9] or "",
+                "owner_id":       row[6],
+                "urgency":        row[7],
+                "deadline":       _to_iso(row[8]),
+                "remarks":        row[9] or "",
+                "element":        element,
+                "location":       location,
             }
 
             defect["hda_compliant"] = calculate_hda_compliance(
@@ -1999,11 +2023,19 @@ def generate_ai_report_api():
         for d in defects:
             if not d.get("id"):
                 missing_fields.append(f"Defect missing ID")
-            if not d.get("unit"):
-                missing_fields.append(f"Defect #{d.get('id', 'unknown')} missing Unit")
             if not d.get("desc"):
                 missing_fields.append(f"Defect #{d.get('id', 'unknown')} missing Description")
-        
+            # unit is only required for module3-form defects;
+            # pinpoint defects from module2 use element/location as identifiers.
+            if not d.get("unit") and not d.get("element") and not d.get("location"):
+                missing_fields.append(
+                    f"Defect #{d.get('id', 'unknown')} has no Unit, Element, or Location — "
+                    "please add a Room/Area via the 3D visualizer."
+                )
+            # Back-fill unit for AI context when only element/location available
+            if not d.get("unit"):
+                d["unit"] = d.get("location") or d.get("element") or "Pinpointed (No Unit)"
+
         if missing_fields:
             return jsonify({
                 "error": "Missing required data in defects",

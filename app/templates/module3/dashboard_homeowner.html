@@ -249,10 +249,10 @@
                     </select>
                     <select id="m3-filter-unit" onchange="applyFilters()"
                         class="rounded-xl border border-slate-300 py-1.5 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none min-w-[140px]">
-                        <option value="">All Units</option>
-                        {% set units = defects | map(attribute='unit') | unique | list %}
-                        {% for unit in units %}
-                        <option value="{{ unit }}">{{ unit }}</option>
+                        <option value="">All Projects</option>
+                        {% set projects = defects | map(attribute='project_name') | select('string') | reject('equalto', 'None') | unique | sort | list %}
+                        {% for p in projects if p %}
+                        <option value="{{ p }}">{{ p }}</option>
                         {% endfor %}
                     </select>
                     <button onclick="resetFilters()"
@@ -264,7 +264,7 @@
                     <thead>
                         <tr class="bg-surface-container-highest/30">
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">ID</th>
-                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Unit</th>
+                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Project / Taman</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Description</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Status</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Remarks</th>
@@ -308,7 +308,9 @@ window.allDefects = [
 {% for d in defects %}
 {
     id: {{ d.id }},
-    unit: {{ d.unit | tojson }},
+    unit: {{ (d.project_name or '') | tojson }},
+    project_name: {{ (d.project_name or '') | tojson }},
+    scan_name: {{ (d.scan_name or '') | tojson }},
     desc: {{ d.desc | tojson }},
     status: {{ d.status | tojson }},
     display_status: {{ ('Closed' if d.closed else d.status) | tojson }},
@@ -327,11 +329,18 @@ window.buildRow = function(d, statusClass) {
     const evidenceBadge = d.evidence_uploaded
         ? `<div style="margin-top:6px;background:#dcfce7;color:#166534;padding:5px 10px;border-radius:8px;font-size:.82rem;font-weight:700;">✓ Uploaded${d.evidence_uploaded_at ? ' (' + d.evidence_uploaded_at + ')' : ''}</div>`
         : '';
+    const projectLabel = d.project_name || d.scan_name || d.unit || '<span style="color:#94a3b8">Pinpointed</span>';
+    // For pinpoint defects, append type in brackets if available
+    const descText = d.desc
+        ? (d.defect_type && d.defect_type !== 'Unknown' && !d.desc.toLowerCase().includes(d.defect_type.toLowerCase())
+            ? `${d.desc} <span style="color:#94a3b8;font-size:.82rem;">[${d.defect_type}]</span>`
+            : d.desc)
+        : '<span style="color:#94a3b8;">No description</span>';
     return `
         <td class="m3-td">#${d.id}</td>
-        <td class="m3-td">${d.unit || '-'}</td>
-        <td class="m3-td" style="max-width:260px;">${d.desc || '-'}</td>
-        <td class="m3-td"><span class="m3-badge ${statusClass}">${d.display_status}</span></td>
+        <td class="m3-td">${projectLabel}</td>
+        <td class="m3-td" style="max-width:260px;">${descText}</td>
+        <td class="m3-td"><span class="m3-badge ${statusClass}">${d.display_status || d.status || 'Reported'}</span></td>
         <td class="m3-td" style="max-width:180px;">${d.remarks || '-'}</td>
         <td class="m3-td">
             <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">

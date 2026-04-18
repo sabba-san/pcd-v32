@@ -197,7 +197,23 @@
 <span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform" data-icon="visibility">visibility</span>
 <span class="text-[9px] uppercase tracking-wider font-bold text-slate-600">Markers</span>
 </button>
+<div class="w-[1px] h-6 bg-slate-200"></div>
+<!-- Report Mode Toggle -->
+<button onclick="toggleReportMode()" id="reportModeBtn" class="flex flex-col items-center gap-1 group">
+  <span class="material-symbols-outlined text-slate-400 group-hover:scale-110 transition-transform" id="reportModeIcon" style="font-variation-settings:'FILL' 0;">add_location_alt</span>
+  <span class="text-[9px] uppercase tracking-wider font-bold text-slate-600" id="reportModeLabel">Report</span>
+</button>
 </div>
+</div>
+<!-- Report Mode Hint Banner -->
+<div id="reportModeBanner" class="absolute top-6 left-1/2 -translate-x-1/2 z-20 hidden">
+  <div class="flex items-center gap-2 bg-amber-500 text-white text-xs font-bold px-5 py-2 rounded-full shadow-lg animate-pulse">
+    <span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 1;">ads_click</span>
+    REPORT MODE ACTIVE — Click anywhere on the model to drop a defect marker
+    <button onclick="toggleReportMode()" class="ml-3 bg-white/20 hover:bg-white/40 rounded-full p-0.5 transition-colors">
+      <span class="material-symbols-outlined text-[14px]">close</span>
+    </button>
+  </div>
 </div>
 <!-- Coordinate Indicator (HUD) -->
 <div id="cameraInfo" class="absolute bottom-6 right-6 z-10 text-[10px] bg-white/80 px-3 py-1.5 rounded-lg backdrop-blur-sm shadow border border-slate-200 font-mono text-slate-500 tracking-widest pointer-events-none">
@@ -252,7 +268,9 @@
 </aside>
 </main>
 
-<!-- Detail Modal -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  VIEW DEFECT MODAL (existing defects)                         -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
 <div id="defectModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm pointer-events-none opacity-0 transition-opacity duration-200">
 <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 scale-95 transition-transform duration-200" id="modalContent">
 <div class="flex h-[400px]">
@@ -262,13 +280,7 @@
     <span class="material-symbols-outlined text-4xl mb-2" data-icon="broken_image">broken_image</span>
     <span class="text-xs font-medium">No Snapshot Available</span>
 </div>
-<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent hover:opacity-100 group"></div>
-<div class="absolute top-4 right-4 z-10">
-    <button id="modalChangeImageBtn" class="flex items-center gap-1.5 bg-black/40 hover:bg-black/70 text-white text-[10px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md transition-all shadow-sm" title="Manually re-assign defect image (Placeholder)">
-        <span class="material-symbols-outlined text-[14px]" data-icon="edit">edit</span>
-        Change Image
-    </button>
-</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 <div class="absolute bottom-4 left-4 text-white">
 <span class="text-[10px] uppercase font-bold tracking-wider opacity-80">Location Data</span>
 <p id="modalLocationText" class="text-xs truncate max-w-[150px]">Processing...</p>
@@ -305,26 +317,149 @@
 <textarea id="modalDefectNotes" class="w-full h-24 bg-slate-50 border border-slate-200 rounded-lg text-sm p-3 focus:ring-primary/20 resize-none outline-none transition-shadow" placeholder="Add observations or instructions for the rectification team..."></textarea>
 </div>
 <div class="flex items-center gap-3 mt-8">
-<button id="modalSaveBtn" class="flex-grow bg-primary text-on-primary py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 hover:shadow-xl hover:translate-y-[-1px] active:scale-[0.98] transition-all">
-                            Save Changes
-                        </button>
-<button onclick="closeDefectModal()" class="bg-white text-slate-700 border border-slate-200 px-6 py-2.5 rounded-lg font-bold hover:bg-slate-50 active:scale-[0.98] transition-all">
-                            Cancel
-                        </button>
+<button id="modalSaveBtn" class="flex-grow bg-primary text-on-primary py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 hover:shadow-xl hover:translate-y-[-1px] active:scale-[0.98] transition-all">Save Changes</button>
+<button onclick="closeDefectModal()" class="bg-white text-slate-700 border border-slate-200 px-4 py-2.5 rounded-lg font-bold hover:bg-slate-50 active:scale-[0.98] transition-all">Cancel</button>
+<button id="modalDeleteBtn" class="flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 px-4 py-2.5 rounded-lg font-bold hover:bg-red-100 active:scale-[0.98] transition-all" title="Permanently delete this defect">
+  <span class="material-symbols-outlined text-[16px]">delete</span>
+  Delete
+</button>
 </div>
 </div>
 </div>
 </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  REPORT DEFECT MODAL (pinpoint new defect submission)         -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="reportDefectModal" class="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-sm pointer-events-none opacity-0 transition-opacity duration-200">
+  <div class="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 scale-95 transition-transform duration-200 overflow-hidden" id="reportModalContent">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-8 pt-7 pb-4 border-b border-slate-100">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center shadow">
+          <span class="material-symbols-outlined text-white text-[20px]" style="font-variation-settings:'FILL' 1;">add_location_alt</span>
+        </div>
+        <div>
+          <p class="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Report Mode</p>
+          <h2 class="text-lg font-headline font-extrabold text-slate-800 leading-tight">New Defect Submission</h2>
+        </div>
+      </div>
+      <button onclick="closeReportModal()" class="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700 transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Pinpointed Coordinates Banner -->
+    <div class="mx-8 mt-5 mb-1 flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+      <span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings:'FILL' 1;">location_on</span>
+      <div>
+        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pinpointed Coordinates</p>
+        <p class="text-sm font-mono font-bold text-slate-800" id="reportCoordDisplay">X: 0.000 | Y: 0.000 | Z: 0.000</p>
+      </div>
+      <div class="ml-auto text-right">
+        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mesh Element</p>
+        <p class="text-xs font-semibold text-slate-600 truncate max-w-[120px]" id="reportElementDisplay">—</p>
+      </div>
+    </div>
+
+    <!-- Form Body -->
+    <div class="px-8 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+
+      <!-- Description (required) -->
+      <div>
+        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Description <span class="text-red-500">*</span></label>
+        <textarea id="reportDescription" rows="3" placeholder="Describe what you see — e.g. ceiling crack near bathroom, water stain on wall..."
+          class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm p-3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 resize-none transition-shadow"></textarea>
+      </div>
+
+      <!-- Defect Type + Severity (two columns) -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Defect Type</label>
+          <select id="reportDefectType" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition-shadow">
+            <option value="Unknown">Unknown</option>
+            <option value="Crack">Crack</option>
+            <option value="Water Damage">Water Damage</option>
+            <option value="Structural">Structural</option>
+            <option value="Finish">Finish / Cosmetic</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Plumbing">Plumbing</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Severity</label>
+          <select id="reportSeverity" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition-shadow">
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Location label (optional) -->
+      <div>
+        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Room / Area (optional)</label>
+        <input type="text" id="reportLocation" placeholder="e.g. Master Bedroom, Kitchen, Living Room"
+          class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition-shadow">
+      </div>
+
+      <!-- Photo Evidence Upload -->
+      <div>
+        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Photographic Evidence (JPG / PNG / PDF)</label>
+        <label id="evidenceDropZone" class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl p-6 cursor-pointer hover:border-amber-400 hover:bg-amber-50/40 transition-all group">
+          <span class="material-symbols-outlined text-3xl text-slate-300 group-hover:text-amber-400 transition-colors" style="font-variation-settings:'FILL' 1;">add_photo_alternate</span>
+          <p class="text-xs font-semibold text-slate-500 group-hover:text-amber-600 transition-colors" id="evidenceLabel">Click to upload or drag &amp; drop</p>
+          <p class="text-[10px] text-slate-400">Max 20 MB · JPG, PNG, PDF</p>
+          <input type="file" id="reportEvidenceFile" accept=".jpg,.jpeg,.png,.pdf" class="hidden">
+        </label>
+      </div>
+
+    </div><!-- /form body -->
+
+    <!-- Footer Actions -->
+    <div class="flex items-center gap-3 px-8 py-5 border-t border-slate-100 bg-slate-50">
+      <button id="submitReportBtn" onclick="submitReportDefect()"
+        class="flex-grow flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-white py-2.5 rounded-xl font-bold shadow-lg shadow-amber-200 transition-all">
+        <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">send</span>
+        Submit Defect Report
+      </button>
+      <!-- Try Again: disposes only the temp pin, stays in Report Mode -->
+      <button onclick="discardPin()"
+        class="flex items-center gap-1.5 bg-white text-slate-600 border border-slate-200 px-4 py-2.5 rounded-xl font-bold hover:bg-slate-100 active:scale-[0.98] transition-all"
+        title="Remove this pin and click elsewhere to try again">
+        <span class="material-symbols-outlined text-[16px]">undo</span>
+        Try Again
+      </button>
+      <!-- Exit: disposes temp pin AND fully deactivates Report Mode -->
+      <button onclick="closeReportModal()"
+        class="bg-white text-slate-400 border border-slate-200 px-3 py-2.5 rounded-xl font-bold hover:bg-slate-100 active:scale-[0.98] transition-all"
+        title="Exit Report Mode">
+        <span class="material-symbols-outlined text-[16px]">close</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <!-- Babylon JS & Logic Scripts -->
 <script>
+    const SCAN_ID = {{ scan_id }};
+    const REPORT_DEFECT_URL = `/scans/${SCAN_ID}/report_defect`;
+
     let currentDefectId = null;
     let engine, scene, camera, wireframeMode = false, xrayMode = false, defectsVisible = true;
     let loadedMeshes = [];
     let markers = []; // each entry: { mesh, defectId }
     let maxModelDim = 10;
     let modelCenterGlobal = null;
+
+    // ── Report Mode state ────────────────────────────────────────────────────
+    let reportModeActive = false;
+    let pendingMarker    = null; // temporary cyan sphere
+    let pendingCoords    = { x: 0, y: 0, z: 0, element: '' };
 
     // ── Defect data baked in from the server ────────────────────────────────
     const ALL_DEFECTS = [
@@ -450,7 +585,180 @@
             .catch(err => alert("Failed to fetch defect data."));
     }
 
+    // ── Report Mode ──────────────────────────────────────────────────────────
+    function toggleReportMode() {
+        reportModeActive = !reportModeActive;
+        const icon   = document.getElementById('reportModeIcon');
+        const label  = document.getElementById('reportModeLabel');
+        const banner = document.getElementById('reportModeBanner');
+        if (reportModeActive) {
+            icon.style.fontVariationSettings = "'FILL' 1";
+            icon.classList.replace('text-slate-400', 'text-amber-500');
+            label.classList.replace('text-slate-600', 'text-amber-600');
+            banner.classList.remove('hidden');
+            // In Report Mode, detach camera control so a click only picks — NOT pans
+            if (camera) camera.detachControl();
+        } else {
+            icon.style.fontVariationSettings = "'FILL' 0";
+            icon.classList.replace('text-amber-500', 'text-slate-400');
+            label.classList.replace('text-amber-600', 'text-slate-600');
+            banner.classList.add('hidden');
+            removePendingMarker();
+            // Restore camera control when leaving Report Mode
+            if (camera) camera.attachControl(document.getElementById('renderCanvas'), true);
+        }
+    }
+
+    function removePendingMarker() {
+        if (pendingMarker) { pendingMarker.dispose(); pendingMarker = null; }
+    }
+
+    function openReportModal(point, meshName) {
+        pendingCoords = { x: point.x, y: point.y, z: point.z, element: meshName || '' };
+        document.getElementById('reportCoordDisplay').textContent =
+            `X: ${point.x.toFixed(3)} | Y: ${point.y.toFixed(3)} | Z: ${point.z.toFixed(3)}`;
+        document.getElementById('reportElementDisplay').textContent = meshName || '—';
+        // Clear form
+        document.getElementById('reportDescription').value = '';
+        document.getElementById('reportDefectType').value  = 'Unknown';
+        document.getElementById('reportSeverity').value    = 'Medium';
+        document.getElementById('reportLocation').value    = '';
+        document.getElementById('reportEvidenceFile').value = '';
+        document.getElementById('evidenceLabel').textContent = 'Click to upload or drag & drop';
+
+        const modal   = document.getElementById('reportDefectModal');
+        const content = document.getElementById('reportModalContent');
+        modal.classList.remove('pointer-events-none', 'opacity-0');
+        modal.classList.add('pointer-events-auto', 'opacity-100');
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+    }
+
+    function closeReportModal() {
+        const modal   = document.getElementById('reportDefectModal');
+        const content = document.getElementById('reportModalContent');
+        modal.classList.add('opacity-0');
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        setTimeout(() => modal.classList.add('pointer-events-none'), 200);
+        content.classList.add('scale-95'); content.classList.remove('scale-100');
+        removePendingMarker();
+        // Fully exit report mode when closing modal via X or Cancel-and-exit
+        if (reportModeActive) toggleReportMode();
+    }
+
+    // Discard the temporary pin but STAY in report mode so user can retry
+    function discardPin() {
+        removePendingMarker();
+        const modal   = document.getElementById('reportDefectModal');
+        const content = document.getElementById('reportModalContent');
+        modal.classList.add('opacity-0');
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        setTimeout(() => modal.classList.add('pointer-events-none'), 200);
+        content.classList.add('scale-95'); content.classList.remove('scale-100');
+        // Keep camera detached (report mode stays on) — re-attach only when toggling off
+    }
+
+    async function submitReportDefect() {
+        const description = document.getElementById('reportDescription').value.trim();
+        if (!description) {
+            document.getElementById('reportDescription').classList.add('ring-2', 'ring-red-400');
+            return;
+        }
+        document.getElementById('reportDescription').classList.remove('ring-2', 'ring-red-400');
+
+        const btn = document.getElementById('submitReportBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> Submitting…';
+
+        const fd = new FormData();
+        fd.append('x',           pendingCoords.x.toFixed(6));
+        fd.append('y',           pendingCoords.y.toFixed(6));
+        fd.append('z',           pendingCoords.z.toFixed(6));
+        fd.append('element',     pendingCoords.element);
+        fd.append('description', description);
+        fd.append('defect_type', document.getElementById('reportDefectType').value);
+        fd.append('severity',    document.getElementById('reportSeverity').value);
+        fd.append('location',    document.getElementById('reportLocation').value.trim());
+
+        const fileInput = document.getElementById('reportEvidenceFile');
+        if (fileInput.files[0]) fd.append('evidence_image', fileInput.files[0]);
+
+        try {
+            const resp = await fetch(REPORT_DEFECT_URL, { method: 'POST', body: fd });
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                alert(data.error || 'Submission failed. Please try again.');
+                return;
+            }
+
+            // ── Success: add live marker to 3D scene ─────────────────────────
+            const d   = data.defect;
+            const pos = new BABYLON.Vector3(parseFloat(d.x), parseFloat(d.y), parseFloat(d.z));
+            const markerSize = maxModelDim * 0.025;
+
+            const newMesh = BABYLON.MeshBuilder.CreateSphere('marker-' + d.id, { diameter: markerSize, segments: 16 }, scene);
+            newMesh.position = pos;
+            newMesh.setParent(null); // explicitly detach
+            newMesh.metadata = { defectId: d.id };
+
+            const mat = new BABYLON.StandardMaterial('mat-new-' + d.id, scene);
+            const sev = (d.severity || '').toLowerCase();
+            if (sev.includes('critical') || sev.includes('high')) {
+                mat.diffuseColor = new BABYLON.Color3(0.9, 0.1, 0.1); mat.emissiveColor = new BABYLON.Color3(0.5, 0, 0);
+            } else if (sev.includes('medium')) {
+                mat.diffuseColor = new BABYLON.Color3(0.95, 0.75, 0.1); mat.emissiveColor = mat.diffuseColor.scale(0.35);
+            } else {
+                mat.diffuseColor = new BABYLON.Color3(0.15, 0.45, 0.95); mat.emissiveColor = mat.diffuseColor.scale(0.35);
+            }
+            newMesh.material = mat;
+
+            newMesh.actionManager = new BABYLON.ActionManager(scene);
+            newMesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+                BABYLON.ActionManager.OnPickTrigger,
+                evt => openDefectModal(evt.meshUnderPointer.metadata.defectId)
+            ));
+
+            markers.push({ mesh: newMesh, defectId: d.id });
+
+            // ── Update sidebar ───────────────────────────────────────────────
+            ALL_DEFECTS.push({ id: d.id, defect_type: d.defect_type, description: d.description, severity: d.severity, status: d.status, x: d.x, y: d.y, z: d.z });
+            filteredDefects = ALL_DEFECTS.slice();
+            renderDefectList(filteredDefects);
+            document.getElementById('defectCount').textContent = filteredDefects.length + ' items';
+
+            closeReportModal();
+            // Auto-deactivate report mode after first submission
+            if (reportModeActive) toggleReportMode();
+
+            // Brief success flash
+            const flash = document.createElement('div');
+            flash.className = 'fixed top-24 right-6 z-[200] bg-green-600 text-white text-sm font-bold px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 animate-pulse';
+            flash.innerHTML = '<span class="material-symbols-outlined text-[18px]">check_circle</span> Defect reported!';
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 3000);
+
+        } catch (err) {
+            alert('Network error. Please check your connection and try again.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:\'FILL\' 1;">send</span> Submit Defect Report';
+        }
+    }
+
+    // Wire up file input label
+    document.addEventListener('DOMContentLoaded', () => {
+        const fi = document.getElementById('reportEvidenceFile');
+        if (fi) fi.addEventListener('change', () => {
+            document.getElementById('evidenceLabel').textContent = fi.files[0] ? fi.files[0].name : 'Click to upload or drag & drop';
+        });
+    });
+
     function closeDefectModal() {
+        // Return camera control to canvas when both modals are closed
+        if (camera && !reportModeActive) {
+            camera.attachControl(document.getElementById('renderCanvas'), true);
+        }
         const modal = document.getElementById('defectModal');
         const content = document.getElementById('modalContent');
         modal.classList.add('opacity-0');
@@ -479,6 +787,48 @@
             window.location.reload(); 
         })
         .finally(() => btn.innerText = 'Save Changes');
+    });
+
+    document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
+        if (!currentDefectId) return;
+        if (!confirm(`Delete defect #DFT-${currentDefectId}? This cannot be undone.`)) return;
+
+        const btn = document.getElementById('modalDeleteBtn');
+        btn.innerText = 'Deleting…';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch(`/defect/${currentDefectId}`, { method: 'DELETE' });
+            if (!resp.ok) { alert('Delete failed. Please try again.'); return; }
+
+            // Remove 3D marker from scene
+            const markerMesh = scene.getMeshByName('marker-' + currentDefectId);
+            if (markerMesh) markerMesh.dispose();
+
+            // Remove from client-side arrays
+            const idx = ALL_DEFECTS.findIndex(d => d.id === currentDefectId);
+            if (idx !== -1) ALL_DEFECTS.splice(idx, 1);
+            const mIdx = markers.findIndex(m => m.defectId === currentDefectId);
+            if (mIdx !== -1) markers.splice(mIdx, 1);
+
+            filteredDefects = ALL_DEFECTS.slice();
+            renderDefectList(filteredDefects);
+            document.getElementById('defectCount').textContent = filteredDefects.length + ' items';
+
+            closeDefectModal();
+
+            // Success toast
+            const flash = document.createElement('div');
+            flash.className = 'fixed top-24 right-6 z-[200] bg-red-600 text-white text-sm font-bold px-5 py-3 rounded-xl shadow-xl flex items-center gap-2';
+            flash.innerHTML = '<span class="material-symbols-outlined text-[18px]">delete</span> Defect deleted.';
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 3000);
+        } catch (e) {
+            alert('Network error.');
+        } finally {
+            btn.innerText = 'Delete';
+            btn.disabled = false;
+        }
     });
 
     // View Controls
@@ -538,12 +888,46 @@
         }
     }
 
+    // ── Babylon.js pointer handler — supports both view & report modes ───────
+    function _onScenePointerDown(evt, originalPickResult) {
+        if (evt.button !== 0) return; // left-click only
+        
+        // Manual raycast to enforce hitting only visible geometry (ignore invisible bounding boxes)
+        const pickResult = scene.pick(scene.pointerX, scene.pointerY, function(mesh) {
+            return mesh.isVisible && mesh.isPickable && mesh.name !== '__root__';
+        });
+
+        if (!pickResult.hit || !pickResult.pickedMesh) return;
+        const meshName = pickResult.pickedMesh.name;
+        if (meshName.startsWith('marker')) {
+            // In Report Mode, ignore existing markers
+            if (!reportModeActive) openDefectModal(pickResult.pickedMesh.metadata?.defectId);
+            return;
+        }
+        if (reportModeActive) {
+            // Drop cyan pending marker
+            removePendingMarker();
+            const markerSize  = maxModelDim * 0.025;
+            pendingMarker     = BABYLON.MeshBuilder.CreateSphere('pending-marker', { diameter: markerSize * 0.8, segments: 12 }, scene);
+            pendingMarker.position = pickResult.pickedPoint.clone();
+            pendingMarker.setParent(null); // explicitly detach from GLB scaling/transformations
+            const pMat = new BABYLON.StandardMaterial('pending-mat', scene);
+            pMat.diffuseColor  = new BABYLON.Color3(0, 1, 1);
+            pMat.emissiveColor = new BABYLON.Color3(0, 0.4, 0.4);
+            pendingMarker.material = pMat;
+            openReportModal(pickResult.pickedPoint, meshName !== '__root__' ? meshName : '');
+        }
+    }
+
     // Initialize 3D Engine
     function initBabylonScene() {
         const canvas = document.getElementById("renderCanvas");
         engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
         scene = new BABYLON.Scene(engine);
         scene.clearColor = BABYLON.Color4.FromHexString("#f1f5f9ff");
+
+        // Attach unified pointer handler
+        scene.onPointerDown = _onScenePointerDown;
 
         // UniversalCamera allows WASD free-roam
         camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 10, -20), scene);
@@ -658,11 +1042,11 @@
                     }
 
                     // Raw Database Fallback:
-                    // If no proxy node exists, render using raw IFC (Z-UP) coordinates via LHS transposition
+                    // If no proxy node exists, render using exact literal coordinates saved in the DB
                     if (!finalPosition) {
                         if (d.x === null || d.x === undefined) return;
-                        const scaleFactor = 1; 
-                        finalPosition = new BABYLON.Vector3(d.x * scaleFactor, d.z * scaleFactor, d.y * scaleFactor);
+                        // Avoid swapping Y/Z and ensure strict float parsing
+                        finalPosition = new BABYLON.Vector3(parseFloat(d.x), parseFloat(d.y), parseFloat(d.z));
                     }
 
                     const mesh = BABYLON.MeshBuilder.CreateSphere(
@@ -671,7 +1055,9 @@
                         loadedScene
                     );
                     
-                    mesh.position = finalPosition;
+                    mesh.position = finalPosition.clone();
+                    mesh.setParent(null); // explicitly detach from any GLB node inheritance
+
 
                     // explicit ID Binding
                     mesh.metadata = { defectId: d.id };
