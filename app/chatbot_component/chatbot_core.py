@@ -1,13 +1,17 @@
-from groq import Groq
-from .dlp_knowledge_base import load_pdf_knowledge
-import pypdf
 import io
+import os
 
-# ⚠️ Paste your actual Groq API key here
-GROQ_API_KEY = "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"
+import pypdf
+from groq import Groq
+
+from .dlp_knowledge_base import load_pdf_knowledge
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 try:
-    client = Groq(api_key=GROQ_API_KEY)
+    client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+    if not GROQ_API_KEY:
+        print("Groq Initialization Error: GROQ_API_KEY is not set.")
 except Exception as e:
     print(f"Groq Initialization Error: {e}")
     client = None

@@ -1,494 +1,334 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LDMS — {{ scan.name }}</title>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>LDMS - Project Details</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#435368",
+                        "error-container": "#fe8983",
+                        "on-primary": "#f8f7ff",
+                        "primary": "#0053db",
+                        "inverse-primary": "#618bff",
+                        "on-error-container": "#752121",
+                        "error": "#9f403d",
+                        "on-primary-fixed-variant": "#0050d4",
+                        "primary-fixed-dim": "#c7d3ff",
+                        "surface-variant": "#d9e4ea",
+                        "tertiary-container": "#ddddfe",
+                        "tertiary-dim": "#4f516c",
+                        "on-error": "#fff7f6",
+                        "surface-container": "#e8eff3",
+                        "surface-container-low": "#f0f4f7",
+                        "primary-dim": "#0048c1",
+                        "primary-container": "#dbe1ff",
+                        "on-primary-container": "#0048bf",
+                        "on-surface": "#2a3439",
+                        "on-tertiary-fixed-variant": "#565873",
+                        "on-tertiary": "#fbf8ff",
+                        "on-tertiary-fixed": "#3a3c55",
+                        "background": "#f7f9fb",
+                        "on-tertiary-container": "#4c4e69",
+                        "on-primary-fixed": "#003798",
+                        "surface-container-high": "#e1e9ee",
+                        "tertiary-fixed-dim": "#cecfef",
+                        "outline-variant": "#a9b4b9",
+                        "secondary-dim": "#44546a",
+                        "inverse-surface": "#0b0f10",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "on-background": "#2a3439",
+                        "secondary": "#506076",
+                        "on-secondary": "#f7f9ff",
+                        "on-secondary-fixed": "#314055",
+                        "surface-tint": "#0053db",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-secondary-fixed-variant": "#4d5d73",
+                        "error-dim": "#4e0309",
+                        "surface": "#f7f9fb",
+                        "tertiary-fixed": "#ddddfe",
+                        "secondary-fixed-dim": "#c5d6f0",
+                        "tertiary": "#5b5d78",
+                        "surface-container-highest": "#d9e4ea",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-dim": "#cfdce3",
+                        "inverse-on-surface": "#9a9d9f",
+                        "outline": "#717c82",
+                        "on-surface-variant": "#566166",
+                        "secondary-container": "#d3e4fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
         }
-
-        body {
-            font-family: 'Space Grotesk', system-ui, sans-serif;
-            background: linear-gradient(135deg, #0b1020 0%, #151d3b 50%, #0b1020 100%);
-            color: #e2e8f0;
-            min-height: 100vh;
-            padding: 2rem;
+        .severity-bar {
+            width: 4px;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
         }
-        body.light-mode {
-            background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), transparent 35%),
-                radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.08), transparent 30%),
-                linear-gradient(135deg, #f8fafc 0%, #e2e8f0 45%, #f5f5f5 100%);
-        }
-
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        /* Top bar */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-            color: #94a3b8;
-        }
-
-        .breadcrumb a {
-            color: #60a5fa;
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        .breadcrumb .sep {
-            color: #475569;
-        }
-
-        .logout-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 0.45rem 0.9rem;
-            border-radius: 999px;
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-            text-decoration: none;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 0.85rem;
-            backdrop-filter: blur(8px);
-            transition: background 0.2s;
-        }
-
-        .logout-btn:hover {
-            background: rgba(239, 68, 68, 0.25);
-        }
-
-        /* Header card */
-        .header-card {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(12px);
-        }
-
-        .header-card h1 {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #f8fafc;
-            margin-bottom: 0.25rem;
-        }
-
-        .header-card h1 i {
-            color: #60a5fa;
-            margin-right: 0.5rem;
-        }
-
-        .header-card .subtitle {
-            color: #94a3b8;
-            font-size: 0.95rem;
-        }
-
-        /* Metadata grid */
-        .meta-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .meta-item {
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 1rem 1.2rem;
-        }
-
-        .meta-item .meta-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: #64748b;
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-        }
-
-        .meta-item .meta-value {
-            font-size: 1rem;
-            color: #f1f5f9;
-            font-weight: 500;
-        }
-
-        /* Table section */
-        .table-card {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 1.5rem 2rem;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(12px);
-        }
-
-        .table-card h2 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #f8fafc;
-            margin-bottom: 1rem;
-        }
-
-        .table-card h2 i {
-            color: #f59e0b;
-            margin-right: 0.5rem;
-        }
-
-        .badge-count {
-            display: inline-block;
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 0.2rem 0.6rem;
-            border-radius: 999px;
-            margin-left: 0.5rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            font-size: 0.9rem;
-        }
-
-        th {
-            color: #64748b;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            font-weight: 600;
-            background: rgba(15, 23, 42, 0.4);
-        }
-
-        th:first-child {
-            border-radius: 8px 0 0 8px;
-        }
-
-        th:last-child {
-            border-radius: 0 8px 8px 0;
-        }
-
-        td {
-            color: #cbd5e1;
-        }
-
-        tr:hover td {
-            background: rgba(59, 130, 246, 0.05);
-        }
-
-        /* Severity colors */
-        .severity-low {
-            color: #4ade80;
-        }
-
-        .severity-medium {
-            color: #facc15;
-        }
-
-        .severity-high {
-            color: #fb923c;
-        }
-
-        .severity-critical {
-            color: #f87171;
-            font-weight: 700;
-        }
-
-        /* Status badges */
-        .status-badge {
-            display: inline-block;
-            padding: 0.2rem 0.6rem;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .status-reported {
-            background: rgba(251, 191, 36, 0.15);
-            color: #fbbf24;
-            border: 1px solid rgba(251, 191, 36, 0.3);
-        }
-
-        .status-underreview {
-            background: rgba(59, 130, 246, 0.15);
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .status-fixed {
-            background: rgba(34, 197, 94, 0.15);
-            color: #4ade80;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-        body.light-mode .status-reported { color: #92400e; }
-        body.light-mode .status-underreview, body.light-mode .status-review { color: #1e40af; }
-        body.light-mode .status-fixed { color: #065f46; }
-
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: #64748b;
-        }
-
-        .empty-state i {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            display: block;
-            color: #475569;
-        }
-
-        /* Action links */
-        .actions {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.65rem 1.2rem;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6, #6366f1);
-            color: #fff;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        .btn-outline {
-            background: rgba(255, 255, 255, 0.05);
-            color: #94a3b8;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .btn-outline:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #f8fafc;
-        }
-
-        body.light-mode {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%);
-            color: #0f172a;
-        }
-        body.light-mode .header-card {
-            background: rgba(255, 255, 255, 0.92);
-            border-color: rgba(0, 0, 0, 0.08);
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
-        }
-        body.light-mode .header-card h1 { color: #0f172a; }
-        body.light-mode .header-card .subtitle { color: #475569; }
-        body.light-mode .meta-item {
-            background: rgba(241, 245, 249, 0.9);
-            border-color: rgba(0, 0, 0, 0.08);
-        }
-        body.light-mode .meta-item .meta-label { color: #64748b; }
-        body.light-mode .meta-item .meta-value { color: #0f172a; }
-        body.light-mode .table-card {
-            background: rgba(255, 255, 255, 0.92);
-            border-color: rgba(0, 0, 0, 0.08);
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
-        }
-        body.light-mode .table-card h2 { color: #0f172a; }
-        body.light-mode th {
-            background: rgba(241, 245, 249, 0.9);
-            color: #475569;
-            border-bottom-color: rgba(0, 0, 0, 0.08);
-        }
-        body.light-mode td {
-            color: #1e293b;
-            border-bottom-color: rgba(0, 0, 0, 0.06);
-        }
-        body.light-mode tr:hover td { background: rgba(59, 130, 246, 0.05); }
-        body.light-mode .breadcrumb { color: #475569; }
-        body.light-mode .breadcrumb a { color: #2563eb; }
-        body.light-mode .breadcrumb .sep { color: #94a3b8; }
-        body.light-mode .btn-outline {
-            background: rgba(255, 255, 255, 0.8);
-            color: #475569;
-            border-color: rgba(0, 0, 0, 0.12);
-        }
-        body.light-mode .btn-outline:hover {
-            background: #f1f5f9;
-            color: #0f172a;
-        }
-        body.light-mode .severity-low { color: #15803d; }
-        body.light-mode .severity-medium { color: #a16207; }
-        body.light-mode .severity-high { color: #c2410c; }
-        body.light-mode .severity-critical { color: #b91c1c; }
-
-    
-        body.light-mode h1, body.light-mode h2, body.light-mode h3, 
-        body.light-mode h4, body.light-mode h5, body.light-mode h6,
-        body.light-mode .defect-title, body.light-mode .info-value, 
-        body.light-mode .count, body.light-mode label, body.light-mode .field-value {
-            color: #0f172a !important;
-        }
-        body.light-mode input, body.light-mode select, body.light-mode textarea,
-        body.light-mode .coordinates, body.light-mode .defect-id {
-            color: #0f172a !important;
-            border-color: rgba(0,0,0,0.15) !important;
-        }
-        body.light-mode .form-group label {
-            color: #475569 !important;
-        }
-
     </style>
 </head>
-
-<body>
-    <script>
-      (function() {
-        if (!localStorage.getItem('theme-set')) {
-          document.body.classList.add('light-mode');
-        } else if (localStorage.getItem('theme') === 'light') {
-          document.body.classList.add('light-mode');
-        }
-      })();
-    </script>
-
-    <div class="container">
-        <!-- Top bar -->
-        <div class="top-bar">
-            <div class="breadcrumb">
-                <a href="{{ url_for('module2.list_projects') }}"><i class="fas fa-folder-open"></i> Projects</a>
-                <span class="sep"><i class="fas fa-chevron-right"></i></span>
-                <span>{{ scan.name }}</span>
-            </div>
-            <a href="{{ url_for('auth.logout') }}" class="logout-btn">
-                <i class="fas fa-user"></i> {{ current_user.username }} <i class="fas fa-sign-out-alt"></i>
-            </a>
-        </div>
-
-        <!-- Header card -->
-        <div class="header-card">
-            <h1><i class="fas fa-cube"></i> {{ scan.name }}</h1>
-            <p class="subtitle">Project details and defect overview</p>
-
-            {% if upload_metadata %}
-            <div class="meta-grid">
-                <div class="meta-item">
-                    <div class="meta-label"><i class="fas fa-calendar"></i> Scan Date</div>
-                    <div class="meta-value">{{ upload_metadata.scan_date }}</div>
-                </div>
-                <div class="meta-item">
-                    <div class="meta-label"><i class="fas fa-map-marker-alt"></i> Location</div>
-                    <div class="meta-value">{{ upload_metadata.location }}</div>
-                </div>
-                <div class="meta-item">
-                    <div class="meta-label"><i class="fas fa-user-shield"></i> Inspector</div>
-                    <div class="meta-value">{{ upload_metadata.inspector }}</div>
-                </div>
-                {% if upload_metadata.notes %}
-                <div class="meta-item">
-                    <div class="meta-label"><i class="fas fa-sticky-note"></i> Notes</div>
-                    <div class="meta-value">{{ upload_metadata.notes }}</div>
-                </div>
-                {% endif %}
-            </div>
+<body class="bg-surface text-on-surface">
+    <div class="flex min-h-screen">
+        <!-- SideNavBar -->
+        <aside class="hidden md:flex flex-col h-screen w-64 bg-[#f0f4f7] p-4 gap-2 fixed left-0 top-0">
+            {% set dashboard_url = url_for('auth.homeowner_dashboard') %}
+            {% if current_user.user_type == 'developer' %}
+              {% set dashboard_url = url_for('auth.developer_dashboard') %}
+            {% elif current_user.user_type == 'lawyer' %}
+              {% set dashboard_url = url_for('auth.lawyer_dashboard') %}
             {% endif %}
-        </div>
-
-        <!-- Defects table -->
-        <div class="table-card">
-            <h2><i class="fas fa-bug"></i> Defects <span class="badge-count">{{ defects|length }}</span></h2>
-            {% if defects %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Location</th>
-                        <th>Type</th>
-                        <th>Severity</th>
-                        <th>Status</th>
-                        <th>Notes</th>
-                        <th>Created</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for defect in defects %}
-                    <tr>
-                        <td><strong>#{{ defect.id }}</strong></td>
-                        <td>{{ defect.location or 'Not specified' }}</td>
-                        <td>{{ defect.defect_type or 'Unknown' }}</td>
-                        <td><span class="severity-{{ defect.severity.lower() }}">{{ defect.severity }}</span></td>
-                        <td><span class="status-badge status-{{ defect.status.lower().replace(' ', '') }}">{{
-                                defect.status }}</span></td>
-                        <td>{{ defect.notes or '—' }}</td>
-                        <td>{{ defect.created_at.strftime('%Y-%m-%d') if defect.created_at else '—' }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="empty-state">
-                <i class="fas fa-check-circle"></i>
-                <p>No defects found for this project.</p>
+            <div class="mb-8 px-2">
+                <div class="flex items-center gap-3 mb-1">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'FILL' 1;">architecture</span>
+                    </div>
+                    <span class="font-headline font-extrabold text-[#0053db] text-xl tracking-tight">DLP ADVISOR</span>
+                </div>
             </div>
-            {% endif %}
-        </div>
+            <nav class="flex-1 space-y-1">
+                <a class="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all duration-200 group" href="{{ dashboard_url }}">
+                    <span class="material-symbols-outlined text-xl">grid_view</span>
+                    <span class="font-medium text-sm">Dashboard</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 bg-white text-[#0053db] rounded-lg shadow-sm font-semibold transition-all duration-200" href="{{ url_for('module2.list_projects') }}">
+                    <span class="material-symbols-outlined text-xl">folder_open</span>
+                    <span class="font-medium text-sm">Projects</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all duration-200" href="{{ url_for('module3.dashboard') }}">
+                    <span class="material-symbols-outlined text-xl">pest_control</span>
+                    <span class="font-medium text-sm">Defects</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all duration-200" href="javascript:void(0)" onclick="alert('Feature coming soon in future updates.');">
+                    <span class="material-symbols-outlined text-xl">engineering</span>
+                    <span class="font-medium text-sm">Inspectors</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all duration-200" href="javascript:void(0)" onclick="alert('Feature coming soon in future updates.');">
+                    <span class="material-symbols-outlined text-xl">settings</span>
+                    <span class="font-medium text-sm">Settings</span>
+                </a>
+            </nav>
+            <div class="mt-auto pt-4 space-y-1">
+                <a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-900 text-sm" href="javascript:void(0)" onclick="alert('Feature coming soon in future updates.');">
+                    <span class="material-symbols-outlined text-lg">contact_support</span>
+                    <span>Support</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-900 text-sm" href="javascript:void(0)" onclick="alert('Feature coming soon in future updates.');">
+                    <span class="material-symbols-outlined text-lg">history</span>
+                    <span>Logs</span>
+                </a>
+                <div class="mt-4 p-3 bg-white/50 rounded-xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+                            <span class="material-symbols-outlined mt-1 ml-1 text-slate-400">person</span>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-xs font-bold truncate">{{ current_user.name or current_user.username or 'Username' }}</p>
+                            <p class="text-[10px] text-on-surface-variant uppercase">{{ current_user.user_type if current_user.is_authenticated else 'User' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
-        <!-- Action buttons -->
-        <div class="actions">
-            <a href="{{ url_for('module2.visualize_scan', scan_id=scan_id) }}" class="btn btn-primary">
-                <i class="fas fa-cube"></i> View 3D Model
-            </a>
-            <a href="{{ url_for('module2.list_projects') }}" class="btn btn-outline">
-                <i class="fas fa-arrow-left"></i> Back to Projects
-            </a>
-        </div>
+        <!-- Main Content -->
+        <main class="flex-1 md:ml-64 bg-surface min-h-screen pb-24">
+            <!-- TopNavBar -->
+            <header class="flex justify-between items-center w-full px-8 py-4 bg-[#f7f9fb] z-50 sticky top-0">
+                <div class="flex items-center gap-4">
+                    <button class="md:hidden p-2 rounded-lg hover:bg-slate-100">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="flex items-baseline gap-2">
+                        <h1 class="font-headline font-bold text-lg tracking-tight text-on-surface">{{ scan.name }}</h1>
+                        <span class="text-xs font-medium text-on-surface-variant px-2 py-0.5 bg-surface-container rounded-full">Active Project</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative hidden sm:block">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                        <input class="bg-surface-container-low border-none rounded-full py-1.5 pl-9 pr-4 text-xs w-64 focus:ring-1 focus:ring-primary/20 placeholder:text-on-surface-variant/50" placeholder="Search defects..." type="text">
+                    </div>
+                    <button class="p-2 text-on-surface-variant hover:bg-slate-100 rounded-full transition-colors" onclick="alert('No new notifications');">
+                        <span class="material-symbols-outlined">notifications</span>
+                    </button>
+                    <button class="p-2 text-on-surface-variant hover:bg-slate-100 rounded-full transition-colors" onclick="alert('Help center loading...');">
+                        <span class="material-symbols-outlined">help_outline</span>
+                    </button>
+                    <a href="{{ url_for('auth.logout') }}" class="p-2 text-error hover:bg-red-50 rounded-full transition-colors" title="Logout">
+                        <span class="material-symbols-outlined">logout</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Content Container -->
+            <div class="px-8 mt-6">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-headline font-extrabold text-on-surface">Project Details</h2>
+                    <p class="text-on-surface-variant font-medium mt-1">Project details and defect overview</p>
+                </div>
+
+                <!-- Metadata Cards Bento Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                    <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 flex flex-col gap-3 transition-all hover:border-primary/20">
+                        <div class="w-10 h-10 rounded-lg bg-primary-container/30 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined">calendar_today</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant/70">Scan Date</p>
+                            <p class="font-headline font-bold text-on-surface">{{ upload_metadata.scan_date if upload_metadata and upload_metadata.scan_date else 'N/A' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 flex flex-col gap-3 transition-all hover:border-primary/20">
+                        <div class="w-10 h-10 rounded-lg bg-secondary-container/30 flex items-center justify-center text-secondary">
+                            <span class="material-symbols-outlined">location_on</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant/70">Location</p>
+                            <p class="font-headline font-bold text-on-surface truncate">{{ upload_metadata.address if upload_metadata and upload_metadata.address else (scan.name) }}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 flex flex-col gap-3 transition-all hover:border-primary/20">
+                        <div class="w-10 h-10 rounded-lg bg-tertiary-container/30 flex items-center justify-center text-tertiary">
+                            <span class="material-symbols-outlined">badge</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant/70">Inspector</p>
+                            <p class="font-headline font-bold text-on-surface truncate">{{ current_user.name or current_user.username or 'Inspector' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 flex flex-col gap-3 transition-all hover:border-primary/20">
+                        <div class="w-10 h-10 rounded-lg bg-surface-container-high/40 flex items-center justify-center text-on-surface-variant">
+                            <span class="material-symbols-outlined">description</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant/70">Notes</p>
+                            <p class="font-headline font-bold text-on-surface truncate" title="{{ upload_metadata.notes if upload_metadata and upload_metadata.notes else 'None' }}">{{ upload_metadata.notes if upload_metadata and upload_metadata.notes else 'None' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Defects Table Section -->
+                <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden">
+                    <div class="px-6 py-5 flex items-center justify-between border-b border-surface-container">
+                        <h3 class="font-headline font-bold text-lg">Defect Log</h3>
+                        <div class="flex items-center gap-2">
+                            <button id="filter-defects-btn" class="px-3 py-1.5 text-xs font-semibold bg-surface-container-low text-on-surface-variant rounded-lg hover:bg-surface-container-high transition-colors">Filter</button>
+                            <button id="export-defects-btn" class="px-3 py-1.5 text-xs font-semibold bg-surface-container-low text-on-surface-variant rounded-lg hover:bg-surface-container-high transition-colors">Export</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-surface-container-low/50">
+                                    <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">ID</th>
+                                    <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">Location</th>
+                                    <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">Type</th>
+                                    <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">Severity</th>
+                                    <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">Status</th>
+                                    <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">Notes</th>
+                                    <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">Created</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-surface-container/50">
+                                {% if defects %}
+                                    {% for defect in defects %}
+                                    <tr class="group hover:bg-surface-container-low transition-colors relative">
+                                        <td class="px-6 py-5 font-headline font-bold text-sm text-on-surface">#{{ defect.id }}</td>
+                                        <td class="px-6 py-5 text-sm font-medium">{{ defect.location or 'Not specified' }}</td>
+                                        <td class="px-6 py-5 text-sm text-on-surface-variant">{{ defect.defect_type or 'Unknown' }}</td>
+                                        <td class="px-6 py-5">
+                                            <div class="flex items-center gap-2">
+                                                {% if defect.severity|lower == 'critical' %}
+                                                    <div class="w-2 h-2 rounded-full bg-error"></div>
+                                                    <span class="text-sm font-semibold text-error">Critical</span>
+                                                {% elif defect.severity|lower == 'high' %}
+                                                    <div class="w-2 h-2 rounded-full bg-orange-500"></div>
+                                                    <span class="text-sm font-semibold text-orange-600">High</span>
+                                                {% elif defect.severity|lower == 'low' %}
+                                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                                    <span class="text-sm font-semibold text-green-600">Low</span>
+                                                {% else %}
+                                                    <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+                                                    <span class="text-sm font-semibold text-amber-600">{{ defect.severity or 'Medium' }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-5">
+                                            {% if defect.status|lower == 'reported' %}
+                                                <span class="px-2.5 py-1 bg-primary-container text-on-primary-container text-[10px] font-bold uppercase tracking-wider rounded-full">{{ defect.status }}</span>
+                                            {% elif defect.status|lower == 'fixed' or defect.status|lower == 'resolved' %}
+                                                <span class="px-2.5 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider rounded-full">{{ defect.status }}</span>
+                                            {% else %}
+                                                <span class="px-2.5 py-1 bg-surface-container-high text-on-surface-variant text-[10px] font-bold uppercase tracking-wider rounded-full">{{ defect.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-5 text-sm text-on-surface-variant max-w-xs truncate" title="{{ defect.notes }}">{{ defect.notes or '—' }}</td>
+                                        <td class="px-6 py-5 text-sm text-on-surface-variant">{{ defect.created_at.strftime('%Y-%m-%d') if defect.created_at else '—' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-10 text-center text-sm text-on-surface-variant">
+                                            No defects found for this project.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if defects %}
+                    <div class="px-6 py-4 bg-surface-container-low/30 flex justify-between items-center">
+                        <span class="text-xs text-on-surface-variant font-medium">Showing {{ defects|length }} defects found</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Footer Actions Fixed -->
+            <div class="fixed bottom-0 left-0 md:left-64 right-0 p-6 bg-surface/80 backdrop-blur-md flex justify-between items-center border-t border-outline-variant/5">
+                <a href="{{ url_for('module2.list_projects') }}" class="flex items-center gap-2 px-6 py-3 bg-surface-container-highest text-on-surface font-bold text-sm rounded-xl transition-all hover:bg-surface-container-high active:scale-95">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Back to Projects
+                </a>
+                <a href="{{ url_for('module2.visualize_scan', scan_id=scan.id) }}" class="flex items-center gap-2 px-8 py-3 bg-gradient-to-br from-primary to-primary-dim text-on-primary font-bold text-sm rounded-xl shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30 active:scale-95">
+                    <span class="material-symbols-outlined">view_in_ar</span>
+                    View 3D Model
+                </a>
+            </div>
+        </main>
     </div>
 </body>
-
 </html>
