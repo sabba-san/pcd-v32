@@ -272,6 +272,90 @@ def create_defect(scan_id):
     db.session.commit()
     return jsonify({'message': 'Defect created', 'defectId': defect.id}), 201
 
+
+ALLOWED_EVIDENCE_EXTS = {'.jpg', '.jpeg', '.png', '.pdf'}
+
+@module2.route('/scans/<int:scan_id>/report_defect', methods=['POST'])
+@login_required
+def report_defect(scan_id):
+    """Homeowner pinpoint-defect submission with optional photographic evidence."""
+    scan = Scan.query.get_or_404(scan_id)
+
+    # ── Coordinates (from hidden form fields set by Babylon.js) ─────────────
+    try:
+        x = float(request.form.get('x', 0))
+        y = float(request.form.get('y', 0))
+        z = float(request.form.get('z', 0))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid coordinate values.'}), 400
+
+    element     = request.form.get('element', '').strip()
+    description = request.form.get('description', '').strip()
+    defect_type = request.form.get('defect_type', 'Unknown').strip()
+    severity    = request.form.get('severity', 'Medium').strip()
+    location    = request.form.get('location', '').strip()
+    notes       = request.form.get('notes', '').strip()
+
+    if not description:
+        return jsonify({'error': 'Defect description is required.'}), 400
+
+    # ── Optional photographic evidence upload ────────────────────────────────
+    image_path = None
+    evidence_file = request.files.get('evidence_image')
+    if evidence_file and evidence_file.filename:
+        _, ext = os.path.splitext(evidence_file.filename.lower())
+        if ext not in ALLOWED_EVIDENCE_EXTS:
+            return jsonify({'error': f'Invalid file type. Allowed: {", ".join(ALLOWED_EVIDENCE_EXTS)}'}), 400
+
+        import uuid
+        safe_name   = secure_filename(evidence_file.filename)
+        unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+        evidence_dir = os.path.join(
+            current_app.instance_path, 'uploads', 'upload_data', 'evidence'
+        )
+        os.makedirs(evidence_dir, exist_ok=True)
+        save_path = os.path.join(evidence_dir, unique_name)
+        evidence_file.save(save_path)
+        # Store relative path so it can be served back via serve_defect_image
+        image_path = os.path.join('evidence', unique_name)
+
+    # ── Persist defect record ────────────────────────────────────────────────
+    defect = Defect(
+        scan_id=scan_id,
+        user_id=current_user.id,
+        x=x,
+        y=y,
+        z=z,
+        element=element,
+        location=location,
+        defect_type=defect_type,
+        severity=severity,
+        description=description,
+        status='Reported',
+        notes=notes,
+        image_path=image_path,
+    )
+    db.session.add(defect)
+    db.session.commit()
+
+    image_url = url_for('module2.serve_defect_image', defect_id=defect.id) if image_path else None
+
+    return jsonify({
+        'message': 'Defect reported successfully.',
+        'defect': {
+            'id':          defect.id,
+            'x':           defect.x,
+            'y':           defect.y,
+            'z':           defect.z,
+            'element':     defect.element,
+            'description': defect.description,
+            'defect_type': defect.defect_type,
+            'severity':    defect.severity,
+            'status':      defect.status,
+            'imageUrl':    image_url,
+        }
+    }), 201
+
 @module2.route('/scans/<int:scan_id>/model', methods=['GET'])
 @login_required
 def serve_model(scan_id):
