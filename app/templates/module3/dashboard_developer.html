@@ -157,6 +157,7 @@
                 <input type="hidden" name="language" id="m3-pdf-language" value="ms">
                 <input type="hidden" name="claimant_user_id" id="m3-pdf-claimant-user-id" value="">
                 <input type="hidden" name="ai_report" id="m3-pdf-ai-report" value="">
+                <input type="hidden" name="project_filter" id="m3-pdf-project-filter" value="">
                 <button id="m3-export-btn" class="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-6 py-2.5 rounded-xl font-bold hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" disabled>
                     <span class="material-symbols-outlined text-lg">picture_as_pdf</span>Export PDF
                 </button>
@@ -229,6 +230,10 @@
         <div id="m3-completion-date-wrapper" style="display:none;" class="mb-4">
             <label class="block text-sm font-semibold text-slate-700 mb-1">Completion Date</label>
             <input type="date" id="m3-completion-date" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Deadline Date</label>
+            <input type="date" id="m3-deadline-date" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none">
         </div>
         <div class="flex justify-end gap-3">
             <button onclick="closeUpdateModal()" class="px-5 py-2 rounded-xl border border-slate-300 font-semibold text-sm hover:bg-slate-50">Cancel</button>

@@ -1,6 +1,21 @@
 // ============================================================
 // dashboard_module3.js  – Consolidated JS for all M3 dashboards
 // Depends on: window.M3_CONFIG being set by the template
+//
+// Report "Missing data" debugger notes:
+// Point A (HTML):
+//   Inputs can exist visually but still fail the flow if the expected
+//   ids/names are missing or mismatched. In that case JS reads empty values
+//   even though the user typed into the form.
+// Point B (JS):
+//   The save/generate payload may omit specific fields entirely. If the JSON
+//   or FormData body does not include the homeowner/respondent fields the
+//   backend expects, the database never receives them.
+// Point C (Backend):
+//   The Flask route can receive a valid payload but still fail to persist or
+//   map it into report_homeowner_profile / report_respondent_profile. When
+//   that happens, later report validation reads incomplete DB rows and raises
+//   the "Missing data" error during generation.
 // ============================================================
 
 const M3 = window.M3_CONFIG || {};
@@ -104,6 +119,7 @@ function applyFilters() {
         const um = !unitFilter   || d.unit === unitFilter;
         return sm && um;
     });
+    invalidateReportExport();
     populateTable(filtered);
 }
 
@@ -112,15 +128,23 @@ function resetFilters() {
     const u = document.getElementById('m3-filter-unit');
     if (s) s.value = '';
     if (u) u.value = '';
+    invalidateReportExport();
     populateTable(window.allDefects || []);
 }
 
 // ── Report generation ────────────────────────────────────────
+function getSelectedProjectFilter() {
+    const value = (document.getElementById('m3-filter-unit') || {}).value || '';
+    return String(value).trim();
+}
+
 function invalidateReportExport() {
     const btn = document.getElementById('m3-export-btn');
     const inp = document.getElementById('m3-pdf-ai-report');
+    const pdfProject = document.getElementById('m3-pdf-project-filter');
     if (btn) btn.disabled = true;
     if (inp) inp.value = '';
+    if (pdfProject) pdfProject.value = getSelectedProjectFilter();
 }
 
 function generateReport() {
@@ -129,12 +153,15 @@ function generateReport() {
 
     const claimantSel = document.getElementById('m3-claimant-select');
     const claimantUserId = claimantSel ? claimantSel.value : '';
+    const projectFilter = getSelectedProjectFilter();
 
     invalidateReportExport();
     const pdfLang = document.getElementById('m3-pdf-language');
     const pdfCid  = document.getElementById('m3-pdf-claimant-user-id');
+    const pdfProject = document.getElementById('m3-pdf-project-filter');
     if (pdfLang) pdfLang.value = lang;
     if (pdfCid)  pdfCid.value  = claimantUserId;
+    if (pdfProject) pdfProject.value = projectFilter;
 
     const output = document.getElementById('m3-report-output');
     const preview = document.getElementById('m3-report-preview');
@@ -144,7 +171,12 @@ function generateReport() {
     fetch(`${BASE}/generate_ai_report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: M3.role, language: lang, claimant_user_id: claimantUserId }),
+        body: JSON.stringify({
+            role: M3.role,
+            language: lang,
+            claimant_user_id: claimantUserId,
+            project_filter: projectFilter,
+        }),
     })
     .then(r => r.json())
     .then(data => {
@@ -177,12 +209,20 @@ function generateReport() {
 function saveClaimDetails() {
     const g = id => (document.getElementById(id) || {}).value || '';
     const payload = {
+        homeowner_address: g('m3-homeowner-address'),
         court_location:   g('m3-court-location'),
         state_name:       g('m3-state-name'),
         item_service:     g('m3-item-service'),
         transaction_date: g('m3-transaction-date'),
         claim_amount:     g('m3-claim-amount'),
+        respondent_company_name: g('m3-respondent-company-name'),
+        respondent_registration_number: g('m3-respondent-registration-number'),
+        respondent_email: g('m3-respondent-email'),
+        respondent_phone_number: g('m3-respondent-phone-number'),
+        respondent_address: g('m3-respondent-address'),
     };
+    console.table(payload);
+    console.log('SENDING TO BACKEND:', payload);
     fetch(`${BASE}/save_homeowner_claim_details`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -191,6 +231,39 @@ function saveClaimDetails() {
     .then(r => r.json())
     .then(d => showToast(d.success ? 'Claim details saved.' : (d.error || 'Save failed.'), d.success ? 'success' : 'error'))
     .catch(() => showToast('Save failed.', 'error'));
+}
+
+// ── Report data inspector (Debug) ───────────────────────────
+function closeClaimStateInspector() {
+    const modal = document.getElementById('m3-claim-debug-modal');
+    if (modal) modal.classList.remove('m3-modal-show');
+}
+
+function inspectSavedData() {
+    const output = document.getElementById('m3-claim-debug-output');
+    const modal = document.getElementById('m3-claim-debug-modal');
+    if (modal) modal.classList.add('m3-modal-show');
+    if (output) output.textContent = 'Loading saved claim state…';
+
+    fetch(`${BASE}/debug/claim_state`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+    })
+    .then(async response => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.error || `Debug request failed with ${response.status}`);
+        }
+        console.log('CLAIM STATE DEBUG:', data);
+        if (output) output.textContent = JSON.stringify(data, null, 2);
+    })
+    .catch(error => {
+        const message = error && error.message ? error.message : 'Debug request failed.';
+        console.error('CLAIM STATE DEBUG ERROR:', error);
+        if (output) output.textContent = message;
+        showToast(message, 'error');
+        alert(message);
+    });
 }
 
 // ── Court location helper ────────────────────────────────────
@@ -237,6 +310,8 @@ function openUpdateModal(id) {
     if (overlay) overlay.classList.add('m3-modal-show');
     const ss = document.getElementById('m3-new-status-select');
     if (ss) { ss.value = 'In Progress'; _onStatusSelectChange(); }
+    const dd = document.getElementById('m3-deadline-date');
+    if (dd) dd.value = d && d.deadline ? d.deadline : '';
 }
 function closeUpdateModal() {
     const overlay = document.getElementById('m3-update-modal');
@@ -251,8 +326,10 @@ function confirmUpdate() {
     const id  = _currentUpdateId;
     const ss  = document.getElementById('m3-new-status-select');
     const cdi = document.getElementById('m3-completion-date');
+    const ddi = document.getElementById('m3-deadline-date');
     const status = ss ? ss.value : '';
     const completed_date = cdi ? cdi.value : '';
+    const deadline = ddi ? ddi.value : '';
     if (status === 'Completed' && !completed_date) {
         showToast('Please select a completion date.', 'warning'); return;
     }
@@ -264,7 +341,7 @@ function confirmUpdate() {
     fetch(`${BASE}/update_status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status, completed_date }),
+        body: JSON.stringify({ id, status, completed_date, deadline }),
     })
     .then(r => r.json())
     .then(data => {

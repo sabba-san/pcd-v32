@@ -152,7 +152,7 @@
                             <span class="material-symbols-outlined mt-1 ml-1 text-slate-400">person</span>
                         </div>
                         <div class="overflow-hidden">
-                            <p class="text-xs font-bold truncate">{{ current_user.name or current_user.username or 'Username' }}</p>
+                            <p class="text-xs font-bold truncate">{{ current_user.full_name or 'Username' }}</p>
                             <p class="text-[10px] text-on-surface-variant uppercase">{{ current_user.user_type if current_user.is_authenticated else 'User' }}</p>
                         </div>
                     </div>
@@ -225,7 +225,7 @@
                         </div>
                         <div>
                             <p class="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant/70">Inspector</p>
-                            <p class="font-headline font-bold text-on-surface truncate">{{ current_user.name or current_user.username or 'Inspector' }}</p>
+                            <p class="font-headline font-bold text-on-surface truncate">{{ current_user.full_name or 'Inspector' }}</p>
                         </div>
                     </div>
 

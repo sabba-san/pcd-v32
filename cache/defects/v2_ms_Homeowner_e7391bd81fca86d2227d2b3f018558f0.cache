@@ -1,0 +1,50 @@
+[
+  {
+    "id": 7,
+    "unit": "A-12-3A",
+    "desc": "Kebolehkan bocor di bilik tidur utama",
+    "priority": "Tinggi"
+  },
+  {
+    "id": 8,
+    "unit": "A-12-3A",
+    "desc": "Reticula halus pada dinding ruang tamu",
+    "priority": "Sederhana"
+  },
+  {
+    "id": 9,
+    "unit": "B-05-2B",
+    "desc": "Rembesan air di belakang dinding dapur",
+    "priority": "Tinggi"
+  },
+  {
+    "id": 10,
+    "unit": "B-05-2B",
+    "desc": "Kerangka pintu rosak – bilik tidur 2",
+    "priority": "Rendah"
+  },
+  {
+    "id": 11,
+    "unit": "C-08-1C",
+    "desc": "Jubin retak di bilik mandi",
+    "priority": "Sederhana"
+  },
+  {
+    "id": 12,
+    "unit": "C-08-1C",
+    "desc": "Soket elektrik rosak – lorong",
+    "priority": "Segera"
+  },
+  {
+    "id": 42,
+    "unit": "taman rumah aiman",
+    "desc": "retak pada dinding",
+    "priority": null
+  },
+  {
+    "id": 43,
+    "unit": "taman rumah aiman",
+    "desc": "Retak berhampiran tingkap",
+    "priority": null
+  }
+]

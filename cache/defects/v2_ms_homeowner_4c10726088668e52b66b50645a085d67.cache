@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "unit": "taman bunda rahmat",
+    "desc": "IfcBuildingElementProxy/Snapshot-3dKdx67knAKveQB7ZGz1MS",
+    "priority": null
+  },
+  {
+    "id": 2,
+    "unit": "taman bunda rahmat",
+    "desc": "IfcBuildingElementProxy/Snapshot-2UAhq9SKL9$gur2PEd5wuS",
+    "priority": null
+  },
+  {
+    "id": 3,
+    "unit": "taman bunda rahmat",
+    "desc": "IfcBuildingElementProxy/Snapshot-0drNXk_2jBAQ1w1MZ9hABN",
+    "priority": null
+  },
+  {
+    "id": 4,
+    "unit": "taman bunda rahmat",
+    "desc": "IfcBuildingElementProxy/Snapshot-09iUMdab13shgWia1TcMDP",
+    "priority": null
+  },
+  {
+    "id": 5,
+    "unit": "taman bunda rahmat",
+    "desc": "IfcBuildingElementProxy/Snapshot-1BNMZE$gX1ywOmls1SZmob",
+    "priority": null
+  },
+  {
+    "id": 6,
+    "unit": "taman bunda rahmat",
+    "desc": "IfcBuildingElementProxy/Snapshot-3pVD$YfjH7WOu6GD5Y4CZs",
+    "priority": null
+  },
+  {
+    "id": 7,
+    "unit": "A-12-3A",
+    "desc": "Bocor siling di bilik tidur utama",
+    "priority": "Tinggi"
+  },
+  {
+    "id": 8,
+    "unit": "A-12-3A",
+    "desc": "Reticula halus pada dinding ruang tamu",
+    "priority": "Sederhana"
+  },
+  {
+    "id": 9,
+    "unit": "B-05-2B",
+    "desc": "Rembesan air di belakang dinding dapur",
+    "priority": "Tinggi"
+  },
+  {
+    "id": 10,
+    "unit": "B-05-2B",
+    "desc": "Kerangka pintu rosak – bilik tidur 2",
+    "priority": "Rendah"
+  },
+  {
+    "id": 11,
+    "unit": "C-08-1C",
+    "desc": "Jubin retak di bilik air",
+    "priority": "Sederhana"
+  },
+  {
+    "id": 12,
+    "unit": "C-08-1C",
+    "desc": "Soket elektrik rosak – lorong",
+    "priority": "Segera"
+  },
+  {
+    "id": 42,
+    "unit": "taman rumah aiman",
+    "desc": "retak pada dinding",
+    "priority": null
+  },
+  {
+    "id": 43,
+    "unit": "taman rumah aiman",
+    "desc": "Retak berhampiran tingkap",
+    "priority": null
+  }
+]
