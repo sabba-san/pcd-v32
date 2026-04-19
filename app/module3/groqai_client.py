@@ -4,6 +4,13 @@ from groq import Groq
 
 _client = None  # singleton
 
+
+def _get_sanitized_api_key() -> str:
+    raw_value = os.getenv("GROQ_API_KEY", "")
+    api_key = raw_value.strip().strip('"').strip("'").strip()
+    return api_key
+
+
 def get_ai_client():
     """
     Get Groq AI client
@@ -13,7 +20,7 @@ def get_ai_client():
     if _client is not None:
         return _client
 
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = _get_sanitized_api_key()
 
     if not api_key:
         raise RuntimeError(

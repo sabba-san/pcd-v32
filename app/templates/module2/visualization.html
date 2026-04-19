@@ -126,7 +126,7 @@
 <span class="material-symbols-outlined text-slate-600" data-icon="settings">settings</span>
 </button>
 <div class="h-8 w-8 rounded-full flex items-center justify-center bg-primary text-on-primary font-bold overflow-hidden border border-slate-200 shadow-sm">
-{{ current_user.username[:1].upper() if current_user.username else 'U' }}
+{{ current_user.full_name[:1].upper() if current_user.full_name else 'U' }}
 </div>
 </div>
 </header>
@@ -406,6 +406,12 @@
           class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition-shadow">
       </div>
 
+      <div>
+        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Deadline Date</label>
+        <input type="date" id="reportDeadline" name="deadline"
+          class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition-shadow">
+      </div>
+
       <!-- Photo Evidence Upload -->
       <div>
         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Photographic Evidence (JPG / PNG / PDF)</label>
@@ -623,6 +629,8 @@
         document.getElementById('reportDefectType').value  = 'Unknown';
         document.getElementById('reportSeverity').value    = 'Medium';
         document.getElementById('reportLocation').value    = '';
+        const defaultDeadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        document.getElementById('reportDeadline').value = defaultDeadline.toISOString().slice(0, 10);
         document.getElementById('reportEvidenceFile').value = '';
         document.getElementById('evidenceLabel').textContent = 'Click to upload or drag & drop';
 
@@ -679,6 +687,7 @@
         fd.append('defect_type', document.getElementById('reportDefectType').value);
         fd.append('severity',    document.getElementById('reportSeverity').value);
         fd.append('location',    document.getElementById('reportLocation').value.trim());
+        fd.append('deadline',    document.getElementById('reportDeadline').value);
 
         const fileInput = document.getElementById('reportEvidenceFile');
         if (fileInput.files[0]) fd.append('evidence_image', fileInput.files[0]);

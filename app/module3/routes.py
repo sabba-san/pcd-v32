@@ -325,6 +325,17 @@ def _current_role():
     return current_user.user_type if current_user.is_authenticated else None
 
 
+def _current_role_key():
+    role = _current_role()
+    return role.lower() if isinstance(role, str) else None
+
+
+def _current_actor_name():
+    if current_user.is_authenticated:
+        return getattr(current_user, "full_name", None) or getattr(current_user, "email", None) or f"user:{current_user.id}"
+    return ""
+
+
 def _current_user_id():
     return current_user.id if current_user.is_authenticated else None or (SIMULATED_LOGIN_USER_ID if ENABLE_DEMO_LOGIN_FALLBACK else None)
 
@@ -528,28 +539,65 @@ def get_homeowner_claim_details(user_id):
     try:
         cur.execute(
             """
-            SELECT court_location, state_name, item_service, transaction_date, claim_amount
+            SELECT court_location, state_name, item_service, transaction_date, claim_amount, address
             FROM report_homeowner_profile
             WHERE homeowner_id = %s
             """,
             (user_id,),
         )
-        row = cur.fetchone()
-        if not row:
-            return {
-                "court_location": "",
-                "state_name": "",
-                "item_service": _default_item_service(),
-                "transaction_date": "",
-                "claim_amount": "",
-            }
-        return {
-            "court_location": row[0] or "",
-            "state_name": row[1] or "",
-            "item_service": _normalise_item_service(row[2]),
-            "transaction_date": row[3].strftime("%Y-%m-%d") if row[3] else "",
-            "claim_amount": str(row[4]) if row[4] is not None else "",
+        homeowner_row = cur.fetchone()
+
+        cur.execute("ALTER TABLE report_respondent_profile ADD COLUMN IF NOT EXISTS homeowner_id INTEGER")
+        cur.execute(
+            """
+            SELECT company_name, registration_number, email, phone_number, address
+            FROM report_respondent_profile
+            WHERE homeowner_id = %s
+            ORDER BY updated_at DESC, respondent_id ASC
+            LIMIT 1
+            """,
+            (user_id,),
+        )
+        respondent_row = cur.fetchone()
+
+        result = {
+            "homeowner_address": "",
+            "court_location": "",
+            "state_name": "",
+            "item_service": _default_item_service(),
+            "transaction_date": "",
+            "claim_amount": "",
+            "respondent_company_name": "",
+            "respondent_registration_number": "",
+            "respondent_email": "",
+            "respondent_phone_number": "",
+            "respondent_address": "",
         }
+
+        if homeowner_row:
+            result.update(
+                {
+                    "homeowner_address": homeowner_row[5] or "",
+                    "court_location": homeowner_row[0] or "",
+                    "state_name": homeowner_row[1] or "",
+                    "item_service": _normalise_item_service(homeowner_row[2]),
+                    "transaction_date": homeowner_row[3].strftime("%Y-%m-%d") if homeowner_row[3] else "",
+                    "claim_amount": str(homeowner_row[4]) if homeowner_row[4] is not None else "",
+                }
+            )
+
+        if respondent_row:
+            result.update(
+                {
+                    "respondent_company_name": respondent_row[0] or "",
+                    "respondent_registration_number": respondent_row[1] or "",
+                    "respondent_email": respondent_row[2] or "",
+                    "respondent_phone_number": respondent_row[3] or "",
+                    "respondent_address": respondent_row[4] or "",
+                }
+            )
+
+        return result
     finally:
         cur.close()
         conn.close()
@@ -609,6 +657,27 @@ def calculate_days_to_complete(reported_date, completed_date):
         return None
 
     return max((completed_date_obj - reported_date_obj).days, 0)
+
+
+def backfill_missing_deadlines():
+    """Populate deadline for legacy defects using reported_date + 30 days."""
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            UPDATE defects
+            SET deadline = (reported_date::date + INTERVAL '30 days')::date
+            WHERE deadline IS NULL
+              AND reported_date IS NOT NULL
+            """
+        )
+        updated = cur.rowcount or 0
+        conn.commit()
+        return updated
+    finally:
+        cur.close()
+        conn.close()
 
 
 def is_auto_closed(status, completed_date):
@@ -801,6 +870,31 @@ def get_defects_for_role(role):
         cur.close()
         conn.close()
 
+
+def _normalise_project_filter_value(value):
+    text = str(value or "").strip()
+    if text.lower() in {"", "all", "all projects"}:
+        return ""
+    return text
+
+
+def filter_defects_by_project(defects, project_filter):
+    normalized_filter = _normalise_project_filter_value(project_filter)
+    if not normalized_filter:
+        return defects
+
+    target = normalized_filter.casefold()
+    filtered = []
+    for defect in defects:
+        candidates = [
+            defect.get("project_name"),
+            defect.get("scan_name"),
+            defect.get("unit"),
+        ]
+        if any(str(candidate or "").strip().casefold() == target for candidate in candidates):
+            filtered.append(defect)
+    return filtered
+
 def load_remarks():
     conn = get_connection()
     cur = conn.cursor()
@@ -830,7 +924,7 @@ def save_remarks(data):
                 (int(defect_id), "Homeowner", remark),
             )
             cur.execute(
-                "UPDATE defects SET remarks = %s, updated_at = NOW() WHERE id = %s",
+                "UPDATE defects SET remarks = %s WHERE id = %s",
                 (remark, int(defect_id)),
             )
         conn.commit()
@@ -854,7 +948,7 @@ def save_status(data):
     try:
         for defect_id, status in data.items():
             cur.execute(
-                "UPDATE defects SET status = %s, updated_at = NOW() WHERE id = %s",
+                "UPDATE defects SET status = %s WHERE id = %s",
                 (status, int(defect_id)),
             )
         conn.commit()
@@ -883,11 +977,11 @@ def save_completion_dates(data):
                 (int(defect_id), completed_date),
             )
             cur.execute(
-                "UPDATE defects SET completed_date = %s, updated_at = NOW() WHERE id = %s",
+                "UPDATE defects SET completed_date = %s WHERE id = %s",
                 (completed_date, int(defect_id)),
             )
         cur.execute(
-            "UPDATE defects SET completed_date = NULL, updated_at = NOW() WHERE id NOT IN (SELECT defect_id FROM completion_dates)"
+            "UPDATE defects SET completed_date = NULL WHERE id NOT IN (SELECT defect_id FROM completion_dates)"
         )
         conn.commit()
     finally:
@@ -922,9 +1016,10 @@ def save_versions(data):
     try:
         for role, versions in data.items():
             for v in versions:
+                version_no = str(v.get("version"))
                 cur.execute(
                     "SELECT 1 FROM report_versions WHERE role = %s AND version_no = %s LIMIT 1",
-                    (role, v.get("version")),
+                    (role, version_no),
                 )
                 if cur.fetchone():
                     continue
@@ -936,7 +1031,7 @@ def save_versions(data):
                     (
                         role,
                         v.get("language", "ms"),
-                        v.get("version"),
+                        version_no,
                         v.get("report_text", ""),
                         v.get("generated_at", _now_app_timezone().strftime("%Y-%m-%d %H:%M:%S")),
                     ),
@@ -1425,6 +1520,7 @@ def dashboard():
     if role == "Lawyer": role = "Legal"
     
     auto_close_completed_cases(trigger_role=role)
+    backfill_missing_deadlines()
 
     if role == "Admin":
         defects = get_defects_for_role("Developer")
@@ -1480,7 +1576,7 @@ def dashboard():
             audit_roles=audit_roles,
             audit_actions=audit_actions,
             support_contact=SUPPORT_CONTACT,
-            username=session.get("username", "admin"),
+            username=_current_actor_name() or "admin",
         )
 
     defects = get_defects_for_role(role)
@@ -1551,7 +1647,7 @@ def dashboard():
                 cur.close()
                 conn.close()
     else:
-        user_info = {"name": session.get("username", role), "unit": ""}
+        user_info = {"name": _current_actor_name() or role, "unit": ""}
 
     homeowner_claimants = get_homeowner_claimants() if role in ["Developer", "Legal"] else []
 
@@ -1575,14 +1671,14 @@ def dashboard():
         item_service_options=list(ITEM_SERVICE_TRANSLATIONS.keys()),
         homeowner_claimants=homeowner_claimants,
         support_contact=SUPPORT_CONTACT,
-        username=session.get("username", "")
+        username=_current_actor_name(),
     )
 
 
 @routes.route("/save_homeowner_claim_details", methods=["POST"])
 @login_required
 def save_homeowner_claim_details():
-    if _current_role() != "Homeowner":
+    if _current_role_key() != "homeowner":
         return jsonify({"success": False, "error": "Only homeowner can update claim details."}), 403
 
     data = request.get_json(silent=True) or {}
@@ -1591,6 +1687,12 @@ def save_homeowner_claim_details():
     item_service = (data.get("item_service") or "").strip()
     transaction_date = (data.get("transaction_date") or "").strip()
     claim_amount = (data.get("claim_amount") or "").strip()
+    homeowner_address = (data.get("homeowner_address") or "").strip()
+    respondent_company_name = (data.get("respondent_company_name") or "").strip()
+    respondent_registration_number = (data.get("respondent_registration_number") or "").strip()
+    respondent_email = (data.get("respondent_email") or "").strip()
+    respondent_phone_number = (data.get("respondent_phone_number") or "").strip()
+    respondent_address = (data.get("respondent_address") or "").strip()
 
     if not court_location:
         return jsonify({"success": False, "error": "Court location is required."}), 400
@@ -1600,6 +1702,8 @@ def save_homeowner_claim_details():
         return jsonify({"success": False, "error": "Transaction date is required."}), 400
     if not claim_amount:
         return jsonify({"success": False, "error": "Claim amount is required."}), 400
+    if not homeowner_address:
+        return jsonify({"success": False, "error": "Homeowner address is required."}), 400
 
     if not item_service:
         item_service = _default_item_service()
@@ -1619,10 +1723,11 @@ def save_homeowner_claim_details():
         cur.execute("ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS claim_amount VARCHAR(100)")
         cur.execute("ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS item_service VARCHAR(255)")
         cur.execute("ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS transaction_date DATE")
+        cur.execute("ALTER TABLE report_respondent_profile ADD COLUMN IF NOT EXISTS homeowner_id INTEGER")
 
         user_id = _current_user_id()
         cur.execute(
-            "SELECT full_name, email, unit FROM users WHERE id = %s",
+            "SELECT full_name, email, unit, ic_number, phone_number FROM users WHERE id = %s",
             (user_id,),
         )
         user_row = cur.fetchone()
@@ -1643,12 +1748,14 @@ def save_homeowner_claim_details():
         cur.execute(
             """
             INSERT INTO report_homeowner_profile (
-                homeowner_id, name, email, address, court_location, state_name, item_service, transaction_date, claim_amount, updated_at
+                homeowner_id, name, ic_number, email, phone_number, address, court_location, state_name, item_service, transaction_date, claim_amount, updated_at
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
             ON CONFLICT (homeowner_id) DO UPDATE
             SET name = EXCLUDED.name,
+                ic_number = EXCLUDED.ic_number,
                 email = EXCLUDED.email,
+                phone_number = EXCLUDED.phone_number,
                 address = EXCLUDED.address,
                 court_location = EXCLUDED.court_location,
                 state_name = EXCLUDED.state_name,
@@ -1660,8 +1767,10 @@ def save_homeowner_claim_details():
             (
                 user_id,
                 profile_name,
+                user_row[3],
                 user_row[1],
-                user_row[2],
+                user_row[4],
+                homeowner_address,
                 court_location,
                 state_name,
                 item_service,
@@ -1669,11 +1778,155 @@ def save_homeowner_claim_details():
                 claim_amount,
             ),
         )
+
+        cur.execute(
+            """
+            INSERT INTO report_respondent_profile (
+                respondent_id, homeowner_id, company_name, registration_number, email, phone_number, address, updated_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+            ON CONFLICT (respondent_id) DO UPDATE
+            SET homeowner_id = EXCLUDED.homeowner_id,
+                company_name = EXCLUDED.company_name,
+                registration_number = EXCLUDED.registration_number,
+                email = EXCLUDED.email,
+                phone_number = EXCLUDED.phone_number,
+                address = EXCLUDED.address,
+                updated_at = NOW()
+            """,
+            (
+                user_id,
+                user_id,
+                respondent_company_name or "-",
+                respondent_registration_number or "-",
+                respondent_email or "-",
+                respondent_phone_number or "-",
+                respondent_address or "-",
+            ),
+        )
         conn.commit()
         return jsonify({"success": True, "message": "Claim details saved."})
     finally:
         cur.close()
         conn.close()
+
+
+@routes.route("/debug/claim_state", methods=["GET"])
+@login_required
+def debug_claim_state():
+    """Temporary debug route to inspect report metadata rows before generation."""
+    def _serialize_row(columns, row):
+        if not row:
+            return None
+        payload = {}
+        for key, value in zip(columns, row):
+            if hasattr(value, "isoformat"):
+                payload[key] = value.isoformat()
+            else:
+                payload[key] = value
+        return payload
+
+    current_role = _current_role()
+    role = current_role.capitalize() if current_role else "Homeowner"
+    if role == "Lawyer":
+        role = "Legal"
+
+    user_id = _current_user_id()
+    requirement_errors = validate_report_requirements(role=role, user_id=user_id, claimant_user_id=user_id)
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT homeowner_id, name, ic_number, email, phone_number, address,
+                   court_location, state_name, claim_amount, item_service,
+                   transaction_date, updated_at
+            FROM report_homeowner_profile
+            WHERE homeowner_id = %s
+            """,
+            (user_id,),
+        )
+        homeowner_row = cur.fetchone()
+
+        cur.execute(
+            """
+            SELECT respondent_id, company_name, registration_number, email,
+                   phone_number, address, updated_at
+            FROM report_respondent_profile
+            WHERE homeowner_id = %s
+            ORDER BY updated_at DESC, respondent_id ASC
+            LIMIT 1
+            """
+            ,
+            (user_id,),
+        )
+        first_respondent_row = cur.fetchone()
+
+        cur.execute(
+            """
+            SELECT id, full_name, email, phone_number, unit, company_name, user_type
+            FROM users
+            WHERE id = %s
+            """,
+            (user_id,),
+        )
+        user_row = cur.fetchone()
+    finally:
+        cur.close()
+        conn.close()
+
+    return jsonify(
+        {
+            "debug_note": {
+                "why_missing_data_happens": [
+                    "HTML inputs may render but fail to map if the expected ids/names are missing or mismatched.",
+                    "Frontend JS may submit an incomplete payload even when the form looks filled in.",
+                    "Backend persistence may save only part of the claim profile, so later validation still sees missing DB columns.",
+                ],
+                "homeowner_report_rule": "Homeowner report generation validates the homeowner profile plus the respondent profile explicitly linked by homeowner_id.",
+            },
+            "request_context": {
+                "current_user_id": user_id,
+                "current_role": current_role,
+                "normalized_role": role,
+            },
+            "user_row": _serialize_row(
+                ["id", "full_name", "email", "phone_number", "unit", "company_name", "user_type"],
+                user_row,
+            ),
+            "report_homeowner_profile": _serialize_row(
+                [
+                    "homeowner_id",
+                    "name",
+                    "ic_number",
+                    "email",
+                    "phone_number",
+                    "address",
+                    "court_location",
+                    "state_name",
+                    "claim_amount",
+                    "item_service",
+                    "transaction_date",
+                    "updated_at",
+                ],
+                homeowner_row,
+            ),
+            "report_respondent_profile_linked_row": _serialize_row(
+                [
+                    "respondent_id",
+                    "company_name",
+                    "registration_number",
+                    "email",
+                    "phone_number",
+                    "address",
+                    "updated_at",
+                ],
+                first_respondent_row,
+            ),
+            "validation_errors": requirement_errors,
+        }
+    )
 
 # =================================================
 # UPLOAD EVIDENCE IMAGE
@@ -1735,7 +1988,7 @@ def upload_evidence():
             defect_id=defect_id,
             filename=filename,
             details={
-                "username": session.get("username", ""),
+                "username": _current_actor_name(),
                 "defect_id": defect_id,
                 "filename": filename,
                 "file_extension": ext,
@@ -1790,7 +2043,7 @@ def add_remark():
     role = _current_role()
 
     # Only Homeowner is allowed to add remarks
-    if role != "Homeowner":
+    if _current_role_key() != "homeowner":
         return jsonify({"error": "Unauthorized"}), 403
 
     defect_id = str(data.get("id"))
@@ -1812,7 +2065,7 @@ def add_remark():
         defect_id=defect_id,
         role=role,
         details={
-            "username": session.get("username", ""),
+            "username": _current_actor_name(),
             "remark": remark,
             "remark_length": len(remark),
         },
@@ -1826,7 +2079,7 @@ def add_remark():
 @routes.route("/update_status", methods=["POST"])
 @login_required
 def update_status():
-    if _current_role() not in ["Developer", "Admin"]:
+    if _current_role_key() not in ["developer", "admin"]:
         return jsonify({"success": False, "message": "Unauthorized"}), 403
 
     data = request.get_json()
@@ -1837,6 +2090,7 @@ def update_status():
     # Closed is system-derived only (auto-close), never manually set.
     new_status = requested_status
     completed_date = data.get("completed_date")
+    deadline = (data.get("deadline") or "").strip()
 
     ALLOWED_STATUS = {
         "Pending",
@@ -1863,13 +2117,20 @@ def update_status():
         if completed_date_obj > _now_app_timezone().date():
             return jsonify({"success": False, "message": "Completion date cannot be in the future"}), 400
 
+    parsed_deadline = None
+    if deadline:
+        try:
+            parsed_deadline = datetime.strptime(deadline, "%Y-%m-%d").date()
+        except Exception:
+            return jsonify({"success": False, "message": "Invalid deadline date format"}), 400
+
     effective_completed_date = completed_date
 
     conn = get_connection()
     cur = conn.cursor()
     try:
         cur.execute(
-            "SELECT status FROM defects WHERE id = %s",
+            "SELECT status, deadline FROM defects WHERE id = %s",
             (int(defect_id),),
         )
         row = cur.fetchone()
@@ -1877,16 +2138,23 @@ def update_status():
             return jsonify({"success": False, "message": "Defect not found"}), 404
 
         old_status = row[0]
+        old_deadline = _to_iso(row[1])
 
         cur.execute(
-            "UPDATE defects SET status = %s, updated_at = NOW() WHERE id = %s",
+            "UPDATE defects SET status = %s WHERE id = %s",
             (new_status, int(defect_id)),
         )
+
+        if parsed_deadline is not None:
+            cur.execute(
+                "UPDATE defects SET deadline = %s WHERE id = %s",
+                (parsed_deadline, int(defect_id)),
+            )
 
         # Keep defects.completed_date and completion_dates synchronized for the same defect only.
         if new_status == "Completed" and effective_completed_date:
             cur.execute(
-                "UPDATE defects SET completed_date = %s, updated_at = NOW() WHERE id = %s",
+                "UPDATE defects SET completed_date = %s WHERE id = %s",
                 (effective_completed_date, int(defect_id)),
             )
             cur.execute(
@@ -1901,7 +2169,7 @@ def update_status():
         else:
             cur.execute("DELETE FROM completion_dates WHERE defect_id = %s", (int(defect_id),))
             cur.execute(
-                "UPDATE defects SET completed_date = NULL, updated_at = NOW() WHERE id = %s",
+                "UPDATE defects SET completed_date = NULL WHERE id = %s",
                 (int(defect_id),),
             )
 
@@ -1923,12 +2191,14 @@ def update_status():
         defect_id=defect_id,
         new_status=new_status,
         details={
-            "username": session.get("username", ""),
+            "username": _current_actor_name(),
             "old_status": old_status,
             "requested_status": requested_status,
             "new_status": new_status,
             "requested_completed_date": completed_date,
             "stored_completed_date": effective_completed_date if new_status == "Completed" else None,
+            "old_deadline": old_deadline,
+            "new_deadline": deadline or old_deadline,
         },
     )
 
@@ -1941,6 +2211,7 @@ def update_status():
 @login_required
 def generate_ai_report_api():
     try:
+        backfill_missing_deadlines()
         data = request.get_json(silent=True) or {}
         user_type = (_current_role() or "").lower()
         if user_type not in ["homeowner", "developer", "lawyer", "legal"]:
@@ -1951,13 +2222,32 @@ def generate_ai_report_api():
         if role == "Lawyer": role = "Legal"
         auto_close_completed_cases(trigger_role=role)
         language = _normalise_language(data.get("language", "ms"))
+        project_filter = _normalise_project_filter_value(data.get("project_filter"))
+        defects = get_defects_for_role(role)
+        defects = filter_defects_by_project(defects, project_filter)
+        
+        # Validate: Check if there are any defects at all
+        if not defects or len(defects) == 0:
+            return jsonify({
+                "error": "No defects available to generate report",
+                "details": (
+                    f"No defects found for project '{project_filter}'."
+                    if project_filter
+                    else "Please add defects before generating a report."
+                )
+            }), 400
+            
         claimant_user_id = data.get("claimant_user_id")
         claimant_user_id = int(claimant_user_id) if str(claimant_user_id or "").strip().isdigit() else None
+        
         if role == "Homeowner":
             claimant_user_id = _current_user_id()
-        elif role in ["Developer", "Legal"] and claimant_user_id is None:
-            claimants = get_homeowner_claimants()
-            claimant_user_id = claimants[0]["homeowner_id"] if claimants else None
+        else:
+            if defects and defects[0].get("user_id"):
+                claimant_user_id = defects[0].get("user_id")
+            elif claimant_user_id is None:
+                claimants = get_homeowner_claimants()
+                claimant_user_id = claimants[0]["homeowner_id"] if claimants else None
 
         requirement_errors = validate_report_requirements(role=role, user_id=_current_user_id(), claimant_user_id=claimant_user_id)
         if requirement_errors:
@@ -1969,15 +2259,6 @@ def generate_ai_report_api():
             ), 400
 
         closed_evidence_appendix = get_closed_evidence_appendix(role)
-
-        defects = get_defects_for_role(role)
-        
-        # Validate: Check if there are any defects at all
-        if not defects or len(defects) == 0:
-            return jsonify({
-                "error": "No defects available to generate report",
-                "details": "Please add defects before generating a report."
-            }), 400
         
         remarks_store = load_remarks()
         status_store = load_status()
@@ -2074,7 +2355,7 @@ def generate_ai_report_api():
                         role=role
                     )
 
-        if role != "Homeowner":
+        if role.lower() != "homeowner":
             for d in defects:
                 d["remarks"] = ""
         
@@ -2109,6 +2390,7 @@ def generate_ai_report_api():
             "report_format_version": 6,
             "role": role,
             "language": language,
+            "project_filter": project_filter,
             "appendix_schema_version": 2 if role in ["Homeowner", "Developer", "Legal", "Admin"] else 1,
             "defects": [
                 {
@@ -2160,6 +2442,7 @@ def generate_ai_report_api():
                 details = existing[0]
                 cached_version = int(details.get("version", 0))
                 if cached_version > 0:
+                    cached_version_str = str(cached_version)
                     cur.execute(
                         """
                         SELECT report_text
@@ -2167,7 +2450,7 @@ def generate_ai_report_api():
                         WHERE role = %s AND version_no = %s AND language = %s
                         LIMIT 1
                         """,
-                        (role, cached_version, language),
+                        (role, cached_version_str, language),
                     )
                     cached_row = cur.fetchone()
                     if cached_row and cached_row[0]:
@@ -2186,6 +2469,7 @@ def generate_ai_report_api():
                             user_id=_current_user_id(),
                             case_key=cached_case_key,
                             claimant_user_id=claimant_user_id,
+                            project_filter=project_filter,
                         )
 
                         report_text = enforce_closed_appendix_format(
@@ -2222,6 +2506,7 @@ def generate_ai_report_api():
             user_id=_current_user_id(),
             case_key=case_key,
             claimant_user_id=claimant_user_id,
+            project_filter=project_filter,
         )
 
         # Keep boolean-like fields aligned with selected language before prompting AI.
@@ -2438,11 +2723,12 @@ def generate_ai_report_api():
             action="AI Report Generated",
             role=role,
             details={
-                "username": session.get("username", ""),
+                "username": _current_actor_name(),
                 "language": language,
                 "version": new_version_number,
                 "data_hash": data_hash,
                 "defect_count": len(defects),
+                "project_filter": project_filter or "All Projects",
             },
         )
 
@@ -2484,19 +2770,44 @@ def generate_ai_report_api():
 @login_required
 def export_pdf():
     role = _current_role()
+    if role:
+        role = role.strip().capitalize()
+        if role == "Lawyer":
+            role = "Legal"
+            
     auto_close_completed_cases(trigger_role=role)
+    backfill_missing_deadlines()
     # 🔒 Enforce backend role validation
-    if role not in ["Homeowner", "Developer", "Legal"]:
+    if role.lower() not in ["homeowner", "developer", "lawyer", "legal"]:
         return jsonify({"error": "Unauthorized role"}), 403
     language = _normalise_language(request.form.get("language", "ms"))
     ai_report_text = request.form.get("ai_report", "")
+    project_filter = _normalise_project_filter_value(request.form.get("project_filter"))
+    defects = get_defects_for_role(role)
+    defects = filter_defects_by_project(defects, project_filter)
+    
+    if not defects:
+        return jsonify(
+            {
+                "error": (
+                    f"No defects found for project '{project_filter}'."
+                    if project_filter
+                    else "No defects available for PDF export."
+                )
+            }
+        ), 400
+
     claimant_user_id = request.form.get("claimant_user_id", "")
     claimant_user_id = int(claimant_user_id) if str(claimant_user_id).strip().isdigit() else None
-    if role == "Homeowner":
+    
+    if role.lower() == "homeowner":
         claimant_user_id = _current_user_id()
-    elif role in ["Developer", "Legal"] and claimant_user_id is None:
-        claimants = get_homeowner_claimants()
-        claimant_user_id = claimants[0]["homeowner_id"] if claimants else None
+    else:
+        if defects and defects[0].get("user_id"):
+            claimant_user_id = defects[0].get("user_id")
+        elif claimant_user_id is None:
+            claimants = get_homeowner_claimants()
+            claimant_user_id = claimants[0]["homeowner_id"] if claimants else None
 
     if not ai_report_text or not ai_report_text.strip():
         return jsonify(
@@ -2515,11 +2826,7 @@ def export_pdf():
         ), 400
 
     closed_evidence_appendix = get_closed_evidence_appendix(role)
-
-    # Load language-specific labels
     labels = PDF_LABELS.get(language, PDF_LABELS["ms"])
-
-    defects = get_defects_for_role(role)
     remarks_store = load_remarks()
     status_store = load_status()
     completion_store = load_completion_dates()
@@ -2565,6 +2872,17 @@ def export_pdf():
 
     if role in ["Homeowner", "Developer", "Legal", "Admin"]:
         defects = [d for d in defects if not d.get("closed")]
+
+    if not defects:
+        return jsonify(
+            {
+                "error": (
+                    f"No defects found for project '{project_filter}'."
+                    if project_filter
+                    else "No defects available for PDF export."
+                )
+            }
+        ), 400
 
     # LOCK STATUS (BACKEND AUTHORITY)
     # Status must NEVER be modified by AI
@@ -2613,6 +2931,7 @@ def export_pdf():
         case_key=case_key,
         claimant_user_id=claimant_user_id,
         forced_claim_number=preview_claim_id,
+        project_filter=project_filter,
     )
     if preview_claim_id:
         report_data.setdefault("case_info", {})["claim_id"] = preview_claim_id
@@ -2631,7 +2950,7 @@ def export_pdf():
             )
 
     # HIDE REMARKS FOR NON-HOMEOWNER ROLES
-    if role != "Homeowner":
+    if role.lower() != "homeowner":
         for d in defects:
             d["remarks"] = ""
 
@@ -2758,26 +3077,34 @@ def export_pdf():
 
     pdf.setFont("Helvetica", 10)
 
-    lokasi = report_data["case_info"]["tribunal_location"]
-    negeri = report_data["case_info"]["state_name"]
-    no_tuntutan = report_data["case_info"]["claim_number"]
+    lokasi = str(report_data["case_info"].get("tribunal_location") or "-").strip().upper()
+    negeri = str(report_data["case_info"].get("state_name") or "-").strip().upper()
+    no_tuntutan = report_data["case_info"].get("claim_number") or "-"
+    project_name = report_data["case_info"].get("project_name") or "-"
 
     if language == "en":
-        pdf.drawCentredString(width/2, y, f"AT {lokasi}".upper())
+        pdf.drawCentredString(width/2, y, f"AT {lokasi}")
         y -= LINE_SPACING_MEDIUM
 
-        pdf.drawCentredString(width/2, y, f"IN THE STATE OF {negeri}, MALAYSIA".upper())
+        pdf.drawCentredString(width/2, y, f"IN THE STATE OF {negeri}, MALAYSIA")
         y -= LINE_SPACING_LARGE
 
         pdf.drawString(50, y, f"CLAIM NO.: {no_tuntutan}")
     else:
-        pdf.drawCentredString(width/2, y, f"DI {lokasi}".upper())
+        pdf.drawCentredString(width/2, y, f"DI {lokasi}")
         y -= LINE_SPACING_MEDIUM
 
-        pdf.drawCentredString(width/2, y, f"DI NEGERI {negeri}, MALAYSIA".upper())
+        pdf.drawCentredString(width/2, y, f"DI NEGERI {negeri}, MALAYSIA")
         y -= LINE_SPACING_LARGE
 
         pdf.drawString(50, y, f"TUNTUTAN NO.: {no_tuntutan}")
+
+    y -= 18
+    pdf.setFont("Helvetica-Bold", 10)
+    if language == "en":
+        pdf.drawString(50, y, f"PROJECT / TAMAN: {project_name}")
+    else:
+        pdf.drawString(50, y, f"PROJEK / TAMAN: {project_name}")
 
     y -= 20
 
@@ -2800,9 +3127,13 @@ def export_pdf():
     y -= 20
     pdf.setFont("Helvetica", 9)
     claimant = report_data['claimant']
+    
+    # Enforce claimant name from current_user (Homeowner scenario)
+    claimant_name = current_user.full_name if current_user.is_authenticated and _current_role_key() == "homeowner" else claimant.get('name', '')
+
     if language == "en":
         pdf.drawString(60, y, "Claimant Name")
-        pdf.drawString(200, y, f": {claimant.get('name', '')}")
+        pdf.drawString(200, y, f": {claimant_name}")
         y -= 18
         pdf.drawString(60, y, "IC/Passport No.")
         # Encrypt NRIC before displaying (simulation of encryption at rest)
@@ -2812,7 +3143,8 @@ def export_pdf():
         pdf.drawString(200, y, f": {decrypted_nric}")
         y -= 18
         pdf.drawString(60, y, "Correspondence Address")
-        pdf.drawString(200, y, f": {claimant.get('address_line_1', '')}")
+        claimant_address = str(claimant.get('address_line_1') or '-').strip()
+        pdf.drawString(200, y, f": {claimant_address}")
         y -= 18
         pdf.drawString(60, y, "Phone No.")
         pdf.drawString(200, y, f": {claimant.get('phone_number', '')}")
@@ -2821,7 +3153,7 @@ def export_pdf():
         pdf.drawString(200, y, f": {claimant.get('email', '')}")
     else:
         pdf.drawString(60, y, "Nama Pihak Yang Menuntut")
-        pdf.drawString(200, y, f": {claimant.get('name', '')}")
+        pdf.drawString(200, y, f": {claimant_name}")
         y -= 18
         pdf.drawString(60, y, "No. Kad Pengenalan/Pasport")
         # Encrypt NRIC before displaying (simulation of encryption at rest)
@@ -2831,7 +3163,8 @@ def export_pdf():
         pdf.drawString(200, y, f": {decrypted_nric}")
         y -= 18
         pdf.drawString(60, y, "Alamat Surat Menyurat")
-        pdf.drawString(200, y, f": {claimant.get('address_line_1', '')}")
+        claimant_address = str(claimant.get('address_line_1') or '-').strip()
+        pdf.drawString(200, y, f": {claimant_address}")
         y -= 18
         pdf.drawString(60, y, "No. Telefon")
         pdf.drawString(200, y, f": {claimant.get('phone_number', '')}")
@@ -2849,7 +3182,7 @@ def export_pdf():
     
     # Draw box for respondent details - make it taller to fit all content
     box_top = y - 10
-    box_height = 170
+    box_height = 190
     pdf.rect(box_x, box_top - box_height, box_width, box_height)
     
     # Respondent form fields
@@ -2913,13 +3246,15 @@ def export_pdf():
         y -= 20
         pdf.setFont("Helvetica", 9)
         pdf.drawString(50, y, "The Claimant's claim is for the amount of RM:")
-        pdf.drawString(280, y, f"{report_data['case_info']['claim_amount']}")
+        claim_amt = str(report_data['case_info'].get('claim_amount') or '-').replace('RM', '').strip()
+        pdf.drawString(280, y, f": {claim_amt}")
     else:
         pdf.drawString(50, y, "PERNYATAAN TUNTUTAN")
         y -= 20
         pdf.setFont("Helvetica", 9)
         pdf.drawString(50, y, "Tuntutan Pihak Yang Menuntut ialah untuk jumlah RM:")
-        pdf.drawString(280, y, f"{report_data['case_info']['claim_amount']}")
+        claim_amt = str(report_data['case_info'].get('claim_amount') or '-').replace('RM', '').strip()
+        pdf.drawString(280, y, f": {claim_amt}")
     
     # --- BUTIR-BUTIR TUNTUTAN (Claim Details) ---
     y -= 30
@@ -2931,7 +3266,7 @@ def export_pdf():
     
     # Draw box for claim details - box starts below title
     box_top = y - 10
-    box_height = 60
+    box_height = 75
     pdf.rect(50, box_top - box_height, width - 100, box_height)
     
     y -= 20
@@ -2944,7 +3279,10 @@ def export_pdf():
         pdf.drawString(200, y, f": {report_data['case_info'].get('transaction_date', report_data['case_info']['generated_date'])}")
         y -= 15
         pdf.drawString(60, y, "Amount Paid")
-        pdf.drawString(200, y, f": {report_data['case_info']['claim_amount']}")
+        pdf.drawString(200, y, f": RM {report_data['case_info'].get('claim_amount', '-')}")
+        y -= 15
+        pdf.drawString(60, y, "Property Location")
+        pdf.drawString(200, y, f": {report_data['case_info'].get('project_name', '-')}")
     else:
         pdf.drawString(60, y, "Barangan/Perkhidmatan")
         pdf.drawString(200, y, f": {report_data['case_info'].get('item_service', 'Pembaikan Kecacatan Dalam Tempoh DLP')}")
@@ -2953,7 +3291,10 @@ def export_pdf():
         pdf.drawString(200, y, f": {report_data['case_info'].get('transaction_date', report_data['case_info']['generated_date'])}")
         y -= 15
         pdf.drawString(60, y, "Jumlah yang dibayar")
-        pdf.drawString(200, y, f": {report_data['case_info']['claim_amount']}")
+        pdf.drawString(200, y, f": RM {report_data['case_info'].get('claim_amount', '-')}")
+        y -= 15
+        pdf.drawString(60, y, "Lokasi Harta")
+        pdf.drawString(200, y, f": {report_data['case_info'].get('project_name', '-')}")
 
     # ============================================
     # PAGE 2: RINGKASAN & SENARAI KECACATAN
@@ -3794,7 +4135,7 @@ def export_pdf():
         role=role,
         filename=filename,
         details={
-            "username": session.get("username", ""),
+            "username": _current_actor_name(),
             "language": language,
             "filename": filename,
             "hash": digital_hash,

@@ -3,7 +3,7 @@ import glob
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import re
 from typing import List, Optional, Set, Tuple
 
@@ -27,6 +27,21 @@ module2 = Blueprint('module2', __name__)
 ALLOWED_GLB_EXT = {".glb"}
 ALLOWED_PDF_EXT = {".pdf"}
 METADATA_FILENAME = "latest_upload.json"
+
+
+def _default_deadline_date(reported_at: datetime | None = None):
+    base = reported_at or datetime.now(timezone.utc)
+    return (base + timedelta(days=30)).date()
+
+
+def _parse_deadline_value(raw_value, reported_at: datetime | None = None):
+    value = str(raw_value or "").strip()
+    if not value:
+        return _default_deadline_date(reported_at)
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        return None
 
 
 def _allowed_file(filename: str, allowed_exts) -> bool:
@@ -255,6 +270,10 @@ def delete_defect(defect_id):
 def create_defect(scan_id):
     scan = Scan.query.get_or_404(scan_id)
     data = request.get_json()
+    reported_at = datetime.now(timezone.utc)
+    deadline = _parse_deadline_value(data.get('deadline'), reported_at)
+    if deadline is None:
+        return jsonify({'error': 'Invalid deadline date format. Use YYYY-MM-DD.'}), 400
     defect = Defect(
         scan_id=scan_id,
         x=data.get('x', 0),
@@ -266,7 +285,9 @@ def create_defect(scan_id):
         severity=data.get('severity', 'Medium'),
         description=data.get('description', ''),
         status=data.get('status', 'Reported'),
-        notes=data.get('notes', '')
+        notes=data.get('notes', ''),
+        reported_date=reported_at,
+        deadline=deadline,
     )
     db.session.add(defect)
     db.session.commit()
@@ -295,9 +316,13 @@ def report_defect(scan_id):
     severity    = request.form.get('severity', 'Medium').strip()
     location    = request.form.get('location', '').strip()
     notes       = request.form.get('notes', '').strip()
+    reported_at = datetime.now(timezone.utc)
+    deadline = _parse_deadline_value(request.form.get('deadline'), reported_at)
 
     if not description:
         return jsonify({'error': 'Defect description is required.'}), 400
+    if deadline is None:
+        return jsonify({'error': 'Invalid deadline date format. Use YYYY-MM-DD.'}), 400
 
     # ── Optional photographic evidence upload ────────────────────────────────
     image_path = None
@@ -334,6 +359,8 @@ def report_defect(scan_id):
         status='Reported',
         notes=notes,
         image_path=image_path,
+        reported_date=reported_at,
+        deadline=deadline,
     )
     db.session.add(defect)
     db.session.commit()
@@ -470,6 +497,7 @@ def upload_scan():
         # Create Defect records from snapshots
         db_defects = []
         for snap in snapshots:
+            reported_at = datetime.now(timezone.utc)
             defect = Defect(
                 scan_id=scan.id,
                 x=float(snap.coordinates[0]),
@@ -480,6 +508,8 @@ def upload_scan():
                 defect_type='Unknown',
                 severity='Medium',
                 status='Reported',
+                reported_date=reported_at,
+                deadline=_default_deadline_date(reported_at),
             )
             db.session.add(defect)
             db_defects.append(defect)

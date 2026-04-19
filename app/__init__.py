@@ -1,6 +1,7 @@
 # __init__.py
 import os
 from flask import Flask, redirect, url_for
+from dotenv import load_dotenv
 from .extensions import db, login_manager
 from .module1.routes import module1
 from .module2.routes import module2
@@ -8,6 +9,10 @@ from .module3.routes import module3
 from .module4.routes import module4
 from .auth.routes import auth
 from .core_features import core_features
+
+# Load .env before any app config or AI client access.
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 
 def create_app():

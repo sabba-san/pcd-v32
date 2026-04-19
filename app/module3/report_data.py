@@ -107,6 +107,7 @@ def _ensure_report_metadata_tables():
             """
             CREATE TABLE IF NOT EXISTS report_respondent_profile (
                 respondent_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                homeowner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                 company_name VARCHAR(255) NOT NULL,
                 registration_number VARCHAR(100),
                 email VARCHAR(255),
@@ -115,6 +116,9 @@ def _ensure_report_metadata_tables():
                 updated_at TIMESTAMP NOT NULL DEFAULT NOW()
             )
             """
+        )
+        cur.execute(
+            "ALTER TABLE report_respondent_profile ADD COLUMN IF NOT EXISTS homeowner_id INTEGER"
         )
         cur.execute(
             """
@@ -160,6 +164,39 @@ def _ensure_report_metadata_tables():
         conn.close()
 
 
+def _fetch_respondent_profile(cur, homeowner_id=None, respondent_user_id=None):
+    if homeowner_id is not None:
+        cur.execute(
+            """
+            SELECT respondent_id, homeowner_id, company_name, registration_number, email, phone_number, address
+            FROM report_respondent_profile
+            WHERE homeowner_id = %s
+            ORDER BY updated_at DESC, respondent_id ASC
+            LIMIT 1
+            """,
+            (homeowner_id,),
+        )
+        row = cur.fetchone()
+        if row:
+            return row
+
+    if respondent_user_id is not None:
+        cur.execute(
+            """
+            SELECT respondent_id, homeowner_id, company_name, registration_number, email, phone_number, address
+            FROM report_respondent_profile
+            WHERE respondent_id = %s
+            LIMIT 1
+            """,
+            (respondent_user_id,),
+        )
+        row = cur.fetchone()
+        if row:
+            return row
+
+    return None
+
+
 def get_homeowner_claimants():
     _ensure_report_metadata_tables()
 
@@ -197,9 +234,14 @@ def _is_missing_required(value):
 
 
 def validate_report_requirements(role, user_id=None, claimant_user_id=None):
+    # Normalize role string (e.g. 'homeowner' -> 'Homeowner')
+    if role:
+        role = role.strip().capitalize()
+        if role == "Lawyer":
+            role = "Legal"
+
     case_info, claimant, respondent, _, _, _ = _load_report_metadata(user_id=user_id, role=role, claimant_user_id=claimant_user_id)
-    active_role = (role or "").strip()
-    respondent_for_validation = dict(respondent)
+    active_role = role or "Homeowner"
 
     required_case_fields = {
         "tribunal_location": "Homeowner profile (report_homeowner_profile): Court location",
@@ -222,30 +264,6 @@ def validate_report_requirements(role, user_id=None, claimant_user_id=None):
         "email": "Respondent profile (report_respondent_profile): Email",
     }
 
-    if active_role in ("Developer", "Legal", "Admin") and user_id is not None:
-        conn = get_connection()
-        cur = conn.cursor()
-        try:
-            cur.execute(
-                """
-                SELECT company_name, registration_number, email, phone_number, address
-                FROM report_respondent_profile
-                WHERE respondent_id = %s
-                """,
-                (user_id,),
-            )
-            row = cur.fetchone()
-            respondent_for_validation = {
-                "name": row[0] if row else "-",
-                "registration_no": row[1] if row else "-",
-                "email": row[2] if row else "-",
-                "phone_number": row[3] if row else "-",
-                "address_line_1": row[4] if row else "-",
-            }
-        finally:
-            cur.close()
-            conn.close()
-
     errors = []
 
     # Homeowner report requires complete claimant/case context.
@@ -263,7 +281,7 @@ def validate_report_requirements(role, user_id=None, claimant_user_id=None):
     # Developer/Legal/Admin report requires respondent profile completeness.
     if active_role in ("Homeowner", "Developer", "Legal", "Admin"):
         for key, label in required_respondent_fields.items():
-            if _is_missing_required(respondent_for_validation.get(key)):
+            if _is_missing_required(respondent.get(key)):
                 errors.append(f"Missing {label}")
 
     return errors
@@ -310,7 +328,7 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
         if user_id is not None:
             cur.execute(
                 """
-                SELECT id, full_name, unit, role, email
+                SELECT id, full_name, unit, role, email, ic_number, phone_number
                 FROM users
                 WHERE id = %s
                 """,
@@ -319,8 +337,10 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
             user_row = cur.fetchone()
 
         if user_row:
-            _, full_name, unit, user_role, user_email = user_row
-            active_role = role or user_role
+            _, full_name, unit, user_role, user_email, user_ic_number, user_phone_number = user_row
+            active_role = (role or user_role or "Homeowner").strip().capitalize()
+            if active_role == "Lawyer":
+                active_role = "Legal"
 
             if active_role == "Homeowner":
                 homeowner_row = None
@@ -350,29 +370,30 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
                     case_info["item_service"] = homeowner_row[8] or case_info["item_service"]
                     if homeowner_row[9]:
                         case_info["transaction_date"] = homeowner_row[9].strftime("%d-%m-%Y")
+                # Only fallback to user table defaults if the profile value is truly missing/placeholder
                 if _is_missing_required(claimant.get("name")):
                     claimant["name"] = full_name or claimant["name"]
+                if _is_missing_required(claimant.get("national_id")):
+                    claimant["national_id"] = user_ic_number or claimant["national_id"]
                 if _is_missing_required(claimant.get("email")):
                     claimant["email"] = user_email or claimant["email"]
-                if _is_missing_required(claimant.get("address_line_1")):
-                    claimant["address_line_1"] = unit or claimant["address_line_1"]
+                if _is_missing_required(claimant.get("phone_number")):
+                    claimant["phone_number"] = user_phone_number or claimant["phone_number"]
+                
+                # IMPORTANT: If address is already set from profile (homeowner_row[4]), 
+                # do not override it with unit unless it is empty or '-'
+                if not claimant.get("address_line_1") or claimant.get("address_line_1") == "-":
+                    if unit and unit != "None":
+                        claimant["address_line_1"] = unit or claimant["address_line_1"]
 
-                cur.execute(
-                    """
-                    SELECT company_name, registration_number, email, phone_number, address
-                    FROM report_respondent_profile
-                    ORDER BY respondent_id ASC
-                    LIMIT 1
-                    """
-                )
-                respondent_row = cur.fetchone()
+                respondent_row = _fetch_respondent_profile(cur, homeowner_id=user_id)
                 if respondent_row:
                     respondent = {
-                        "name": respondent_row[0] or respondent["name"],
-                        "registration_no": respondent_row[1] or respondent["registration_no"],
-                        "email": respondent_row[2] or respondent["email"],
-                        "phone_number": respondent_row[3] or respondent["phone_number"],
-                        "address_line_1": respondent_row[4] or respondent["address_line_1"],
+                        "name": respondent_row[2] or respondent["name"],
+                        "registration_no": respondent_row[3] or respondent["registration_no"],
+                        "email": respondent_row[4] or respondent["email"],
+                        "phone_number": respondent_row[5] or respondent["phone_number"],
+                        "address_line_1": respondent_row[6] or respondent["address_line_1"],
                         "address_line_2": "",
                         "description": "Pemaju projek perumahan",
                     }
@@ -422,23 +443,14 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
                     if claimant_row[9]:
                         case_info["transaction_date"] = claimant_row[9].strftime("%d-%m-%Y")
 
-                respondent_row = None
-                cur.execute(
-                    """
-                    SELECT company_name, registration_number, email, phone_number, address
-                    FROM report_respondent_profile
-                    WHERE respondent_id = %s
-                    """,
-                    (user_id,),
-                )
-                respondent_row = cur.fetchone()
+                respondent_row = _fetch_respondent_profile(cur, respondent_user_id=user_id)
                 if respondent_row:
                     respondent = {
-                        "name": respondent_row[0] or respondent["name"],
-                        "registration_no": respondent_row[1] or respondent["registration_no"],
-                        "email": respondent_row[2] or respondent["email"],
-                        "phone_number": respondent_row[3] or respondent["phone_number"],
-                        "address_line_1": respondent_row[4] or respondent["address_line_1"],
+                        "name": respondent_row[2] or respondent["name"],
+                        "registration_no": respondent_row[3] or respondent["registration_no"],
+                        "email": respondent_row[4] or respondent["email"],
+                        "phone_number": respondent_row[5] or respondent["phone_number"],
+                        "address_line_1": respondent_row[6] or respondent["address_line_1"],
                         "address_line_2": "",
                         "description": "Pemaju projek perumahan",
                     }
@@ -446,6 +458,8 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
                     respondent["name"] = full_name or respondent["name"]
                 if _is_missing_required(respondent.get("email")):
                     respondent["email"] = user_email or respondent["email"]
+                if _is_missing_required(respondent.get("phone_number")):
+                    respondent["phone_number"] = user_phone_number or respondent["phone_number"]
                 if _is_missing_required(respondent.get("address_line_1")):
                     respondent["address_line_1"] = unit or respondent["address_line_1"]
 
@@ -639,7 +653,14 @@ def build_report_data(
     case_key=None,
     claimant_user_id=None,
     forced_claim_number=None,
+    project_filter=None,
 ):
+    # Normalize role string (e.g. 'homeowner' -> 'Homeowner')
+    if role:
+        role = role.strip().capitalize()
+        if role == "Lawyer":
+            role = "Legal"
+
     (
         case_info,
         claimant,
@@ -670,6 +691,18 @@ def build_report_data(
     case_info["claim_id"] = claim_number
     case_info["claim_number"] = claim_number
     case_info["state_code"] = negeri_codes.get(state_name, "UNK")
+    selected_project_name = str(project_filter or "").strip()
+    if not selected_project_name:
+        if defects:
+            selected_project_name = (
+                defects[0].get("project_name")
+                or defects[0].get("scan_name")
+                or defects[0].get("unit")
+                or "-"
+            )
+        else:
+            selected_project_name = "-"
+    case_info["project_name"] = selected_project_name
 
     return {
         "case_info": case_info,
