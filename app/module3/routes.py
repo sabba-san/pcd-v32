@@ -9,6 +9,7 @@ from flask import (
     redirect,
     url_for,
     session,
+    flash,
 )
 
 try:
@@ -31,7 +32,7 @@ from reportlab.lib.utils import ImageReader
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-# from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import json
@@ -510,12 +511,12 @@ def get_current_user():
     try:
         user_id = _current_user_id()
         cur.execute(
-            "SELECT id, full_name, unit, role FROM users WHERE id = %s",
+            "SELECT id, full_name, unit, role, profile_picture FROM users WHERE id = %s",
             (user_id,)
         )
         row = cur.fetchone()
         if not row:
-            return {"name": "User", "unit": "Unknown"}
+            return {"name": "User", "unit": "Unknown", "profile_picture": None}
 
         display_name = row[1]
         if row[3] == "Homeowner":
@@ -527,7 +528,11 @@ def get_current_user():
             if homeowner_profile and homeowner_profile[0]:
                 display_name = homeowner_profile[0]
 
-        return {"name": display_name, "unit": row[2] or ""}
+        return {
+            "name": display_name,
+            "unit": row[2] or "",
+            "profile_picture": row[4]
+        }
     finally:
         cur.close()
         conn.close()
@@ -699,13 +704,18 @@ def is_auto_closed(status, completed_date):
 def calculate_stats(defects):
     return {
         "total": len(defects),
+        "pending": sum(1 for d in defects if d["status"] in ["Pending", "Reported"]),
+        "in_progress": sum(1 for d in defects if d["status"] in ["In Progress", "WIP"]),
+        "delayed": sum(1 for d in defects if d["status"] == "Delayed"),
+        "overdue": sum(1 for d in defects if d.get("is_overdue")),
         "completed": sum(1 for d in defects if d["status"] == "Completed" and not d.get("closed")),
-        "pending": sum(1 for d in defects if d["status"] == "Pending"),
-        "investigation": sum(1 for d in defects if d["status"] == "In Progress"),
-        "on_hold": sum(1 for d in defects if d["status"] == "Delayed"),
-        "appeal": 0,
         "closed": sum(1 for d in defects if d.get("closed")),
-        "overdue": sum(1 for d in defects if d.get("is_overdue") is True),
+        
+        # Developer-specific groupings (Job Sheet view)
+        "pending_count": sum(1 for d in defects if d["status"] in ["Reported", "Pending", "Delayed"]),
+        "wip_count":     sum(1 for d in defects if d["status"] in ["In Progress", "WIP"]),
+        "done_count":    sum(1 for d in defects if d["status"] in ["Completed", "Done", "Fixed", "Resolved"]),
+
         "hda_non_compliant": sum(1 for d in defects if d.get("hda_compliant") is False),
         "critical": sum(1 for d in defects if d.get("urgency") == "High"),
     }
@@ -4147,5 +4157,94 @@ def export_pdf():
         as_attachment=True,
         download_name=filename,
         mimetype="application/pdf"
+    )
 
-)
+# --- Profile & Settings ---
+
+@module3.route('/profile')
+@login_required
+def profile():
+    return render_template('role/dashboard/profile.html', user=current_user)
+
+@module3.route('/settings')
+@login_required
+def settings():
+    return render_template('role/dashboard/settings.html', user=current_user)
+
+@module3.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    from ..extensions import db
+    
+    # 1. Update Email
+    new_email = request.form.get('email', '').strip().lower()
+    if new_email and new_email != current_user.email:
+        # Check if email exists
+        from ..models import User
+        if User.query.filter(User.email == new_email, User.id != current_user.id).first():
+            flash('This email is already in use.', 'error')
+        else:
+            current_user.email = new_email
+            flash('Email updated successfully.', 'success')
+
+    # 2. Update Profile Picture
+    if 'profile_picture' in request.files:
+        file = request.files['profile_picture']
+        if file and file.filename != '' and allowed_file(file.filename):
+            # Check file size (2MB limit)
+            file.seek(0, os.SEEK_END)
+            file_length = file.tell()
+            if file_length > 2 * 1024 * 1024:
+                flash('File size exceeds 2MB limit.', 'error')
+            else:
+                file.seek(0)
+                filename = secure_filename(file.filename)
+                unique_filename = f"user_{current_user.id}_{int(datetime.now().timestamp())}_{filename}"
+                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'profiles')
+                os.makedirs(upload_folder, exist_ok=True)
+                
+                file_path = os.path.join(upload_folder, unique_filename)
+                file.save(file_path)
+                
+                # Delete old profile picture if exists
+                if current_user.profile_picture:
+                    old_path = os.path.join(current_app.root_path, 'static', current_user.profile_picture)
+                    if os.path.exists(old_path):
+                        try:
+                            os.remove(old_path)
+                        except Exception:
+                            pass
+                
+                current_user.profile_picture = f"uploads/profiles/{unique_filename}"
+                flash('Profile picture updated successfully.', 'success')
+        elif file and file.filename != '':
+            flash('Invalid file type. Only .jpg, .jpeg, .png are allowed.', 'error')
+
+    db.session.commit()
+    return redirect(url_for('module3.profile'))
+
+@module3.route('/change_password', methods=['POST'])
+@login_required
+def change_password():
+    from ..extensions import db
+    current_pw = request.form.get('current_password')
+    new_pw = request.form.get('new_password')
+    confirm_pw = request.form.get('confirm_password')
+
+    if not current_user.check_password(current_pw):
+        flash('Current password is incorrect.', 'error')
+        return redirect(url_for('module3.settings'))
+
+    if new_pw != confirm_pw:
+        flash('New passwords do not match.', 'error')
+        return redirect(url_for('module3.settings'))
+    
+    if len(new_pw) < 6:
+        flash('Password must be at least 6 characters long.', 'error')
+        return redirect(url_for('module3.settings'))
+
+    current_user.set_password(new_pw)
+    db.session.commit()
+    
+    flash('Password changed successfully!', 'success')
+    return redirect(url_for('module3.profile'))

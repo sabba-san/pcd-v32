@@ -133,12 +133,19 @@
                 </button>
                 <div class="h-6 w-[1px] bg-slate-100 dark:bg-slate-800"></div>
                 <div class="flex items-center gap-3 pl-2">
-                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
-                        A</div>
-                    <div class="hidden sm:block">
-                        <p class="text-sm font-semibold text-slate-900 leading-none">{{ current_user.full_name }}</p>
+                    <div class="w-8 h-8 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold text-sm">
+                        {% if current_user.profile_picture %}
+                        <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
+                        {% else %}
+                        {{ current_user.full_name[0].upper() if current_user.full_name else 'U' }}
+                        {% endif %}
                     </div>
-                    <span class="material-symbols-outlined text-slate-400 text-sm">keyboard_arrow_down</span>
+                    <div class="hidden sm:block">
+                        <p class="text-sm font-semibold text-slate-900 dark:text-white leading-none">{{ current_user.full_name }}</p>
+                    </div>
+                    <a href="{{ url_for('module3.profile') }}" class="flex items-center">
+                        <span class="material-symbols-outlined text-slate-400 text-sm hover:text-primary transition-colors">keyboard_arrow_down</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -148,11 +155,16 @@
         <aside
             class="h-screen w-64 fixed left-0 top-16 hidden md:flex flex-col bg-slate-50 dark:bg-slate-950 p-4 space-y-2 border-r border-transparent">
             <div class="flex items-center gap-3 p-4 mb-4">
-                <img alt="Homeowner avatar" class="w-10 h-10 rounded-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz5SwOxkaAQ_XvszCCO8UUL13cC7QZNv1rd3T11mWqA9MWVSqavKKd6fIiplnc0om0010w0jusNtR8G_Ct2wTXtF6LwIb1PHPVuRBO1HMIKS-ATRvw0QxvyoRTge32FGlBkGsdM0HyyQjfp9eMJEkZPdYjh36M-E3ULXJER9bVocReIfpKbQgh1sxr_oma_phqZnd5MCINW_ILSWtWGwfnO5B8w1XJLK-eSFeR3uEA2JBRgVEugF3gV7MwhiJc7PL8jH4XrCcR1Q">
+                <div class="w-10 h-10 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold">
+                    {% if current_user.profile_picture %}
+                    <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
+                    {% else %}
+                    {{ current_user.full_name[0].upper() if current_user.full_name else 'U' }}
+                    {% endif %}
+                </div>
                 <div>
-                    <h3 class="font-headline text-sm font-bold text-slate-900">{{ current_user.housing_project }}</h3>
-                    <p class="text-xs text-slate-500 font-medium">Active Account</p>
+                    <h3 class="font-headline text-sm font-bold text-slate-900 dark:text-slate-100">{{ current_user.housing_project or current_user.full_name }}</h3>
+                    <p class="text-xs text-slate-500 font-medium tracking-tight">Active Account</p>
                 </div>
             </div>
             <nav class="space-y-1">
@@ -320,7 +332,7 @@
             <span class="material-symbols-outlined">gavel</span>
             <span class="text-[10px] font-bold">Legal</span>
         </a>
-        <a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+        <a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="{{ url_for('module3.profile') }}">
             <span class="material-symbols-outlined">person</span>
             <span class="text-[10px] font-bold">Profile</span>
         </a>

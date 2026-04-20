@@ -3,6 +3,9 @@ from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import db
 from ..models import User
 
+# Import module3 functions for data synchronization
+from ..module3.routes import get_defects_for_role, calculate_stats
+
 auth = Blueprint('auth', __name__)
 
 
@@ -159,7 +162,9 @@ def lawyer_dashboard():
 @auth.route('/dashboard/developer')
 @login_required
 def developer_dashboard():
-    return render_template('role/dashboard/housedeveloper.html')
+    defects = get_defects_for_role("Developer")
+    stats = calculate_stats(defects)
+    return render_template('role/dashboard/housedeveloper.html', defects=defects, stats=stats)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
