@@ -81,7 +81,10 @@ function populateTable(data) {
     tbody.innerHTML = '';
     if (!data.length) {
         const cols = window.M3_TABLE_COLS || 6;
-        tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;padding:2.5rem;color:#64748b;">No defects match the selected filters.</td></tr>`;
+        const msg = (window.M3_CONFIG || {}).role === 'Developer' 
+            ? 'No active work orders.' 
+            : 'No defects match the selected filters.';
+        tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;padding:2.5rem;color:#64748b;">${msg}</td></tr>`;
         updateSummaryCards([]);
         return;
     }
@@ -128,8 +131,59 @@ function resetFilters() {
     const u = document.getElementById('m3-filter-unit');
     if (s) s.value = '';
     if (u) u.value = '';
+    
+    // Reset card highlights
+    document.querySelectorAll('.m3-summary-card').forEach(card => {
+        card.classList.remove('ring-4', 'ring-white/30', 'scale-[1.05]', 'shadow-lg');
+    });
+
     invalidateReportExport();
     populateTable(window.allDefects || []);
+}
+
+// ── Card Filtering ───────────────────────────────────────────
+function filterByCardStatus(status) {
+    console.log('Filtering by card status:', status);
+    const statusSelect = document.getElementById('m3-filter-status');
+    if (!statusSelect) return;
+
+    if (status === 'Total') {
+        statusSelect.value = '';
+    } else {
+        // Handle specialized bucket labels for Developer
+        const statusMap = {
+            'Reported': 'Pending',
+            'PENDING':  'Pending',
+            'WIP':      'In Progress',
+            'DONE':     'Completed'
+        };
+        const targetValue = statusMap[status] || status;
+
+        // Try to find matching option value
+        let found = false;
+        for (let opt of statusSelect.options) {
+            if (opt.value === targetValue) {
+                statusSelect.value = targetValue;
+                found = true;
+                break;
+            }
+        }
+        // If not found directly, maybe it's a special alias
+        if (!found) statusSelect.value = '';
+    }
+
+    // Visual cue: highlight active card
+    document.querySelectorAll('.m3-summary-card').forEach(card => {
+        card.classList.remove('ring-4', 'ring-white/30', 'scale-[1.05]', 'shadow-lg');
+        if (card.getAttribute('data-status') === status) {
+            card.classList.add('ring-4', 'ring-white/30', 'scale-[1.05]', 'shadow-lg');
+        }
+    });
+
+    // Centralised filter logic
+    if (typeof applyFilters === 'function') {
+        applyFilters();
+    }
 }
 
 // ── Report generation ────────────────────────────────────────

@@ -123,15 +123,20 @@
             </nav>
         </div>
         <div class="flex items-center gap-4">
-            <div
-                class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all cursor-pointer">
+            <a href="{{ url_for('module3.profile') }}"
+                class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all cursor-pointer group">
                 <div class="flex flex-col items-end">
-                    <span class="text-sm font-bold text-slate-900 dark:text-white">{{ current_user.law_firm_name or current_user.full_name }}</span>
+                    <span class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">{{ current_user.law_firm_name or current_user.full_name }}</span>
                     <span class="text-[10px] uppercase tracking-wider font-bold text-primary px-1.5 py-0.5 bg-primary/10 rounded">Lawyer</span>
                 </div>
-                <img alt="Zulaikha & Partners (Tester)" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuArWeYXz0ZZMuLwT8KKAMb_Tr7728aUKJsmZvC4cTqKmysuL4VA2MaKuvl3mrnrchnvNhFNMgVw6n6PZEpVdvjs8vTcj4-uuhHlb_dHPCrw04B0K1wAusvFFreT4nLBhFD_3tnmttGfPNyQh_DXHt-3DAzyAI3nhgvpYsWiEPCtMiyFQjUqm-ISMWZTcgBdsPXAI2hXg2NNVU3BPk12y7LcXVuGULT96QbBTTRdwFcP_vcv01EqnU_OfAtELK37dk_mOHQYpg5ulA">
-            </div>
+                <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm bg-primary flex items-center justify-center text-white font-bold">
+                    {% if current_user.profile_picture %}
+                    <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
+                    {% else %}
+                    {{ (current_user.law_firm_name or current_user.full_name)[0].upper() }}
+                    {% endif %}
+                </div>
+            </a>
             <div class="flex items-center gap-1 border-l pl-4 border-slate-200 ml-2">
                 <button class="p-2 text-slate-500 hover:bg-slate-200/50 rounded-lg transition-colors">
                     <span class="material-symbols-outlined">notifications</span>

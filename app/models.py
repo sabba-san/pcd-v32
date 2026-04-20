@@ -18,6 +18,7 @@ class User(db.Model, UserMixin):
     full_name     = db.Column(db.String(150), nullable=False)
     email         = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
+    profile_picture = db.Column(db.String(500))  # Path or URL to profile picture
 
     # ── Developer / Housing-Developer fields ──────────────────────────────────
     company_name         = db.Column(db.String(150))

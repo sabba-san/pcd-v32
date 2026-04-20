@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DLP Advisor | Account Profile</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary":                 "#004ac6",
+                        "primary-container":       "#2563eb",
+                        "on-primary":              "#ffffff",
+                        "surface":                 "#f7f9fb",
+                        "surface-container-lowest":"#ffffff",
+                        "surface-container-low":   "#f2f4f6",
+                        "surface-container":       "#eceef0",
+                        "surface-container-high":  "#e6e8ea",
+                        "surface-container-highest":"#e0e3e5",
+                        "on-surface":              "#191c1e",
+                        "on-surface-variant":      "#434655",
+                        "outline":                 "#737686",
+                        "outline-variant":         "#c3c6d7",
+                    },
+                    fontFamily: {
+                        headline: ["Manrope", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+
+        .tonal-shadow {
+            box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
+        }
+    </style>
+</head>
+
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col">
+    <!-- TopAppBar -->
+    <header class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-outline-variant/20">
+        <div class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto w-full">
+            <div class="flex items-center gap-4">
+                <a href="{{ url_for('module3.dashboard') }}"
+                    class="hover:bg-surface-container-low transition-colors p-2 rounded-full active:scale-95 duration-200">
+                    <span class="material-symbols-outlined text-primary">arrow_back</span>
+                </a>
+                <h1 class="font-headline font-bold text-lg tracking-tight text-on-surface">Account Profile</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-black tracking-tight text-primary font-headline">DLP Advisor</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 mt-24 mb-28 px-6 max-w-2xl mx-auto w-full">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="space-y-4 mb-8">
+            {% for category, message in messages %}
+            <div class="p-4 rounded-xl tonal-shadow flex items-center gap-3 {% if category == 'error' %}bg-red-50 text-red-800 border border-red-100{% else %}bg-green-50 text-green-800 border border-green-100{% endif %}">
+                <span class="material-symbols-outlined text-xl">{% if category == 'error' %}error{% else %}check_circle{% endif %}</span>
+                <p class="text-sm font-semibold">{{ message }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Contextual Header -->
+        <section class="mb-10 pt-4">
+            <div class="flex flex-col gap-1">
+                <span class="font-bold text-[0.75rem] uppercase tracking-[0.1em] text-on-surface-variant">Your Account</span>
+                <h2 class="font-headline font-extrabold text-[2.5rem] tracking-tight leading-tight text-on-surface">
+                    Personal Info</h2>
+            </div>
+        </section>
+
+        <!-- Profile Hero Section -->
+        <div class="mb-12 flex flex-col items-center sm:flex-row sm:items-center gap-8 bg-white p-8 rounded-3xl tonal-shadow border border-outline-variant/10">
+            <div class="relative group">
+                <div class="w-32 h-32 rounded-full overflow-hidden shadow-2xl border-4 border-white">
+                    {% if user.profile_picture %}
+                    <img src="{{ url_for('static', filename=user.profile_picture) }}" alt="User Profile" class="w-full h-full object-cover" />
+                    {% else %}
+                    <div class="w-full h-full bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-white text-5xl font-black font-headline">
+                        {{ user.full_name[0].upper() if user.full_name else 'U' }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="absolute -bottom-1 -right-1 bg-primary p-2 rounded-full text-white shadow-lg border-2 border-white">
+                    <span class="material-symbols-outlined text-sm font-bold">verified_user</span>
+                </div>
+            </div>
+            <div class="text-center sm:text-left flex-1">
+                <h3 class="font-headline font-extrabold text-2xl text-on-surface">{{ user.full_name }}</h3>
+                <p class="font-semibold text-primary text-sm uppercase tracking-wider mt-1">{{ user.user_type | capitalize }}</p>
+                <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-4 text-sm text-on-surface-variant">
+                    <div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-lg opacity-60">calendar_today</span>
+                        <span>Joined 2024</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-lg opacity-60">location_on</span>
+                        <span>{{ user.housing_project or 'PCD Network' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="grid grid-cols-1 gap-4">
+            <!-- Email Info -->
+            <div class="bg-white p-6 rounded-2xl flex items-center justify-between transition-all duration-300 hover:border-primary/30 border border-transparent tonal-shadow">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined">mail</span>
+                    </div>
+                    <div>
+                        <p class="text-[0.7rem] font-bold uppercase tracking-widest text-on-surface-variant">Email Address</p>
+                        <p class="font-bold text-on-surface">{{ user.email }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Identity Info -->
+            <div class="bg-white p-6 rounded-2xl flex items-center justify-between transition-all duration-300 hover:border-primary/30 border border-transparent tonal-shadow">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined">fingerprint</span>
+                    </div>
+                    <div>
+                        <p class="text-[0.7rem] font-bold uppercase tracking-widest text-on-surface-variant">Identity Code</p>
+                        <p class="font-bold text-on-surface">{{ user.ic_number or 'USR-' + (user.id|string).zfill(4) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Status -->
+            <div class="bg-white p-6 rounded-2xl flex items-center justify-between border border-transparent tonal-shadow">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
+                        <span class="material-symbols-outlined">security</span>
+                    </div>
+                    <div>
+                        <p class="text-[0.7rem] font-bold uppercase tracking-widest text-on-surface-variant">Security Status</p>
+                        <p class="font-bold text-on-surface">Account Protected</p>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined text-green-500" style="font-variation-settings: 'FILL' 1;">cloud_done</span>
+            </div>
+        </div>
+
+        <!-- Role Specific Section -->
+        {% if user.user_type == 'homeowner' %}
+        <section class="mt-8 p-6 bg-slate-900 rounded-3xl text-white tonal-shadow relative overflow-hidden">
+            <div class="relative z-10">
+                <h4 class="font-headline font-bold text-lg mb-2">Property Details</h4>
+                <div class="space-y-3 opacity-90">
+                    <div class="flex justify-between text-sm">
+                        <span class="font-medium text-slate-400">Project</span>
+                        <span class="font-bold">{{ user.housing_project or '-' }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="font-medium text-slate-400">Unit</span>
+                        <span class="font-bold">{{ user.unit or '-' }}</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Decorative circle -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
+        </section>
+        {% elif user.user_type == 'developer' %}
+        <section class="mt-8 p-6 bg-slate-900 rounded-3xl text-white tonal-shadow relative overflow-hidden">
+            <div class="relative z-10">
+                <h4 class="font-headline font-bold text-lg mb-2">Company Profile</h4>
+                <div class="space-y-3 opacity-90">
+                    <div class="flex justify-between text-sm">
+                        <span class="font-medium text-slate-400">Company</span>
+                        <span class="font-bold">{{ user.company_name or '-' }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="font-medium text-slate-400">SSM No</span>
+                        <span class="font-bold">{{ user.ssm_registration or '-' }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
+        </section>
+        {% elif user.user_type == 'lawyer' %}
+        <section class="mt-8 p-6 bg-slate-900 rounded-3xl text-white tonal-shadow relative overflow-hidden">
+            <div class="relative z-10">
+                <h4 class="font-headline font-bold text-lg mb-2">Legal Credentials</h4>
+                <div class="space-y-3 opacity-90">
+                    <div class="flex justify-between text-sm">
+                        <span class="font-medium text-slate-400">Law Firm</span>
+                        <span class="font-bold">{{ user.law_firm_name or '-' }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="font-medium text-slate-400">Bar Council ID</span>
+                        <span class="font-bold">{{ user.bar_council_id or '-' }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
+        </section>
+        {% endif %}
+
+        <!-- Action Section -->
+        <section class="mt-12">
+            <a href="{{ url_for('module3.settings') }}"
+                class="w-full bg-primary text-white font-bold py-5 rounded-2xl shadow-lg hover:bg-primary-container transition-all duration-300 flex items-center justify-center gap-3 group active:scale-[0.98]">
+                <span class="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform">settings</span>
+                Settings & Preferences
+            </a>
+        </section>
+
+        <!-- Decorative Footer -->
+        <div class="pt-12 pb-12 flex flex-col items-center justify-center text-center space-y-4 opacity-30">
+            <div class="w-16 h-[1px] bg-outline"></div>
+            <p class="text-[0.65rem] uppercase tracking-[0.3em] font-bold text-on-surface">DLP Advisor &bull; Ecosystem</p>
+        </div>
+    </main>
+
+    <!-- Bottom Nav (visible on mobile) -->
+    <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-6 pb-8 pt-4 bg-white/90 backdrop-blur-xl border-t border-outline-variant/20 z-50 md:hidden">
+        <a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-all" href="{{ url_for('module3.dashboard') }}">
+            <span class="material-symbols-outlined">home</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-all" href="#">
+            <span class="material-symbols-outlined">notifications</span>
+        </a>
+        <a class="flex flex-col items-center justify-center bg-primary text-white rounded-2xl p-3 shadow-lg" href="#">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+        </a>
+    </nav>
+</body>
+</html>
