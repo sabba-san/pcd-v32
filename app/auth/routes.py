@@ -123,11 +123,15 @@ def reg_housedeveloper():
             flash('An account with this email already exists.', 'error')
             return redirect(url_for('auth.reg_housedeveloper'))
 
+        company_name = request.form.get('company_name', '').strip()
+        if company_name == 'others':
+            company_name = request.form.get('other_company_name', '').strip()
+
         user = User(
             user_type            = 'developer',
             full_name            = request.form.get('full_name', '').strip(),
             email                = email,
-            company_name         = request.form.get('company_name', '').strip(),
+            company_name         = company_name,
             ssm_registration     = request.form.get('ssm', '').strip(),
             company_address      = request.form.get('address', '').strip(),
             phone_number         = request.form.get('phone', '').strip(),

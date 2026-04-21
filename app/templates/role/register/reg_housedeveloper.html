@@ -167,13 +167,35 @@
 
                     <!-- Row 3: Company Details -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label
-                                class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                                for="company_name">Company Name (Nama Syarikat)</label>
-                            <input
-                                class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
-                                id="company_name" name="company_name" placeholder="Company Name" type="text">
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label
+                                    class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
+                                    for="company_name">Company Name (Nama Syarikat)</label>
+                                <select
+                                    class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
+                                    id="company_name" name="company_name" onchange="handleCompanyChange()" required>
+                                    <option value="" disabled selected>Select Company</option>
+                                    <option value="Sime Darby Property">Sime Darby Property</option>
+                                    <option value="S P Setia">S P Setia</option>
+                                    <option value="Mah Sing Group">Mah Sing Group</option>
+                                    <option value="EcoWorld Development">EcoWorld Development</option>
+                                    <option value="Sunway Property">Sunway Property</option>
+                                    <option value="Gamuda Land">Gamuda Land</option>
+                                    <option value="UEM Sunrise">UEM Sunrise</option>
+                                    <option value="IJM Land">IJM Land</option>
+                                    <option value="IOI Properties">IOI Properties</option>
+                                    <option value="others">Others (Please Specify)</option>
+                                </select>
+                            </div>
+                            <div id="other_company_container" class="space-y-2 hidden">
+                                <label
+                                    class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
+                                    for="other_company_name">Specify Other Company</label>
+                                <input
+                                    class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
+                                    id="other_company_name" name="other_company_name" placeholder="Type your company name..." type="text">
+                            </div>
                         </div>
                         <div class="space-y-2">
                             <label
@@ -297,6 +319,20 @@
             input.type = isPassword ? 'text' : 'password';
             icon.textContent = isPassword ? 'visibility_off' : 'visibility';
         });
+
+        function handleCompanyChange() {
+            const select = document.getElementById('company_name');
+            const container = document.getElementById('other_company_container');
+            const input = document.getElementById('other_company_name');
+            
+            if (select.value === 'others') {
+                container.classList.remove('hidden');
+                input.required = true;
+            } else {
+                container.classList.add('hidden');
+                input.required = false;
+            }
+        }
     </script>
 </body>
 

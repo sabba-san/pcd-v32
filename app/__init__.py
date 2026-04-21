@@ -1,6 +1,7 @@
 # __init__.py
 import os
 from flask import Flask, redirect, url_for
+from sqlalchemy import text
 from dotenv import load_dotenv
 from .extensions import db, login_manager
 from .module1.routes import module1
@@ -42,6 +43,32 @@ def create_app():
     with app.app_context():
         from . import models  # noqa: F401 — ensures models are registered before create_all
         db.create_all()
+
+    @app.cli.command("init-db")
+    def init_db_command():
+        """Initialize the database safely (tables and seed data)."""
+        import click
+        from .module3.routes import _ensure_module3_tables, _ensure_login_accounts_seeded
+        from .module3.report_data import _ensure_report_metadata_tables
+        
+        click.echo("Creating SQLAlchemy tables...")
+        from . import models  # noqa: F401
+        db.create_all()
+        
+        click.echo("Ensuring Module 3 supplemental tables...")
+        _ensure_module3_tables()
+        
+        click.echo("Ensuring report metadata tables...")
+        _ensure_report_metadata_tables()
+        
+        click.echo("Seeding login accounts...")
+        _ensure_login_accounts_seeded()
+
+        click.echo("Synchronizing database sequences...")
+        db.session.execute(text("SELECT setval(pg_get_serial_sequence('users', 'id'), coalesce(max(id), 1), max(id) IS NOT null) FROM users;"))
+        db.session.commit()
+        
+        click.echo("Database initialization complete.")
 
     @app.route('/')
     def index():

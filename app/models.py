@@ -109,6 +109,7 @@ class Defect(db.Model):
     # ── Compliance Module (Nabilah) Fields ───────────────────────────────────
     unit = db.Column(db.String(100))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Linking defect to homeowner
+    assigned_developer_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Linking defect to developer
     reported_date = db.Column(db.DateTime, default=db.func.now())
     urgency = db.Column(db.String(50))
     deadline = db.Column(db.Date)

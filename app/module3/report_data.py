@@ -4,9 +4,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
-def get_connection():
-    from ..extensions import db
-    return db.engine.raw_connection()
+from sqlalchemy import text
 
 TRIBUNAL_NAME = "Tribunal Tuntutan Pengguna Malaysia"
 DEFAULT_TRIBUNAL_LOCATION = "-"
@@ -66,12 +64,10 @@ ROLE_CONTEXTS = {
 }
 
 def _ensure_report_metadata_tables():
-    conn = get_connection()
-    cur = conn.cursor()
+    from ..extensions import db
     try:
-        cur.execute("DROP TABLE IF EXISTS report_active_claimant")
-        cur.execute(
-            """
+        db.session.execute(text("DROP TABLE IF EXISTS report_active_claimant"))
+        db.session.execute(text("""
             CREATE TABLE IF NOT EXISTS report_homeowner_profile (
                 homeowner_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
                 name VARCHAR(255) NOT NULL,
@@ -86,25 +82,23 @@ def _ensure_report_metadata_tables():
                 transaction_date DATE,
                 updated_at TIMESTAMP NOT NULL DEFAULT NOW()
             )
-            """
-        )
-        cur.execute(
-            "ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS court_location VARCHAR(255)"
-        )
-        cur.execute(
-            "ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS state_name VARCHAR(100)"
-        )
-        cur.execute(
-            "ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS claim_amount VARCHAR(100)"
-        )
-        cur.execute(
-            "ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS item_service VARCHAR(255)"
-        )
-        cur.execute(
-            "ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS transaction_date DATE"
-        )
-        cur.execute(
-            """
+        """))
+        
+        # Safe column additions
+        for col_def in [
+            "court_location VARCHAR(255)",
+            "state_name VARCHAR(100)",
+            "claim_amount VARCHAR(100)",
+            "item_service VARCHAR(255)",
+            "transaction_date DATE"
+        ]:
+            col_name = col_def.split()[0]
+            try:
+                db.session.execute(text(f"ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS {col_def}"))
+            except Exception:
+                pass
+
+        db.session.execute(text("""
             CREATE TABLE IF NOT EXISTS report_respondent_profile (
                 respondent_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
                 homeowner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -115,13 +109,14 @@ def _ensure_report_metadata_tables():
                 address VARCHAR(255),
                 updated_at TIMESTAMP NOT NULL DEFAULT NOW()
             )
-            """
-        )
-        cur.execute(
-            "ALTER TABLE report_respondent_profile ADD COLUMN IF NOT EXISTS homeowner_id INTEGER"
-        )
-        cur.execute(
-            """
+        """))
+        
+        try:
+            db.session.execute(text("ALTER TABLE report_respondent_profile ADD COLUMN IF NOT EXISTS homeowner_id INTEGER"))
+        except Exception:
+            pass
+
+        db.session.execute(text("""
             CREATE TABLE IF NOT EXISTS report_claim_registry (
                 claim_id VARCHAR(64) PRIMARY KEY,
                 case_key VARCHAR(255) UNIQUE NOT NULL,
@@ -135,13 +130,15 @@ def _ensure_report_metadata_tables():
                 created_at TIMESTAMP NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMP NOT NULL DEFAULT NOW()
             )
-            """
-        )
-        cur.execute(
-            "ALTER TABLE report_claim_registry ADD COLUMN IF NOT EXISTS state VARCHAR(100)"
-        )
-        cur.execute(
-            """
+        """))
+        
+        try:
+            db.session.execute(text("ALTER TABLE report_claim_registry ADD COLUMN IF NOT EXISTS state VARCHAR(100)"))
+        except Exception:
+            pass
+
+        # Migrate data if necessary
+        db.session.execute(text("""
             DO $$
             BEGIN
                 IF EXISTS (
@@ -155,42 +152,39 @@ def _ensure_report_metadata_tables():
                 END IF;
             END
             $$;
-            """
-        )
+        """))
 
-        conn.commit()
-    finally:
-        cur.close()
-        conn.close()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
-def _fetch_respondent_profile(cur, homeowner_id=None, respondent_user_id=None):
+def _fetch_respondent_profile(session, homeowner_id=None, respondent_user_id=None):
     if homeowner_id is not None:
-        cur.execute(
+        result = session.execute(text(
             """
             SELECT respondent_id, homeowner_id, company_name, registration_number, email, phone_number, address
             FROM report_respondent_profile
-            WHERE homeowner_id = %s
+            WHERE homeowner_id = :homeowner_id
             ORDER BY updated_at DESC, respondent_id ASC
             LIMIT 1
-            """,
-            (homeowner_id,),
-        )
-        row = cur.fetchone()
+            """
+        ), {"homeowner_id": homeowner_id})
+        row = result.fetchone()
         if row:
             return row
 
     if respondent_user_id is not None:
-        cur.execute(
+        result = session.execute(text(
             """
             SELECT respondent_id, homeowner_id, company_name, registration_number, email, phone_number, address
             FROM report_respondent_profile
-            WHERE respondent_id = %s
+            WHERE respondent_id = :respondent_user_id
             LIMIT 1
-            """,
-            (respondent_user_id,),
-        )
-        row = cur.fetchone()
+            """
+        ), {"respondent_user_id": respondent_user_id})
+        row = result.fetchone()
         if row:
             return row
 
@@ -198,18 +192,15 @@ def _fetch_respondent_profile(cur, homeowner_id=None, respondent_user_id=None):
 
 
 def get_homeowner_claimants():
-    _ensure_report_metadata_tables()
-
-    conn = get_connection()
-    cur = conn.cursor()
+    from ..extensions import db
     try:
-        cur.execute(
+        result = db.session.execute(text(
             """
             SELECT homeowner_id, name, address, email
             FROM report_homeowner_profile
             ORDER BY homeowner_id ASC
             """
-        )
+        ))
         return [
             {
                 "homeowner_id": row[0],
@@ -217,11 +208,10 @@ def get_homeowner_claimants():
                 "unit": row[2] or "-",
                 "email": row[3] or "-",
             }
-            for row in cur.fetchall()
+            for row in result.fetchall()
         ]
-    finally:
-        cur.close()
-        conn.close()
+    except Exception:
+        return []
 
 
 def _is_missing_required(value):
@@ -288,10 +278,8 @@ def validate_report_requirements(role, user_id=None, claimant_user_id=None):
 
 
 def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
-    _ensure_report_metadata_tables()
-
-    conn = get_connection()
-    cur = conn.cursor()
+    from ..extensions import db
+    session = db.session
     try:
         case_info = {
             "tribunal_name": TRIBUNAL_NAME,
@@ -326,34 +314,32 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
 
         user_row = None
         if user_id is not None:
-            cur.execute(
+            result = session.execute(text(
                 """
                 SELECT id, full_name, unit, role, email, ic_number, phone_number
                 FROM users
-                WHERE id = %s
-                """,
-                (user_id,),
-            )
-            user_row = cur.fetchone()
+                WHERE id = :id
+                """
+            ), {"id": user_id})
+            user_row = result.fetchone()
 
         if user_row:
-            _, full_name, unit, user_role, user_email, user_ic_number, user_phone_number = user_row
+            uid, full_name, unit, user_role, user_email, user_ic_number, user_phone_number = user_row
             active_role = (role or user_role or "Homeowner").strip().capitalize()
             if active_role == "Lawyer":
                 active_role = "Legal"
 
             if active_role == "Homeowner":
                 homeowner_row = None
-                cur.execute(
+                result = session.execute(text(
                     """
                     SELECT name, ic_number, email, phone_number, address,
                            court_location, state_name, claim_amount, item_service, transaction_date
                     FROM report_homeowner_profile
-                    WHERE homeowner_id = %s
-                    """,
-                    (user_id,),
-                )
-                homeowner_row = cur.fetchone()
+                    WHERE homeowner_id = :homeowner_id
+                    """
+                ), {"homeowner_id": user_id})
+                homeowner_row = result.fetchone()
                 if homeowner_row:
                     claimant = {
                         "name": homeowner_row[0] or claimant["name"],
@@ -370,7 +356,7 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
                     case_info["item_service"] = homeowner_row[8] or case_info["item_service"]
                     if homeowner_row[9]:
                         case_info["transaction_date"] = homeowner_row[9].strftime("%d-%m-%Y")
-                # Only fallback to user table defaults if the profile value is truly missing/placeholder
+                
                 if _is_missing_required(claimant.get("name")):
                     claimant["name"] = full_name or claimant["name"]
                 if _is_missing_required(claimant.get("national_id")):
@@ -380,13 +366,11 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
                 if _is_missing_required(claimant.get("phone_number")):
                     claimant["phone_number"] = user_phone_number or claimant["phone_number"]
                 
-                # IMPORTANT: If address is already set from profile (homeowner_row[4]), 
-                # do not override it with unit unless it is empty or '-'
                 if not claimant.get("address_line_1") or claimant.get("address_line_1") == "-":
                     if unit and unit != "None":
                         claimant["address_line_1"] = unit or claimant["address_line_1"]
 
-                respondent_row = _fetch_respondent_profile(cur, homeowner_id=user_id)
+                respondent_row = _fetch_respondent_profile(session, homeowner_id=user_id)
                 if respondent_row:
                     respondent = {
                         "name": respondent_row[2] or respondent["name"],
@@ -402,21 +386,19 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
 
                 target_homeowner_id = claimant_user_id or DEFAULT_CLAIMANT_HOMEOWNER_ID
                 if target_homeowner_id:
-                    cur.execute(
+                    result = session.execute(text(
                         """
                         SELECT name, ic_number, email, phone_number, address,
                                court_location, state_name, claim_amount, item_service, transaction_date
                         FROM report_homeowner_profile
-                        WHERE homeowner_id = %s
+                        WHERE homeowner_id = :homeowner_id
                         LIMIT 1
-                        """,
-                        (target_homeowner_id,),
-                    )
-                    claimant_row = cur.fetchone()
+                        """
+                    ), {"homeowner_id": target_homeowner_id})
+                    claimant_row = result.fetchone()
 
                 if not claimant_row:
-                    # Fallback only if configured homeowner profile is unavailable.
-                    cur.execute(
+                    result = session.execute(text(
                         """
                         SELECT name, ic_number, email, phone_number, address,
                                court_location, state_name, claim_amount, item_service, transaction_date
@@ -424,8 +406,8 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
                         ORDER BY homeowner_id ASC
                         LIMIT 1
                         """
-                    )
-                    claimant_row = cur.fetchone()
+                    ))
+                    claimant_row = result.fetchone()
                 if claimant_row:
                     claimant = {
                         "name": claimant_row[0] or claimant["name"],
@@ -443,7 +425,7 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
                     if claimant_row[9]:
                         case_info["transaction_date"] = claimant_row[9].strftime("%d-%m-%Y")
 
-                respondent_row = _fetch_respondent_profile(cur, respondent_user_id=user_id)
+                respondent_row = _fetch_respondent_profile(session, respondent_user_id=user_id)
                 if respondent_row:
                     respondent = {
                         "name": respondent_row[2] or respondent["name"],
@@ -468,9 +450,10 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
         nota_penting = IMPORTANT_NOTE
 
         return case_info, claimant, respondent, negeri_codes, role_contexts, nota_penting
-    finally:
-        cur.close()
-        conn.close()
+    except Exception as e:
+        # Avoid crashing the report page if possible, but logging is vital
+        print(f"Error loading report metadata: {e}")
+        raise e
 
 
 # ==================================================
@@ -561,30 +544,27 @@ def generate_no_tuntutan(negeri, running_no, negeri_codes):
 
 
 def get_or_create_claim_number(state_name, negeri_codes, case_key, homeowner_id=None, respondent_id=None):
-    _ensure_report_metadata_tables()
-
-    conn = get_connection()
-    cur = conn.cursor()
+    from ..extensions import db
     try:
         claim_year = _now_app_timezone().year
         state_code = negeri_codes.get(state_name, "UNK")
 
         resolved_homeowner_id = homeowner_id
         if resolved_homeowner_id is None:
-            cur.execute(
+            result = db.session.execute(text(
                 """
                 SELECT homeowner_id
                 FROM report_homeowner_profile
                 ORDER BY updated_at DESC, homeowner_id ASC
                 LIMIT 1
                 """
-            )
-            row = cur.fetchone()
+            ))
+            row = result.fetchone()
             if row and row[0] is not None:
                 resolved_homeowner_id = row[0]
 
         if resolved_homeowner_id is None:
-            cur.execute(
+            result = db.session.execute(text(
                 """
                 SELECT id
                 FROM users
@@ -592,41 +572,58 @@ def get_or_create_claim_number(state_name, negeri_codes, case_key, homeowner_id=
                 ORDER BY id ASC
                 LIMIT 1
                 """
-            )
-            row = cur.fetchone()
+            ))
+            row = result.fetchone()
             if row and row[0] is not None:
                 resolved_homeowner_id = row[0]
-
+        
         if resolved_homeowner_id is None:
             raise ValueError("Cannot generate claim number because no homeowner profile exists.")
 
-        # Always issue a new serial for each generation/export request.
-        unique_case_key = f"{case_key}:{uuid.uuid4().hex}"
+        result = db.session.execute(text(
+            """
+            SELECT claim_id, case_number
+            FROM report_claim_registry
+            WHERE case_key = :case_key
+            LIMIT 1
+            """
+        ), {"case_key": case_key})
+        row = result.fetchone()
 
-        cur.execute(
-            "SELECT COALESCE(MAX(CAST(case_number AS INTEGER)), 0) + 1 FROM report_claim_registry WHERE claim_year = %s AND state_code = %s",
-            (claim_year, state_code),
-        )
-        running_no = int(cur.fetchone()[0])
-        case_number = f"{running_no:06d}"
-        claim_id = f"TTPM/{state_code}/{claim_year}/{case_number}"
+        if row:
+            return row[0]
 
-        cur.execute(
+        result = db.session.execute(text(
+            "SELECT COALESCE(MAX(case_number::INTEGER), 0) FROM report_claim_registry WHERE claim_year = :year"
+        ), {"year": claim_year})
+        max_no = result.fetchone()[0]
+        new_no = max_no + 1
+
+        new_claim_id = generate_no_tuntutan(state_name, new_no, negeri_codes)
+
+        db.session.execute(text(
             """
             INSERT INTO report_claim_registry (
-                claim_id, case_key, case_number, claim_year, date_filed, state, state_code, homeowner_id, respondent_id
+                claim_id, case_key, case_number, claim_year, state, state_code, homeowner_id, respondent_id
             )
-            VALUES (%s, %s, %s, %s, NOW(), %s, %s, %s, %s)
-            RETURNING claim_id
-            """,
-            (claim_id, unique_case_key, case_number, claim_year, state_name, state_code, resolved_homeowner_id, respondent_id),
-        )
-        row = cur.fetchone()
-        conn.commit()
-        return row[0]
-    finally:
-        cur.close()
-        conn.close()
+            VALUES (:cid, :ckey, :cnum, :year, :state, :scode, :hid, :rid)
+            """
+        ), {
+            "cid": new_claim_id,
+            "ckey": case_key,
+            "cnum": f"{new_no:06d}",
+            "year": claim_year,
+            "state": state_name,
+            "scode": state_code,
+            "hid": resolved_homeowner_id,
+            "rid": respondent_id
+        })
+        db.session.commit()
+        return new_claim_id
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in get_or_create_claim_number: {e}")
+        return f"TTPM/ERR/{datetime.now().year}/000000"
 
 # ==================================================
 # ROLE CONTEXT (AI GUIDANCE STRUCTURE)
