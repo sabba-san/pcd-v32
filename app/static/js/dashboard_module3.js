@@ -270,6 +270,7 @@ function saveClaimDetails() {
         transaction_date: g('m3-transaction-date'),
         claim_amount:     g('m3-claim-amount'),
         respondent_company_name: g('m3-respondent-company-name'),
+        other_developer_name:    g('m3-other-developer-name'),
         respondent_registration_number: g('m3-respondent-registration-number'),
         respondent_email: g('m3-respondent-email'),
         respondent_phone_number: g('m3-respondent-phone-number'),
@@ -494,6 +495,23 @@ function uploadEvidence(defectId) {
         .catch(() => showToast('Upload failed.', 'error'));
 }
 
+// ── Respondent Dropdown logic ───────────────────────────────
+function handleRespondentChange() {
+    const sel = document.getElementById('m3-respondent-company-name');
+    const container = document.getElementById('m3-other-developer-container');
+    const input = document.getElementById('m3-other-developer-name');
+    
+    if (sel && container && input) {
+        if (sel.value === 'others') {
+            container.classList.remove('hidden');
+            input.required = true;
+        } else {
+            container.classList.add('hidden');
+            input.required = false;
+        }
+    }
+}
+
 // ── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     populateTable(window.allDefects || []);
@@ -505,4 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (M3.initial_state_name !== undefined) {
         populateCourtLocations(M3.initial_state_name, M3.initial_court_location || '');
     }
+
+    // Initialise Respondent Dropdown
+    handleRespondentChange();
 });

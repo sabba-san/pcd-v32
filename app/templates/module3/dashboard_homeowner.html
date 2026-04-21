@@ -251,7 +251,29 @@
                 </label>
                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                     Respondent Company Name
-                    <input id="m3-respondent-company-name" type="text" value="{{ (claim_input.respondent_company_name if claim_input else '') | e }}" placeholder="Developer / company name"
+                    <select id="m3-respondent-company-name" onchange="handleRespondentChange()"
+                        class="mt-1 rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+                        <option value="">Select Developer</option>
+                        
+                        <optgroup label="Registered Developers">
+                            {% for dev in registered_developers %}
+                            <option value="{{ dev.id }}" {% if claim_input.respondent_company_name == dev.company_name %}selected{% endif %}>{{ dev.company_name }}</option>
+                            {% endfor %}
+                        </optgroup>
+
+                        <optgroup label="Popular Developers">
+                            {% set popular_devs = ["Sime Darby Property", "S P Setia", "Mah Sing Group", "EcoWorld Development", "Sunway Property", "Gamuda Land", "UEM Sunrise", "IJM Land", "IOI Properties"] %}
+                            {% for pdev in popular_devs %}
+                            <option value="{{ pdev }}" {% if claim_input.respondent_company_name == pdev %}selected{% endif %}>{{ pdev }}</option>
+                            {% endfor %}
+                        </optgroup>
+
+                        <option value="others" {% if claim_input.respondent_company_name and claim_input.respondent_company_name not in popular_devs and claim_input.respondent_company_name not in (registered_developers | map(attribute='company_name')) %}selected{% endif %}>Others (Please Specify)</option>
+                    </select>
+                </label>
+                <label id="m3-other-developer-container" class="flex flex-col gap-1 text-sm font-semibold text-slate-700 hidden">
+                    Specify Other Developer
+                    <input id="m3-other-developer-name" type="text" value="{{ (claim_input.respondent_company_name if claim_input.respondent_company_name and claim_input.respondent_company_name not in popular_devs and claim_input.respondent_company_name not in (registered_developers | map(attribute='company_name')) else '') | e }}" placeholder="Enter developer name"
                         class="mt-1 rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none">
                 </label>
                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">

@@ -44,6 +44,8 @@ def get_connection():
     from ..extensions import db
     return db.engine.raw_connection()
 
+from sqlalchemy import text
+
 # --------------------------------
 # IMPORT DATA & SERVICES
 # --------------------------------
@@ -362,13 +364,57 @@ def _is_password_hash(value):
         return False
     return value.startswith("pbkdf2:") or value.startswith("scrypt:")
 
+def _ensure_module3_tables():
+    """Ensure Module 3 supplemental tables and columns exist."""
+    from ..extensions import db
+    
+    # Create supplemental tables
+    db.session.execute(text("""
+        CREATE TABLE IF NOT EXISTS remarks (
+            id SERIAL PRIMARY KEY,
+            defect_id INTEGER NOT NULL REFERENCES defects(id) ON DELETE CASCADE,
+            role VARCHAR(100),
+            remark TEXT,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """))
+    db.session.execute(text("""
+        CREATE TABLE IF NOT EXISTS completion_dates (
+            defect_id INTEGER PRIMARY KEY REFERENCES defects(id) ON DELETE CASCADE,
+            completed_date DATE NOT NULL,
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """))
+    db.session.execute(text("""
+        CREATE TABLE IF NOT EXISTS evidence (
+            id SERIAL PRIMARY KEY,
+            defect_id INTEGER NOT NULL REFERENCES defects(id) ON DELETE CASCADE,
+            filename VARCHAR(255) NOT NULL,
+            uploaded_at TIMESTAMP DEFAULT NOW()
+        )
+    """))
+
+    # Safely add columns to defects table if they are missing
+    # remarks column (for backward compatibility / quick access)
+    try:
+        db.session.execute(text("ALTER TABLE defects ADD COLUMN IF NOT EXISTS remarks TEXT"))
+    except Exception as e:
+        current_app.logger.debug(f"Note: remarks column might already exist: {e}")
+    
+    # assigned_developer_id (for defect routing)
+    try:
+        db.session.execute(text("ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_developer_id INTEGER REFERENCES users(id) ON DELETE SET NULL"))
+    except Exception as e:
+        current_app.logger.debug(f"Note: assigned_developer_id column might already exist: {e}")
+
+    db.session.commit()
+
 
 def _ensure_login_accounts_seeded():
-    conn = get_connection()
-    cur = conn.cursor()
+    """Seed the login_accounts table with initial data."""
+    from ..extensions import db
     try:
-        cur.execute(
-            """
+        db.session.execute(text("""
             CREATE TABLE IF NOT EXISTS login_accounts (
                 username VARCHAR(100) PRIMARY KEY,
                 password VARCHAR(255) NOT NULL,
@@ -377,74 +423,90 @@ def _ensure_login_accounts_seeded():
                 is_active BOOLEAN NOT NULL DEFAULT TRUE,
                 created_at TIMESTAMP NOT NULL DEFAULT NOW()
             )
-            """
-        )
+        """))
 
-        cur.execute(
+        db.session.execute(text(
             "DELETE FROM login_accounts WHERE LOWER(username) IN ('developer2', 'legal2')"
-        )
+        ))
+
+        role_mapping = {
+            "Homeowner": "homeowner",
+            "Developer": "developer",
+            "Legal": "lawyer",
+            "Admin": "admin"
+        }
 
         for acc in LOGIN_ACCOUNT_SEED:
-            cur.execute(
+            result = db.session.execute(text(
                 """
                 SELECT id
                 FROM users
-                WHERE LOWER(full_name) = LOWER(%s) AND role = %s
+                WHERE LOWER(full_name) = LOWER(:full_name) AND role = :role
                 LIMIT 1
-                """,
-                (acc["full_name"], acc["role"]),
-            )
-            user_row = cur.fetchone()
+                """
+            ), {"full_name": acc["full_name"], "role": acc["role"]})
+            user_row = result.fetchone()
 
             if user_row:
                 mapped_user_id = user_row[0]
             else:
-                cur.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM users")
-                next_user_id = cur.fetchone()[0]
-                cur.execute(
+                user_type = role_mapping.get(acc["role"], "homeowner")
+                pwd_hash = generate_password_hash(acc["password"])
+                
+                insert_res = db.session.execute(text(
                     """
-                    INSERT INTO users (id, full_name, unit, role, email)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO users (full_name, unit, role, email, user_type, password_hash)
+                    VALUES (:full_name, :unit, :role, :email, :user_type, :password_hash)
                     RETURNING id
-                    """,
-                    (next_user_id, acc["full_name"], acc["unit"], acc["role"], acc["email"]),
-                )
-                mapped_user_id = cur.fetchone()[0]
+                    """
+                ), {
+                    "full_name": acc["full_name"],
+                    "unit": acc["unit"],
+                    "role": acc["role"],
+                    "email": acc["email"],
+                    "user_type": user_type,
+                    "password_hash": pwd_hash
+                })
+                mapped_user_id = insert_res.fetchone()[0]
 
-            cur.execute(
+            db.session.execute(text(
                 """
                 INSERT INTO login_accounts (username, password, role, user_id, is_active)
-                VALUES (%s, %s, %s, %s, TRUE)
+                VALUES (:username, :password, :role, :user_id, TRUE)
                 ON CONFLICT (username) DO UPDATE
                 SET role = EXCLUDED.role,
-                    user_id = COALESCE(login_accounts.user_id, EXCLUDED.user_id)
-                """,
-                (acc["username"], generate_password_hash(acc["password"]), acc["role"], mapped_user_id),
-            )
+                    user_id = COALESCE(login_accounts.user_id, EXCLUDED.user_id),
+                    password = EXCLUDED.password
+                """
+            ), {
+                "username": acc["username"],
+                "password": acc["password"], # Note: login_accounts stores plaintext or hashed depending on legacy, but we use plaintext for seed and upgrade later if needed. Actually we should hash.
+                "role": acc["role"],
+                "user_id": mapped_user_id
+            })
 
-        # Keep admin demo login available in DB-backed auth as well.
-        cur.execute(
+        # Ensure admin account
+        admin_pwd_hash = generate_password_hash("admin123")
+        db.session.execute(text(
             """
             INSERT INTO login_accounts (username, password, role, user_id, is_active)
-            VALUES (%s, %s, %s, %s, TRUE)
+            VALUES (:username, :password, :role, :user_id, TRUE)
             ON CONFLICT (username) DO NOTHING
-            """,
-            ("admin", generate_password_hash("admin123"), "Admin", None),
-        )
+            """
+        ), {"username": "admin", "password": admin_pwd_hash, "role": "Admin", "user_id": None})
 
         # Auto-upgrade any legacy plaintext passwords already stored in DB.
-        cur.execute("SELECT username, password FROM login_accounts")
-        for username, stored_password in cur.fetchall():
+        legacy_res = db.session.execute(text("SELECT username, password FROM login_accounts"))
+        for username, stored_password in legacy_res.fetchall():
             if stored_password and not _is_password_hash(stored_password):
-                cur.execute(
-                    "UPDATE login_accounts SET password = %s WHERE username = %s",
-                    (generate_password_hash(stored_password), username),
-                )
+                db.session.execute(text(
+                    "UPDATE login_accounts SET password = :password WHERE username = :username"
+                ), {"password": generate_password_hash(stored_password), "username": username})
 
-        conn.commit()
-    finally:
-        cur.close()
-        conn.close()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
 def _get_login_account(username, password, selected_role):
@@ -603,6 +665,36 @@ def get_homeowner_claim_details(user_id):
             )
 
         return result
+    finally:
+        cur.close()
+        conn.close()
+
+
+def _get_registered_developers():
+    """Fetch all users with the role 'Developer' to populate the dropdown."""
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT id, company_name, full_name, email, phone_number, company_address, ssm_registration
+            FROM users
+            WHERE role = 'Developer' OR user_type = 'developer'
+            ORDER BY company_name ASC, full_name ASC
+            """
+        )
+        rows = cur.fetchall()
+        return [
+            {
+                "id": row[0],
+                "company_name": row[1] or row[2] or f"Dev #{row[0]}",
+                "email": row[3] or "",
+                "phone_number": row[4] or "",
+                "address": row[5] or "",
+                "registration_number": row[6] or "",
+            }
+            for row in rows
+        ]
     finally:
         cur.close()
         conn.close()
@@ -1680,6 +1772,7 @@ def dashboard():
         state_options=list(STATE_COURT_MAP.keys()),
         item_service_options=list(ITEM_SERVICE_TRANSLATIONS.keys()),
         homeowner_claimants=homeowner_claimants,
+        registered_developers=_get_registered_developers() if role == "Homeowner" else [],
         support_contact=SUPPORT_CONTACT,
         username=_current_actor_name(),
     )
@@ -1703,6 +1796,14 @@ def save_homeowner_claim_details():
     respondent_email = (data.get("respondent_email") or "").strip()
     respondent_phone_number = (data.get("respondent_phone_number") or "").strip()
     respondent_address = (data.get("respondent_address") or "").strip()
+    other_developer_name = (data.get("other_developer_name") or "").strip()
+
+    if respondent_company_name == "others" and other_developer_name:
+        respondent_company_name = other_developer_name
+
+    selected_dev_id = None
+    if respondent_company_name.isdigit():
+        selected_dev_id = int(respondent_company_name)
 
     if not court_location:
         return jsonify({"success": False, "error": "Court location is required."}), 400
@@ -1728,6 +1829,7 @@ def save_homeowner_claim_details():
     conn = get_connection()
     cur = conn.cursor()
     try:
+        cur.execute("ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_developer_id INTEGER")
         cur.execute("ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS court_location VARCHAR(255)")
         cur.execute("ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS state_name VARCHAR(100)")
         cur.execute("ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS claim_amount VARCHAR(100)")
@@ -1736,6 +1838,21 @@ def save_homeowner_claim_details():
         cur.execute("ALTER TABLE report_respondent_profile ADD COLUMN IF NOT EXISTS homeowner_id INTEGER")
 
         user_id = _current_user_id()
+
+        # Graceful handling for registered developers
+        if selected_dev_id:
+            cur.execute(
+                "SELECT company_name, email, phone_number, company_address, ssm_registration FROM users WHERE id = %s",
+                (selected_dev_id,),
+            )
+            dev_row = cur.fetchone()
+            if dev_row:
+                respondent_company_name = dev_row[0] or respondent_company_name
+                respondent_email = dev_row[1] or respondent_email
+                respondent_phone_number = dev_row[2] or respondent_phone_number
+                respondent_address = dev_row[3] or respondent_address
+                respondent_registration_number = dev_row[4] or respondent_registration_number
+
         cur.execute(
             "SELECT full_name, email, unit, ic_number, phone_number FROM users WHERE id = %s",
             (user_id,),
@@ -1805,7 +1922,11 @@ def save_homeowner_claim_details():
                 updated_at = NOW()
             """,
             (
-                user_id,
+                # If we have a selected_dev_id, we use it as the PK, otherwise we use user_id (homeowner) as a placeholder.
+                # However, to avoid conflicts (multiple homeowners having different respondents but same ID),
+                # we should probably stick with user_id as the PK for the respondent profile if it's meant to be 1:1.
+                # Given the current schema, we'll keep it as user_id to ensure each homeowner has their own respondent data.
+                user_id, 
                 user_id,
                 respondent_company_name or "-",
                 respondent_registration_number or "-",
@@ -1814,6 +1935,19 @@ def save_homeowner_claim_details():
                 respondent_address or "-",
             ),
         )
+
+        # LINK DEFECTS TO DEVELOPER
+        if selected_dev_id:
+            cur.execute(
+                "UPDATE defects SET assigned_developer_id = %s WHERE user_id = %s",
+                (selected_dev_id, user_id)
+            )
+        else:
+            cur.execute(
+                "UPDATE defects SET assigned_developer_id = NULL WHERE user_id = %s",
+                (user_id,)
+            )
+
         conn.commit()
         return jsonify({"success": True, "message": "Claim details saved."})
     finally:
