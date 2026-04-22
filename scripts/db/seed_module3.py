@@ -5,7 +5,7 @@ Inserts a demo homeowner profile and 6 sample defects so Developer / Legal
 views have something to display and test report generation with.
 
 Run from the project root:
-    docker exec flask_app python /usr/src/app/seed_module3.py
+    docker exec flask_app python /usr/src/app/scripts/db/seed_module3.py
 """
 import os, sys
 sys.path.insert(0, '/usr/src/app')
