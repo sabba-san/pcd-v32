@@ -365,37 +365,16 @@ def _is_password_hash(value):
     return value.startswith("pbkdf2:") or value.startswith("scrypt:")
 
 def _ensure_module3_tables():
-    """Ensure Module 3 supplemental tables and columns exist."""
+    """
+    Ensure Module 3 supplemental tables and columns exist.
+    Tables (remarks, completion_dates, evidence, audit_log, report_versions, login_accounts)
+    are now managed by SQLAlchemy models in models.py.
+    """
     from ..extensions import db
     
-    # Create supplemental tables
-    db.session.execute(text("""
-        CREATE TABLE IF NOT EXISTS remarks (
-            id SERIAL PRIMARY KEY,
-            defect_id INTEGER NOT NULL REFERENCES defects(id) ON DELETE CASCADE,
-            role VARCHAR(100),
-            remark TEXT,
-            created_at TIMESTAMP DEFAULT NOW()
-        )
-    """))
-    db.session.execute(text("""
-        CREATE TABLE IF NOT EXISTS completion_dates (
-            defect_id INTEGER PRIMARY KEY REFERENCES defects(id) ON DELETE CASCADE,
-            completed_date DATE NOT NULL,
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-    """))
-    db.session.execute(text("""
-        CREATE TABLE IF NOT EXISTS evidence (
-            id SERIAL PRIMARY KEY,
-            defect_id INTEGER NOT NULL REFERENCES defects(id) ON DELETE CASCADE,
-            filename VARCHAR(255) NOT NULL,
-            uploaded_at TIMESTAMP DEFAULT NOW()
-        )
-    """))
-
-    # Safely add columns to defects table if they are missing
-    # remarks column (for backward compatibility / quick access)
+    # db.create_all() in init-db handles supplemental tables now.
+    
+    # Safely add columns to defects table if they are missing (backward compatibility)
     try:
         db.session.execute(text("ALTER TABLE defects ADD COLUMN IF NOT EXISTS remarks TEXT"))
     except Exception as e:
@@ -411,20 +390,12 @@ def _ensure_module3_tables():
 
 
 def _ensure_login_accounts_seeded():
-    """Seed the login_accounts table with initial data."""
+    """
+    Seed the login_accounts table with initial data.
+    Table creation is now managed by SQLAlchemy models.
+    """
     from ..extensions import db
     try:
-        db.session.execute(text("""
-            CREATE TABLE IF NOT EXISTS login_accounts (
-                username VARCHAR(100) PRIMARY KEY,
-                password VARCHAR(255) NOT NULL,
-                role VARCHAR(50) NOT NULL,
-                user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-                is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                created_at TIMESTAMP NOT NULL DEFAULT NOW()
-            )
-        """))
-
         db.session.execute(text(
             "DELETE FROM login_accounts WHERE LOWER(username) IN ('developer2', 'legal2')"
         ))
@@ -471,29 +442,40 @@ def _ensure_login_accounts_seeded():
 
             db.session.execute(text(
                 """
-                INSERT INTO login_accounts (username, password, role, user_id, is_active)
-                VALUES (:username, :password, :role, :user_id, TRUE)
+                INSERT INTO login_accounts (username, password, role, user_id, is_active, email, password_hash)
+                VALUES (:username, :password, :role, :user_id, TRUE, :email, :password_hash)
                 ON CONFLICT (username) DO UPDATE
                 SET role = EXCLUDED.role,
                     user_id = COALESCE(login_accounts.user_id, EXCLUDED.user_id),
-                    password = EXCLUDED.password
+                    password = EXCLUDED.password,
+                    email = EXCLUDED.email,
+                    password_hash = EXCLUDED.password_hash
                 """
             ), {
                 "username": acc["username"],
-                "password": acc["password"], # Note: login_accounts stores plaintext or hashed depending on legacy, but we use plaintext for seed and upgrade later if needed. Actually we should hash.
+                "password": acc["password"],
                 "role": acc["role"],
-                "user_id": mapped_user_id
+                "user_id": mapped_user_id,
+                "email": acc["email"],
+                "password_hash": generate_password_hash(acc["password"])
             })
 
         # Ensure admin account
         admin_pwd_hash = generate_password_hash("admin123")
         db.session.execute(text(
             """
-            INSERT INTO login_accounts (username, password, role, user_id, is_active)
-            VALUES (:username, :password, :role, :user_id, TRUE)
+            INSERT INTO login_accounts (username, password, role, user_id, is_active, email, password_hash)
+            VALUES (:username, :password, :role, :user_id, TRUE, :email, :password_hash)
             ON CONFLICT (username) DO NOTHING
             """
-        ), {"username": "admin", "password": admin_pwd_hash, "role": "Admin", "user_id": None})
+        ), {
+            "username": "admin",
+            "password": admin_pwd_hash,
+            "role": "Admin",
+            "user_id": None,
+            "email": "admin@demo.local",
+            "password_hash": admin_pwd_hash
+        })
 
         # Auto-upgrade any legacy plaintext passwords already stored in DB.
         legacy_res = db.session.execute(text("SELECT username, password FROM login_accounts"))
@@ -1003,12 +985,12 @@ def load_remarks():
     try:
         cur.execute(
             """
-            SELECT DISTINCT ON (defect_id) defect_id, remark
+            SELECT DISTINCT ON (defect_id) defect_id, remarks
             FROM remarks
             ORDER BY defect_id, created_at DESC
             """
         )
-        return {str(defect_id): remark for defect_id, remark in cur.fetchall()}
+        return {str(defect_id): remarks for defect_id, remarks in cur.fetchall()}
     finally:
         cur.close()
         conn.close()
@@ -1022,7 +1004,7 @@ def save_remarks(data):
             if current.get(str(defect_id)) == remark:
                 continue
             cur.execute(
-                "INSERT INTO remarks (defect_id, role, remark) VALUES (%s, %s, %s)",
+                "INSERT INTO remarks (defect_id, role, remarks) VALUES (%s, %s, %s)",
                 (int(defect_id), "Homeowner", remark),
             )
             cur.execute(
@@ -1062,8 +1044,8 @@ def load_completion_dates():
     conn = get_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT defect_id, completed_date FROM completion_dates")
-        return {str(defect_id): _to_iso(completed_date) for defect_id, completed_date in cur.fetchall()}
+        cur.execute("SELECT defect_id, completion_date FROM completion_dates")
+        return {str(defect_id): _to_iso(completion_date) for defect_id, completion_date in cur.fetchall()}
     finally:
         cur.close()
         conn.close()
@@ -1075,7 +1057,7 @@ def save_completion_dates(data):
         cur.execute("TRUNCATE TABLE completion_dates")
         for defect_id, completed_date in data.items():
             cur.execute(
-                "INSERT INTO completion_dates (defect_id, completed_date) VALUES (%s, %s)",
+                "INSERT INTO completion_dates (defect_id, completion_date) VALUES (%s, %s)",
                 (int(defect_id), completed_date),
             )
             cur.execute(
@@ -2303,10 +2285,10 @@ def update_status():
             )
             cur.execute(
                 """
-                INSERT INTO completion_dates (defect_id, completed_date)
+                INSERT INTO completion_dates (defect_id, completion_date)
                 VALUES (%s, %s)
                 ON CONFLICT (defect_id) DO UPDATE
-                SET completed_date = EXCLUDED.completed_date
+                SET completion_date = EXCLUDED.completion_date
                 """,
                 (int(defect_id), effective_completed_date),
             )

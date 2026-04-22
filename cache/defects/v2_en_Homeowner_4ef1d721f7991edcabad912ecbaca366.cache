@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "unit": "Eco Grandeur 1A",
+    "desc": "significant fracture",
+    "priority": null
+  },
+  {
+    "id": 2,
+    "unit": "Eco Grandeur 1A",
+    "desc": "fracture in proximity to the door",
+    "priority": null
+  }
+]

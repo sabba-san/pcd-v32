@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "unit": "Eco Grandeur 1A",
+    "desc": "retak besar",
+    "priority": null
+  },
+  {
+    "id": 2,
+    "unit": "Eco Grandeur 1A",
+    "desc": "retak berhampiran pintu",
+    "priority": null
+  }
+]

@@ -52,6 +52,12 @@ class User(db.Model, UserMixin):
     def __repr__(self) -> str:
         return f'<User {self.email} [{self.user_type}]>'
 
+    # Relationships
+    defects = db.relationship('Defect', foreign_keys='Defect.user_id', backref='owner', lazy=True)
+    assigned_defects = db.relationship('Defect', foreign_keys='Defect.assigned_developer_id', backref='assigned_developer', lazy=True)
+    login_accounts = db.relationship('LoginAccount', backref='user', lazy=True)
+    audit_entries = db.relationship('AuditLogEntry', backref='user', lazy=True)
+
 
 # Flask-Login user loader ─────────────────────────────────────────────────────
 @login_manager.user_loader
@@ -114,7 +120,11 @@ class Defect(db.Model):
     urgency = db.Column(db.String(50))
     deadline = db.Column(db.Date)
     remarks = db.Column(db.Text)
-    activities = db.relationship('ActivityLog', backref='defect', lazy=True)
+    remarks_list = db.relationship('Remark', backref='defect', lazy=True)
+    completion_dates = db.relationship('CompletionDate', backref='defect', lazy=True)
+    evidence_list = db.relationship('Evidence', backref='defect', lazy=True)
+    report_versions = db.relationship('ReportVersion', backref='defect', lazy=True)
+    audit_log_entries = db.relationship('AuditLogEntry', backref='defect', lazy=True)
 
 class ActivityLog(db.Model):
     """Track all changes/activities on defects"""
@@ -170,3 +180,69 @@ class ReportClaimRegistry(db.Model):
     respondent_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
     created_at = db.Column(db.DateTime, default=db.func.now())
     updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
+
+
+# ── New Supplemental Models (Migrated from Raw SQL) ───────────────────────────
+
+class Remark(db.Model):
+    __tablename__ = 'remarks'
+    id = db.Column(db.Integer, primary_key=True)
+    defect_id = db.Column(db.Integer, db.ForeignKey('defects.id', ondelete='CASCADE'), nullable=False)
+    role = db.Column(db.String(100))  # Kept for compatibility
+    remarks = db.Column(db.Text)      # User requested name
+    created_at = db.Column(db.DateTime, default=db.func.now())
+
+class CompletionDate(db.Model):
+    __tablename__ = 'completion_dates'
+    id = db.Column(db.Integer, primary_key=True)
+    defect_id = db.Column(db.Integer, db.ForeignKey('defects.id', ondelete='CASCADE'), nullable=False)
+    completion_date = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.now())
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
+
+class Evidence(db.Model):
+    __tablename__ = 'evidence'
+    id = db.Column(db.Integer, primary_key=True)
+    defect_id = db.Column(db.Integer, db.ForeignKey('defects.id', ondelete='CASCADE'), nullable=False)
+    file_path = db.Column(db.String(255), nullable=False) # User requested
+    file_type = db.Column(db.String(50))                  # User requested
+    filename = db.Column(db.String(255))                 # Legacy compatibility
+    uploaded_at = db.Column(db.DateTime, default=db.func.now()) # Legacy compatibility
+    created_at = db.Column(db.DateTime, default=db.func.now())   # User requested
+
+class AuditLogEntry(db.Model):
+    __tablename__ = 'audit_log'
+    id = db.Column(db.Integer, primary_key=True)
+    defect_id = db.Column(db.Integer, db.ForeignKey('defects.id', ondelete='SET NULL'))
+    action = db.Column(db.String(255), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
+    role = db.Column(db.String(50))        # Legacy compatibility
+    filename = db.Column(db.String(255))   # Legacy compatibility
+    new_status = db.Column(db.String(50))  # Legacy compatibility
+    details = db.Column(db.JSON)           # Legacy compatibility
+    timestamp = db.Column(db.DateTime, default=db.func.now())
+
+class ReportVersion(db.Model):
+    __tablename__ = 'report_versions'
+    id = db.Column(db.Integer, primary_key=True)
+    defect_id = db.Column(db.Integer, db.ForeignKey('defects.id', ondelete='CASCADE'))
+    role = db.Column(db.String(50))          # Legacy compatibility
+    version_number = db.Column(db.String(50)) # User requested
+    version_no = db.Column(db.String(50))     # Legacy compatibility
+    language = db.Column(db.String(20))       # Legacy compatibility
+    report_text = db.Column(db.Text)         # Legacy compatibility
+    s3_link = db.Column(db.String(500))      # User requested
+    generated_at = db.Column(db.DateTime, default=db.func.now()) # Legacy compatibility
+    created_at = db.Column(db.DateTime, default=db.func.now())   # User requested
+
+class LoginAccount(db.Model):
+    __tablename__ = 'login_accounts'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
+    username = db.Column(db.String(100), unique=True) # Legacy compatibility
+    email = db.Column(db.String(150))                 # User requested
+    password = db.Column(db.String(255))              # Legacy compatibility
+    password_hash = db.Column(db.String(256))         # User requested
+    role = db.Column(db.String(50))                   # Legacy compatibility
+    is_active = db.Column(db.Boolean, default=True)   # Legacy compatibility
+    created_at = db.Column(db.DateTime, default=db.func.now())
