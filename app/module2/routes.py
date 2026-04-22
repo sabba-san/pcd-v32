@@ -403,6 +403,93 @@ def serve_defect_image(defect_id):
     upload_dir = os.path.join(current_app.instance_path, 'uploads', 'upload_data')
     return send_from_directory(upload_dir, defect.image_path)
 
+
+# ── Legal Human-in-the-Loop Evidence Review ───────────────────────────────────
+
+@module2.route('/legal/evidence_review', methods=['GET'])
+@login_required
+def legal_evidence_review():
+    """Render the Manual Evidence Review page for the Lawyer role."""
+    if current_user.user_type not in ('lawyer', 'legal', 'admin'):
+        abort(403)
+
+    # Fetch all defects that have a photographic evidence image attached.
+    # Lawyers can review both unverified and already-verified defects.
+    defects_with_evidence = Defect.query.filter(
+        Defect.image_path.isnot(None),
+        Defect.image_path != '',
+    ).order_by(Defect.is_verified.asc(), Defect.created_at.desc()).all()
+
+    # Build lightweight dicts to pass to the template (avoids lazy-load issues)
+    defect_data = []
+    for d in defects_with_evidence:
+        defect_data.append({
+            'id': d.id,
+            'defect_type': d.defect_type or 'Unknown',
+            'severity': d.severity or 'Medium',
+            'description': d.description or '',
+            'location': d.location or '',
+            'element': d.element or '',
+            'status': d.status or 'Reported',
+            'is_verified': d.is_verified,
+            'legal_remarks': d.legal_remarks or '',
+            'image_url': url_for('module2.serve_defect_image', defect_id=d.id),
+        })
+
+    pending_count = sum(1 for d in defect_data if not d['is_verified'])
+    verified_count = len(defect_data) - pending_count
+
+    return render_template(
+        'role/legal/evidence_review.html',
+        defects=defect_data,
+        pending_count=pending_count,
+        verified_count=verified_count,
+    )
+
+
+@module2.route('/api/legal/verify_defect/<int:defect_id>', methods=['POST'])
+@login_required
+def api_legal_verify_defect(defect_id):
+    """API endpoint: Lawyer manually verifies / overrides a defect's AI assessment."""
+    if current_user.user_type not in ('lawyer', 'legal', 'admin'):
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    defect = Defect.query.get_or_404(defect_id)
+    payload = request.get_json(silent=True) or {}
+
+    manual_severity    = (payload.get('manual_severity') or '').strip()
+    manual_defect_type = (payload.get('manual_defect_type') or '').strip()
+    legal_remarks_val  = (payload.get('legal_remarks') or '').strip()
+
+    VALID_SEVERITIES   = {'Low', 'Medium', 'High', 'Critical'}
+    VALID_DEFECT_TYPES = {'Unknown', 'Crack', 'Water Damage', 'Structural', 'Finish', 'Electrical', 'Plumbing'}
+
+    if manual_severity and manual_severity not in VALID_SEVERITIES:
+        return jsonify({'error': f'Invalid severity: {manual_severity}'}), 400
+    if manual_defect_type and manual_defect_type not in VALID_DEFECT_TYPES:
+        return jsonify({'error': f'Invalid defect type: {manual_defect_type}'}), 400
+
+    if manual_severity:
+        defect.severity = manual_severity
+    if manual_defect_type:
+        defect.defect_type = manual_defect_type
+    if legal_remarks_val:
+        defect.legal_remarks = legal_remarks_val
+
+    defect.is_verified    = True
+    defect.verified_by_id = current_user.id
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'defect_id': defect.id,
+        'severity': defect.severity,
+        'defect_type': defect.defect_type,
+        'is_verified': defect.is_verified,
+    })
+
+
 @module2.route('/project/<int:scan_id>', methods=['GET'])
 @login_required
 def view_project(scan_id):

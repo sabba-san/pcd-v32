@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>DLP Advisor | Manual Evidence Review</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet"/>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { headline: ['Manrope'], body: ['Inter'] },
+          colors: {
+            primary: '#004ac6',
+            'primary-container': '#2563eb',
+            'on-primary': '#ffffff',
+            'surface': '#f7f9fb',
+            'surface-container-lowest': '#ffffff',
+            'surface-container-low': '#f2f4f6',
+            'surface-container': '#eceef0',
+            'surface-container-high': '#e6e8ea',
+            'surface-container-highest': '#e0e3e5',
+            'on-surface': '#191c1e',
+            'on-surface-variant': '#434655',
+            'outline-variant': '#c3c6d7',
+            error: '#ba1a1a',
+            'error-container': '#ffdad6',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+    h1,h2,h3 { font-family: 'Manrope', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+    .card-exit { transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.5s ease, margin 0.5s ease; }
+    .card-exit.removing { opacity: 0; transform: scale(0.97) translateY(-6px); max-height: 0; margin: 0; overflow: hidden; }
+    /* Severity badge colours */
+    .badge-Critical { background:#fee2e2; color:#991b1b; }
+    .badge-High     { background:#ffedd5; color:#9a3412; }
+    .badge-Medium   { background:#dbeafe; color:#1e40af; }
+    .badge-Low      { background:#dcfce7; color:#166534; }
+    .badge-Unknown  { background:#f3f4f6; color:#6b7280; }
+  </style>
+</head>
+<body class="text-on-surface min-h-screen">
+
+<!-- ── Top Nav ─────────────────────────────────────────────────────────────── -->
+<header class="sticky top-0 z-50 flex justify-between items-center px-8 py-3 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+  <div class="flex items-center gap-6">
+    <a href="{{ url_for('auth.lawyer_dashboard') }}" class="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors">
+      <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+      <span class="text-sm font-semibold">Dashboard</span>
+    </a>
+    <div class="h-5 w-[1px] bg-slate-200"></div>
+    <span class="text-lg font-extrabold tracking-tight text-slate-900">Manual Evidence Review</span>
+  </div>
+  <div class="flex items-center gap-4">
+    <!-- Progress pill -->
+    <div class="flex items-center gap-3 bg-surface-container px-4 py-2 rounded-full text-sm font-semibold">
+      <span class="flex items-center gap-1.5 text-amber-600">
+        <span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 1">pending</span>
+        <span id="pendingBadge">{{ pending_count }}</span> Pending
+      </span>
+      <span class="text-slate-300">|</span>
+      <span class="flex items-center gap-1.5 text-green-600">
+        <span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 1">verified</span>
+        <span id="verifiedBadge">{{ verified_count }}</span> Verified
+      </span>
+    </div>
+    <a href="{{ url_for('auth.logout') }}" class="p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors" title="Logout">
+      <span class="material-symbols-outlined">logout</span>
+    </a>
+  </div>
+</header>
+
+<!-- ── Page Header ─────────────────────────────────────────────────────────── -->
+<div class="max-w-6xl mx-auto px-8 pt-10 pb-4">
+  <div class="flex items-end gap-4 mb-2">
+    <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow">
+      <span class="material-symbols-outlined text-white text-[22px]" style="font-variation-settings:'FILL' 1">folder_managed</span>
+    </div>
+    <div>
+      <span class="text-xs font-bold tracking-[0.18em] text-primary uppercase">Legal Console · Human-in-the-Loop</span>
+      <h1 class="text-2xl font-extrabold text-on-surface leading-tight">Manual Evidence Review</h1>
+    </div>
+  </div>
+  <p class="text-sm text-on-surface-variant mt-1 mb-6 max-w-2xl">
+    Review each defect photograph below. Confirm the AI's assessment, or override the Defect Type and Severity before approving.
+    Your verified judgement will be recorded against your legal account.
+  </p>
+
+  <!-- Summary bar -->
+  <div class="flex items-center gap-3 mb-8">
+    <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+      {% set total = pending_count + verified_count %}
+      {% set pct = ((verified_count / total) * 100)|int if total > 0 else 0 %}
+      <div class="h-full bg-green-500 rounded-full transition-all duration-700" style="width: {{ pct }}%" id="progressBar"></div>
+    </div>
+    <span class="text-xs font-bold text-slate-500 whitespace-nowrap" id="progressLabel">
+      {{ pct }}% verified ({{ verified_count }}/{{ total }})
+    </span>
+  </div>
+</div>
+
+<!-- ── Review Cards ────────────────────────────────────────────────────────── -->
+<main class="max-w-6xl mx-auto px-8 pb-20 space-y-6" id="reviewList">
+
+  {% if not defects %}
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm py-24 flex flex-col items-center justify-center text-center">
+    <span class="material-symbols-outlined text-6xl text-slate-300 mb-4" style="font-variation-settings:'FILL' 1">image_search</span>
+    <h3 class="text-lg font-bold text-slate-600 mb-1">No Evidence Found</h3>
+    <p class="text-sm text-slate-400 max-w-xs">No defects with photographic evidence exist yet. Evidence is uploaded when a defect is reported via the 3D Visualizer.</p>
+    <a href="{{ url_for('module2.list_projects') }}" class="mt-6 inline-flex items-center gap-2 bg-primary text-white font-bold px-5 py-2.5 rounded-xl shadow hover:opacity-90 transition-all">
+      <span class="material-symbols-outlined text-[18px]">view_in_ar</span>
+      Go to 3D Projects
+    </a>
+  </div>
+  {% endif %}
+
+  {% for defect in defects %}
+  <div id="card-{{ defect.id }}"
+       class="card-exit bg-white rounded-2xl border {% if defect.is_verified %}border-green-200 opacity-60 hover:opacity-100{% else %}border-slate-200{% endif %} shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
+       data-verified="{{ 'true' if defect.is_verified else 'false' }}">
+
+    <!-- Verified banner -->
+    {% if defect.is_verified %}
+    <div class="flex items-center gap-2 bg-green-50 border-b border-green-100 px-6 py-2 text-green-700 text-xs font-bold">
+      <span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 1">verified</span>
+      VERIFIED — Approved by Legal
+      {% if defect.legal_remarks %}
+      <span class="ml-3 font-normal text-green-600 italic truncate max-w-xs">{{ defect.legal_remarks }}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="flex flex-col md:flex-row min-h-[320px]">
+
+      <!-- LEFT: Evidence Photo ─────────────────────────────────────────────── -->
+      <div class="md:w-2/5 relative bg-slate-900 flex items-center justify-center overflow-hidden shrink-0">
+        <img src="{{ defect.image_url }}"
+             alt="Defect #{{ defect.id }} evidence"
+             class="w-full h-full object-contain"
+             style="max-height: 360px;"
+             loading="lazy"
+             onerror="this.parentElement.innerHTML='<div class=\'flex flex-col items-center justify-center text-slate-500 p-8\' ><span class=\'material-symbols-outlined text-5xl mb-2\'>broken_image</span><span class=\'text-sm\'>Image unavailable</span></div>'"/>
+        <!-- Defect ID badge -->
+        <div class="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-mono font-bold px-2.5 py-1 rounded-md">
+          #DFT-{{ defect.id }}
+        </div>
+        <!-- Location badge -->
+        {% if defect.location or defect.element %}
+        <div class="absolute bottom-3 left-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg">
+          <span class="font-bold opacity-60 text-[10px] uppercase tracking-wider">Location</span><br/>
+          {{ defect.location or defect.element }}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- RIGHT: AI Assessment + Override Form ────────────────────────────── -->
+      <div class="flex-1 p-7 flex flex-col justify-between">
+
+        <!-- AI Original Assessment (read-only) -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
+              <span class="material-symbols-outlined text-blue-600 text-[14px]" style="font-variation-settings:'FILL' 1">smart_toy</span>
+            </div>
+            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Original AI Assessment</span>
+          </div>
+          <div class="flex flex-wrap gap-2 mb-3">
+            <span class="badge-{{ defect.severity }} px-3 py-1 rounded-full text-xs font-bold">{{ defect.severity }}</span>
+            <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold">{{ defect.defect_type }}</span>
+            <span class="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs">{{ defect.status }}</span>
+          </div>
+          {% if defect.description %}
+          <p class="text-sm text-on-surface-variant leading-relaxed mb-4">{{ defect.description }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Manual Override Form -->
+        <form id="form-{{ defect.id }}" class="space-y-4 mt-2" onsubmit="submitVerification(event, {{ defect.id }})">
+
+          <div class="border-t border-slate-100 pt-4">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded bg-amber-100 flex items-center justify-center">
+                <span class="material-symbols-outlined text-amber-600 text-[14px]" style="font-variation-settings:'FILL' 1">edit_note</span>
+              </div>
+              <span class="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Manual Override</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Defect Type -->
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Defect Type</label>
+              <select id="dtype-{{ defect.id }}"
+                      class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow">
+                {% for dt in ['Unknown','Crack','Water Damage','Structural','Finish','Electrical','Plumbing'] %}
+                <option value="{{ dt }}" {% if dt == defect.defect_type %}selected{% endif %}>{{ dt }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <!-- Severity -->
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Severity</label>
+              <select id="sev-{{ defect.id }}"
+                      class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow">
+                {% for s in ['Low','Medium','High','Critical'] %}
+                <option value="{{ s }}" {% if s == defect.severity %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Legal Remarks -->
+          <div>
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Legal Remarks / Notes</label>
+            <textarea id="remarks-{{ defect.id }}"
+                      rows="2"
+                      placeholder="Add observations for the case file… (optional)"
+                      class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm p-3 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none transition-shadow">{{ defect.legal_remarks }}</textarea>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="flex items-center gap-3 pt-1">
+            <button type="submit"
+                    id="btn-{{ defect.id }}"
+                    class="flex-grow flex items-center justify-center gap-2 bg-primary text-white font-bold py-2.5 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all text-sm">
+              <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1">verified</span>
+              {% if defect.is_verified %}Re-Verify{% else %}Approve &amp; Verify{% endif %}
+            </button>
+            {% if not defect.is_verified %}
+            <button type="button"
+                    onclick="skipCard({{ defect.id }})"
+                    class="flex items-center gap-1.5 bg-slate-100 text-slate-500 font-bold px-4 py-2.5 rounded-xl hover:bg-slate-200 active:scale-[0.98] transition-all text-sm"
+                    title="Skip for now">
+              <span class="material-symbols-outlined text-[16px]">skip_next</span>
+              Skip
+            </button>
+            {% endif %}
+          </div>
+        </form>
+
+      </div><!-- /right col -->
+    </div><!-- /card inner flex -->
+  </div><!-- /card -->
+  {% endfor %}
+
+  <!-- All-done state (shown when pending hits 0) -->
+  <div id="allDonePanel" class="hidden bg-white rounded-2xl border border-green-200 shadow-sm py-24 flex flex-col items-center justify-center text-center">
+    <span class="material-symbols-outlined text-7xl text-green-400 mb-4" style="font-variation-settings:'FILL' 1">task_alt</span>
+    <h3 class="text-xl font-extrabold text-green-700 mb-1">All Evidence Verified!</h3>
+    <p class="text-sm text-slate-400 max-w-xs">Every defect with photographic evidence has been reviewed. You may now generate the legal report.</p>
+    <a href="{{ url_for('module3.dashboard') }}"
+       class="mt-6 inline-flex items-center gap-2 bg-primary text-white font-bold px-6 py-3 rounded-xl shadow hover:opacity-90 transition-all">
+      <span class="material-symbols-outlined text-[18px]">analytics</span>
+      Go to Reporting Dashboard
+    </a>
+  </div>
+
+</main>
+
+<!-- ── Toast Notification ───────────────────────────────────────────────────── -->
+<div id="toastContainer" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-3 pointer-events-none"></div>
+
+<script>
+  // ── State ───────────────────────────────────────────────────────────────────
+  let pendingCount   = {{ pending_count }};
+  let verifiedCount  = {{ verified_count }};
+  const totalCount   = pendingCount + verifiedCount;
+
+  // ── Toast ───────────────────────────────────────────────────────────────────
+  function showToast(message, type = 'success') {
+    const el = document.createElement('div');
+    const colour = type === 'success'
+      ? 'bg-green-600 text-white'
+      : 'bg-red-600 text-white';
+    const icon = type === 'success' ? 'check_circle' : 'error';
+    el.className = `pointer-events-auto flex items-center gap-3 ${colour} px-5 py-3 rounded-xl shadow-xl text-sm font-bold`;
+    el.innerHTML = `
+      <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1">${icon}</span>
+      ${message}`;
+    const tc = document.getElementById('toastContainer');
+    tc.appendChild(el);
+    setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.4s'; }, 2600);
+    setTimeout(() => el.remove(), 3000);
+  }
+
+  // ── Update progress bar & badges ───────────────────────────────────────────
+  function updateProgress() {
+    document.getElementById('pendingBadge').textContent  = pendingCount;
+    document.getElementById('verifiedBadge').textContent = verifiedCount;
+    const pct = totalCount > 0 ? Math.round((verifiedCount / totalCount) * 100) : 0;
+    document.getElementById('progressBar').style.width   = pct + '%';
+    document.getElementById('progressLabel').textContent = `${pct}% verified (${verifiedCount}/${totalCount})`;
+
+    if (pendingCount === 0) {
+      document.getElementById('allDonePanel').classList.remove('hidden');
+    }
+  }
+
+  // ── Skip card ───────────────────────────────────────────────────────────────
+  function skipCard(id) {
+    const card = document.getElementById('card-' + id);
+    if (card) {
+      card.style.transition = 'opacity 0.3s';
+      card.style.opacity = '0.3';
+    }
+  }
+
+  // ── Submit verification ─────────────────────────────────────────────────────
+  async function submitVerification(event, defectId) {
+    event.preventDefault();
+
+    const btn        = document.getElementById('btn-' + defectId);
+    const dtype      = document.getElementById('dtype-' + defectId).value;
+    const severity   = document.getElementById('sev-' + defectId).value;
+    const remarks    = document.getElementById('remarks-' + defectId).value.trim();
+    const wasVerified = document.getElementById('card-' + defectId).dataset.verified === 'true';
+
+    // Loading state
+    btn.disabled = true;
+    btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span> Verifying…`;
+
+    try {
+      const resp = await fetch(`/api/legal/verify_defect/${defectId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          manual_defect_type: dtype,
+          manual_severity:    severity,
+          legal_remarks:      remarks,
+        })
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        showToast(data.error || 'Verification failed.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1">verified</span> Re-Verify`;
+        return;
+      }
+
+      // Success ─────────────────────────────────────────────────────────────
+      showToast(`Defect #DFT-${defectId} verified ✓`, 'success');
+
+      // Update pending/verified counts
+      if (!wasVerified) {
+        pendingCount--;
+        verifiedCount++;
+        updateProgress();
+      }
+
+      // Animate the card out after a brief pause
+      const card = document.getElementById('card-' + defectId);
+      if (card) {
+        card.dataset.verified = 'true';
+        setTimeout(() => {
+          card.classList.add('removing');
+          setTimeout(() => {
+            // Instead of removing, collapse into a slim verified chip
+            card.innerHTML = `
+              <div class="flex items-center gap-3 px-6 py-3 bg-green-50 text-green-700 text-sm font-semibold">
+                <span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 1">check_circle</span>
+                #DFT-${defectId} — Verified as <strong class="ml-1">${severity} · ${dtype}</strong>
+                ${remarks ? `<span class="ml-2 text-green-600 font-normal italic truncate max-w-xs">"${remarks}"</span>` : ''}
+              </div>`;
+            card.classList.remove('removing');
+            card.style.maxHeight = '';
+            card.style.margin = '';
+            card.style.opacity = '1';
+          }, 450);
+        }, 600);
+      }
+
+    } catch (err) {
+      showToast('Network error. Please try again.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1">verified</span> Re-Verify`;
+    }
+  }
+</script>
+</body>
+</html>
