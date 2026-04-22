@@ -64,27 +64,14 @@ ROLE_CONTEXTS = {
 }
 
 def _ensure_report_metadata_tables():
+    """
+    Ensure report metadata tables exist.
+    Tables (report_homeowner_profile, report_respondent_profile, report_claim_registry)
+    are already managed by SQLAlchemy models in models.py.
+    """
     from ..extensions import db
     try:
-        db.session.execute(text("DROP TABLE IF EXISTS report_active_claimant"))
-        db.session.execute(text("""
-            CREATE TABLE IF NOT EXISTS report_homeowner_profile (
-                homeowner_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-                name VARCHAR(255) NOT NULL,
-                ic_number VARCHAR(100),
-                email VARCHAR(255),
-                phone_number VARCHAR(100),
-                address VARCHAR(255),
-                court_location VARCHAR(255),
-                state_name VARCHAR(100),
-                claim_amount VARCHAR(100),
-                item_service VARCHAR(255),
-                transaction_date DATE,
-                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-            )
-        """))
-        
-        # Safe column additions
+        # Safe column additions and data migration logic below
         for col_def in [
             "court_location VARCHAR(255)",
             "state_name VARCHAR(100)",
@@ -98,40 +85,11 @@ def _ensure_report_metadata_tables():
             except Exception:
                 pass
 
-        db.session.execute(text("""
-            CREATE TABLE IF NOT EXISTS report_respondent_profile (
-                respondent_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-                homeowner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                company_name VARCHAR(255) NOT NULL,
-                registration_number VARCHAR(100),
-                email VARCHAR(255),
-                phone_number VARCHAR(100),
-                address VARCHAR(255),
-                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-            )
-        """))
-        
         try:
             db.session.execute(text("ALTER TABLE report_respondent_profile ADD COLUMN IF NOT EXISTS homeowner_id INTEGER"))
         except Exception:
             pass
 
-        db.session.execute(text("""
-            CREATE TABLE IF NOT EXISTS report_claim_registry (
-                claim_id VARCHAR(64) PRIMARY KEY,
-                case_key VARCHAR(255) UNIQUE NOT NULL,
-                case_number VARCHAR(6) NOT NULL,
-                claim_year INTEGER NOT NULL,
-                date_filed TIMESTAMP NOT NULL DEFAULT NOW(),
-                state VARCHAR(100) NOT NULL,
-                state_code VARCHAR(20) NOT NULL,
-                homeowner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                respondent_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-            )
-        """))
-        
         try:
             db.session.execute(text("ALTER TABLE report_claim_registry ADD COLUMN IF NOT EXISTS state VARCHAR(100)"))
         except Exception:
@@ -161,6 +119,10 @@ def _ensure_report_metadata_tables():
 
 
 def _fetch_respondent_profile(session, homeowner_id=None, respondent_user_id=None):
+    """Fetch respondent profile row. Tries homeowner_id first, then respondent_id.
+    A respondent row saved from the Homeowner claim form is stored with respondent_id = homeowner_user_id,
+    so we always try the homeowner_id lookup first as a fallback for Developer-generated reports.
+    """
     if homeowner_id is not None:
         result = session.execute(text(
             """
@@ -176,6 +138,7 @@ def _fetch_respondent_profile(session, homeowner_id=None, respondent_user_id=Non
             return row
 
     if respondent_user_id is not None:
+        # Try exact respondent_id match (for rows saved by the developer directly).
         result = session.execute(text(
             """
             SELECT respondent_id, homeowner_id, company_name, registration_number, email, phone_number, address
@@ -184,6 +147,19 @@ def _fetch_respondent_profile(session, homeowner_id=None, respondent_user_id=Non
             LIMIT 1
             """
         ), {"respondent_user_id": respondent_user_id})
+        row = result.fetchone()
+        if row:
+            return row
+
+        # Last resort: take any respondent profile row (oldest first — stable default).
+        result = session.execute(text(
+            """
+            SELECT respondent_id, homeowner_id, company_name, registration_number, email, phone_number, address
+            FROM report_respondent_profile
+            ORDER BY respondent_id ASC
+            LIMIT 1
+            """
+        ))
         row = result.fetchone()
         if row:
             return row
@@ -316,7 +292,8 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
         if user_id is not None:
             result = session.execute(text(
                 """
-                SELECT id, full_name, unit, role, email, ic_number, phone_number
+                SELECT id, full_name, unit, role, email, ic_number, phone_number,
+                       company_name, ssm_registration, company_address
                 FROM users
                 WHERE id = :id
                 """
@@ -324,7 +301,8 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
             user_row = result.fetchone()
 
         if user_row:
-            uid, full_name, unit, user_role, user_email, user_ic_number, user_phone_number = user_row
+            (uid, full_name, unit, user_role, user_email, user_ic_number, user_phone_number,
+             user_company_name, user_ssm_registration, user_company_address) = user_row
             active_role = (role or user_role or "Homeowner").strip().capitalize()
             if active_role == "Lawyer":
                 active_role = "Legal"
@@ -425,7 +403,15 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
                     if claimant_row[9]:
                         case_info["transaction_date"] = claimant_row[9].strftime("%d-%m-%Y")
 
-                respondent_row = _fetch_respondent_profile(session, respondent_user_id=user_id)
+                # For Developer role, the respondent row was saved by the Homeowner claim form
+                # and stored with respondent_id = claimant (homeowner) user_id, not the developer's ID.
+                # So we first try to find it via the claimant's homeowner_id, then fall back to
+                # the developer's own respondent_id, then any available row.
+                respondent_row = _fetch_respondent_profile(
+                    session,
+                    homeowner_id=target_homeowner_id,
+                    respondent_user_id=user_id,
+                )
                 if respondent_row:
                     respondent = {
                         "name": respondent_row[2] or respondent["name"],
@@ -437,13 +423,15 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
                         "description": "Pemaju projek perumahan",
                     }
                 if _is_missing_required(respondent.get("name")):
-                    respondent["name"] = full_name or respondent["name"]
+                    respondent["name"] = user_company_name or full_name or respondent["name"]
+                if _is_missing_required(respondent.get("registration_no")):
+                    respondent["registration_no"] = user_ssm_registration or respondent["registration_no"]
                 if _is_missing_required(respondent.get("email")):
                     respondent["email"] = user_email or respondent["email"]
                 if _is_missing_required(respondent.get("phone_number")):
                     respondent["phone_number"] = user_phone_number or respondent["phone_number"]
                 if _is_missing_required(respondent.get("address_line_1")):
-                    respondent["address_line_1"] = unit or respondent["address_line_1"]
+                    respondent["address_line_1"] = user_company_address or unit or respondent["address_line_1"]
 
         negeri_codes = dict(STATE_CODES)
         role_contexts = dict(ROLE_CONTEXTS)
