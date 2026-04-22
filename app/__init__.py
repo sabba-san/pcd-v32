@@ -43,6 +43,17 @@ def create_app():
     with app.app_context():
         from . import models  # noqa: F401 — ensures models are registered before create_all
         db.create_all()
+        # ── Safe migrations for new columns (idempotent) ──────────────────────
+        for stmt in [
+            "ALTER TABLE defects ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE defects ADD COLUMN IF NOT EXISTS verified_by_id INTEGER REFERENCES users(id)",
+            "ALTER TABLE defects ADD COLUMN IF NOT EXISTS legal_remarks TEXT",
+        ]:
+            try:
+                db.session.execute(text(stmt))
+            except Exception:
+                db.session.rollback()
+        db.session.commit()
 
     @app.cli.command("init-db")
     def init_db_command():

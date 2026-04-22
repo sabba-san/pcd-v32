@@ -125,12 +125,8 @@
                     <span class="font-medium text-sm">Projects</span>
                 </a>
                 <a class="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all duration-200" href="{{ url_for('module3.dashboard') }}">
-                    <span class="material-symbols-outlined text-xl">pest_control</span>
-                    <span class="font-medium text-sm">Defects</span>
-                </a>
-                <a class="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all duration-200" href="javascript:void(0)" onclick="alert('Feature coming soon in future updates.');">
-                    <span class="material-symbols-outlined text-xl">engineering</span>
-                    <span class="font-medium text-sm">Inspectors</span>
+                    <span class="material-symbols-outlined text-xl">analytics</span>
+                    <span class="font-medium text-sm">Reporting Dashboard</span>
                 </a>
                 <a class="flex items-center gap-3 px-4 py-2.5 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all duration-200" href="javascript:void(0)" onclick="alert('Feature coming soon in future updates.');">
                     <span class="material-symbols-outlined text-xl">settings</span>
@@ -198,7 +194,7 @@
                 </div>
 
                 <!-- Metadata Cards Bento Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
                     <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 flex flex-col gap-3 transition-all hover:border-primary/20">
                         <div class="w-10 h-10 rounded-lg bg-primary-container/30 flex items-center justify-center text-primary">
                             <span class="material-symbols-outlined">calendar_today</span>
@@ -220,16 +216,6 @@
                     </div>
 
                     <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 flex flex-col gap-3 transition-all hover:border-primary/20">
-                        <div class="w-10 h-10 rounded-lg bg-tertiary-container/30 flex items-center justify-center text-tertiary">
-                            <span class="material-symbols-outlined">badge</span>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant/70">Inspector</p>
-                            <p class="font-headline font-bold text-on-surface truncate">{{ current_user.full_name or 'Inspector' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 flex flex-col gap-3 transition-all hover:border-primary/20">
                         <div class="w-10 h-10 rounded-lg bg-surface-container-high/40 flex items-center justify-center text-on-surface-variant">
                             <span class="material-symbols-outlined">description</span>
                         </div>
@@ -244,15 +230,12 @@
                 <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden">
                     <div class="px-6 py-5 flex items-center justify-between border-b border-surface-container">
                         <h3 class="font-headline font-bold text-lg">Defect Log</h3>
-                        <div class="flex items-center gap-2">
-                            <button id="filter-defects-btn" class="px-3 py-1.5 text-xs font-semibold bg-surface-container-low text-on-surface-variant rounded-lg hover:bg-surface-container-high transition-colors">Filter</button>
-                            <button id="export-defects-btn" class="px-3 py-1.5 text-xs font-semibold bg-surface-container-low text-on-surface-variant rounded-lg hover:bg-surface-container-high transition-colors">Export</button>
-                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-surface-container-low/50">
+                                    <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">Photo</th>
                                     <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">ID</th>
                                     <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">Location</th>
                                     <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest">Type</th>
@@ -266,6 +249,23 @@
                                 {% if defects %}
                                     {% for defect in defects %}
                                     <tr class="group hover:bg-surface-container-low transition-colors relative">
+                                        <!-- PHOTO thumbnail -->
+                                        <td class="px-6 py-4">
+                                            {% if defect.image_path %}
+                                            <img src="{{ url_for('module2.serve_defect_image', defect_id=defect.id) }}"
+                                                 alt="Defect #{{ defect.id }}"
+                                                 class="h-12 w-12 object-cover rounded-lg border border-outline-variant/20 shadow-sm"
+                                                 loading="lazy"
+                                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"/>
+                                            <div class="h-12 w-12 rounded-lg border border-outline-variant/20 bg-surface-container-low items-center justify-center hidden">
+                                                <span class="material-symbols-outlined text-on-surface-variant/40 text-xl">broken_image</span>
+                                            </div>
+                                            {% else %}
+                                            <div class="h-12 w-12 rounded-lg border border-outline-variant/10 bg-surface-container-low flex items-center justify-center">
+                                                <span class="material-symbols-outlined text-on-surface-variant/30 text-xl">photo_camera</span>
+                                            </div>
+                                            {% endif %}
+                                        </td>
                                         <td class="px-6 py-5 font-headline font-bold text-sm text-on-surface">#{{ defect.id }}</td>
                                         <td class="px-6 py-5 text-sm font-medium">{{ defect.location or 'Not specified' }}</td>
                                         <td class="px-6 py-5 text-sm text-on-surface-variant">{{ defect.defect_type or 'Unknown' }}</td>
@@ -301,7 +301,7 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="7" class="px-6 py-10 text-center text-sm text-on-surface-variant">
+                                        <td colspan="8" class="px-6 py-10 text-center text-sm text-on-surface-variant">
                                             No defects found for this project.
                                         </td>
                                     </tr>

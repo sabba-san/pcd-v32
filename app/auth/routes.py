@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import db
-from ..models import User
+from ..models import User, Defect, Scan
 
 # Import module3 functions for data synchronization
 from ..module3.routes import get_defects_for_role, calculate_stats
@@ -154,13 +154,46 @@ def reg_housedeveloper():
 @auth.route('/dashboard/homeowner')
 @login_required
 def homeowner_dashboard():
-    return render_template('role/dashboard/homeowner.html')
+    """Homeowner dashboard: show the current user's reported defects in Recent Activity."""
+    recent_defects = (
+        Defect.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Defect.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    return render_template('role/dashboard/homeowner.html', recent_defects=recent_defects)
 
 
 @auth.route('/dashboard/lawyer')
 @login_required
 def lawyer_dashboard():
-    return render_template('role/dashboard/lawyer.html')
+    """Lawyer dashboard: show all defects as the Pending Cases Queue."""
+    from sqlalchemy.orm import joinedload
+    defects = (
+        Defect.query
+        .order_by(Defect.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    # Collect unique user IDs so we can fetch names in one query
+    user_ids = list({d.user_id for d in defects if d.user_id})
+    user_map = {u.id: u.full_name for u in User.query.filter(User.id.in_(user_ids)).all()} if user_ids else {}
+
+    pending_cases = []
+    for d in defects:
+        pending_cases.append({
+            'id':            d.id,
+            'scan_id':       d.scan_id,
+            'scan_name':     d.scan.name if d.scan else None,
+            'defect_type':   d.defect_type or 'Unknown',
+            'severity':      d.severity or 'Medium',
+            'status':        d.status or 'Reported',
+            'is_verified':   d.is_verified,
+            'client_name':   user_map.get(d.user_id, '—'),
+            'assigned_date': d.created_at.strftime('%d %b %Y') if d.created_at else '—',
+        })
+    return render_template('role/dashboard/lawyer.html', pending_cases=pending_cases)
 
 
 @auth.route('/dashboard/developer')

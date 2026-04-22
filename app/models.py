@@ -120,6 +120,10 @@ class Defect(db.Model):
     urgency = db.Column(db.String(50))
     deadline = db.Column(db.Date)
     remarks = db.Column(db.Text)
+    # ── Legal Verification (Human-in-the-Loop) ───────────────────────────────
+    is_verified = db.Column(db.Boolean, default=False, nullable=False)
+    verified_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    legal_remarks = db.Column(db.Text, nullable=True)
     remarks_list = db.relationship('Remark', backref='defect', lazy=True)
     completion_dates = db.relationship('CompletionDate', backref='defect', lazy=True)
     evidence_list = db.relationship('Evidence', backref='defect', lazy=True)
