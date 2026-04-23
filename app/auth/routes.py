@@ -168,10 +168,10 @@ def homeowner_dashboard():
 @auth.route('/dashboard/lawyer')
 @login_required
 def lawyer_dashboard():
-    """Lawyer dashboard: show all defects as the Pending Cases Queue."""
-    from sqlalchemy.orm import joinedload
+    """Lawyer dashboard: show only defects explicitly assigned to this lawyer."""
     defects = (
         Defect.query
+        .filter_by(assigned_lawyer_id=current_user.id)
         .order_by(Defect.created_at.desc())
         .limit(50)
         .all()

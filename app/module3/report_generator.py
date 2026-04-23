@@ -24,7 +24,7 @@ def generate_ai_report(role, report_data, language="ms"):
         language: "ms" for Bahasa Malaysia, "en" for English
     """
 
-    client = get_ai_client()
+    client = get_ai_client("report")
     lang_config = get_language_config(language)
 
     # Build tribunal-safe prompt with language support

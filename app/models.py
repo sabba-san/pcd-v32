@@ -55,6 +55,7 @@ class User(db.Model, UserMixin):
     # Relationships
     defects = db.relationship('Defect', foreign_keys='Defect.user_id', backref='owner', lazy=True)
     assigned_defects = db.relationship('Defect', foreign_keys='Defect.assigned_developer_id', backref='assigned_developer', lazy=True)
+    legal_assigned_defects = db.relationship('Defect', foreign_keys='Defect.assigned_lawyer_id', backref='assigned_lawyer', lazy=True)
     login_accounts = db.relationship('LoginAccount', backref='user', lazy=True)
     audit_entries = db.relationship('AuditLogEntry', backref='user', lazy=True)
 
@@ -116,6 +117,7 @@ class Defect(db.Model):
     unit = db.Column(db.String(100))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Linking defect to homeowner
     assigned_developer_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Linking defect to developer
+    assigned_lawyer_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Linking defect to selected lawyer
     reported_date = db.Column(db.DateTime, default=db.func.now())
     urgency = db.Column(db.String(50))
     deadline = db.Column(db.Date)

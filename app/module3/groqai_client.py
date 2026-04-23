@@ -2,33 +2,46 @@
 import os
 from groq import Groq
 
-_client = None  # singleton
+_clients = {}
 
 
-def _get_sanitized_api_key() -> str:
-    raw_value = os.getenv("GROQ_API_KEY", "")
-    api_key = raw_value.strip().strip('"').strip("'").strip()
-    return api_key
+def _sanitize_api_key(raw_value: str) -> str:
+    return (raw_value or "").strip().strip('"').strip("'").strip()
 
 
-def get_ai_client():
+def _get_api_key_for_scope(scope: str = "report") -> str:
+    if scope == "chatbot":
+        return _sanitize_api_key(
+            os.getenv("GROQ_API_KEY_CHATBOT") or os.getenv("GROQ_API_KEY")
+        )
+    if scope == "report":
+        return _sanitize_api_key(
+            os.getenv("GROQ_API_KEY_REPORT") or os.getenv("GROQ_API_KEY")
+        )
+    return _sanitize_api_key(os.getenv("GROQ_API_KEY"))
+
+
+def get_ai_client(scope: str = "report"):
     """
-    Get Groq AI client
+    Get Groq AI client for a specific scope.
+    scope:
+    - report: report generation + module3 AI helpers
+    - chatbot: chatbot-specific calls
+    - default: generic fallback only
     """
-    global _client
+    cache_key = scope or "report"
+    if cache_key in _clients:
+        return _clients[cache_key]
 
-    if _client is not None:
-        return _client
-
-    api_key = _get_sanitized_api_key()
+    api_key = _get_api_key_for_scope(cache_key)
 
     if not api_key:
         raise RuntimeError(
-            "GROQ_API_KEY not set. Please define it in environment variables."
+            "Groq API key not set. Define GROQ_API_KEY_REPORT/GROQ_API_KEY_CHATBOT or fallback GROQ_API_KEY."
         )
 
-    _client = Groq(api_key=api_key)
-    return _client
+    _clients[cache_key] = Groq(api_key=api_key)
+    return _clients[cache_key]
 
 
 # Keep backward compatibility

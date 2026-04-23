@@ -282,6 +282,18 @@
                         class="mt-1 rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none">
                 </label>
                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                    Select Legal Representative
+                    <select id="m3-assigned-lawyer-id"
+                        class="mt-1 rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+                        <option value="">No legal representative selected</option>
+                        {% for lawyer in available_lawyers %}
+                        <option value="{{ lawyer.id }}" {% if claim_input and claim_input.assigned_lawyer_id == (lawyer.id | string) %}selected{% endif %}>
+                            {{ lawyer.display_name }}{% if lawyer.full_name and lawyer.law_firm_name %} - {{ lawyer.full_name }}{% elif lawyer.email %} - {{ lawyer.email }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                     Respondent Email
                     <input id="m3-respondent-email" type="email" value="{{ (claim_input.respondent_email if claim_input else '') | e }}" placeholder="developer@example.com"
                         class="mt-1 rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none">

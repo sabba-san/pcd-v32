@@ -195,10 +195,10 @@
                 </a>
             </nav>
             <div class="mt-auto pt-4 space-y-1 border-t border-slate-200 dark:border-slate-800">
-                <a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 px-4 py-3 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl font-manrope text-sm font-semibold"
-                    href="#">
+                <a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 px-4 py-3 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl font-manrope text-sm font-semibold duration-150 ease-in-out"
+                    href="{{ url_for('core_features.guide') }}">
                     <span class="material-symbols-outlined">help_center</span>
-                    <span>Support</span>
+                    <span>Help & Guide</span>
                 </a>
                 <a class="flex items-center gap-3 text-slate-500 dark:text-slate-400 px-4 py-3 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl font-manrope text-sm font-semibold"
                     href="{{ url_for('auth.logout') }}">
@@ -294,8 +294,9 @@
                     class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_24px_40px_rgba(25,28,30,0.04)] border border-outline-variant/10">
                     <!-- Table Header -->
                     <div
-                        class="grid grid-cols-4 px-8 py-4 bg-surface-container-low border-b border-outline-variant/10 text-[10px] font-black tracking-widest text-on-surface-variant uppercase font-label">
+                        class="grid grid-cols-5 px-8 py-4 bg-surface-container-low border-b border-outline-variant/10 text-[10px] font-black tracking-widest text-on-surface-variant uppercase font-label">
                         <div>HOUSE NO</div>
+                        <div>PICTURE</div>
                         <div>DEFECT DETAIL</div>
                         <div>STATUS</div>
                         <div class="text-right">ACTION</div>
@@ -303,7 +304,7 @@
                     <!-- Table rows (dynamic) -->
                     {% if recent_defects %}
                     {% for defect in recent_defects %}
-                    <div class="grid grid-cols-4 px-8 py-4 border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors duration-150 items-center">
+                    <div class="grid grid-cols-5 px-8 py-4 border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors duration-150 items-center">
                         <!-- House / Project -->
                         <div>
                             <span class="text-sm font-semibold text-on-surface">
@@ -315,6 +316,18 @@
                                 {% endif %}
                             </span>
                             <p class="text-xs text-on-surface-variant font-mono">#DFT-{{ defect.id }}</p>
+                        </div>
+                        <!-- Picture -->
+                        <div>
+                            {% if defect.image_path %}
+                            <img src="{{ url_for('module2.serve_defect_image', defect_id=defect.id) }}"
+                                 alt="Defect {{ defect.id }}"
+                                 class="w-16 h-16 rounded-xl object-cover border border-outline-variant/20 shadow-sm">
+                            {% else %}
+                            <div class="w-16 h-16 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center justify-center text-outline">
+                                <span class="material-symbols-outlined text-xl">image</span>
+                            </div>
+                            {% endif %}
                         </div>
                         <!-- Defect Detail -->
                         <div>
