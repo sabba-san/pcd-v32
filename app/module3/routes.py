@@ -386,6 +386,11 @@ def _ensure_module3_tables():
     except Exception as e:
         current_app.logger.debug(f"Note: assigned_developer_id column might already exist: {e}")
 
+    try:
+        db.session.execute(text("ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER REFERENCES users(id) ON DELETE SET NULL"))
+    except Exception as e:
+        current_app.logger.debug(f"Note: assigned_lawyer_id column might already exist: {e}")
+
     db.session.commit()
 
 
@@ -596,6 +601,19 @@ def get_homeowner_claim_details(user_id):
         )
         homeowner_row = cur.fetchone()
 
+        cur.execute(
+            """
+            SELECT assigned_lawyer_id
+            FROM defects
+            WHERE user_id = %s
+              AND assigned_lawyer_id IS NOT NULL
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (user_id,),
+        )
+        lawyer_row = cur.fetchone()
+
         cur.execute("ALTER TABLE report_respondent_profile ADD COLUMN IF NOT EXISTS homeowner_id INTEGER")
         cur.execute(
             """
@@ -621,6 +639,7 @@ def get_homeowner_claim_details(user_id):
             "respondent_email": "",
             "respondent_phone_number": "",
             "respondent_address": "",
+            "assigned_lawyer_id": "",
         }
 
         if homeowner_row:
@@ -645,6 +664,9 @@ def get_homeowner_claim_details(user_id):
                     "respondent_address": respondent_row[4] or "",
                 }
             )
+
+        if lawyer_row and lawyer_row[0] is not None:
+            result["assigned_lawyer_id"] = str(lawyer_row[0])
 
         return result
     finally:
@@ -680,6 +702,108 @@ def _get_registered_developers():
     finally:
         cur.close()
         conn.close()
+
+
+def _get_registered_lawyers():
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT id, law_firm_name, full_name, email
+            FROM users
+            WHERE user_type = 'lawyer' OR role = 'Legal'
+            ORDER BY COALESCE(NULLIF(law_firm_name, ''), full_name) ASC, full_name ASC
+            """
+        )
+        rows = cur.fetchall()
+        return [
+            {
+                "id": row[0],
+                "law_firm_name": row[1] or "",
+                "full_name": row[2] or "",
+                "email": row[3] or "",
+                "display_name": row[1] or row[2] or f"Lawyer #{row[0]}",
+            }
+            for row in rows
+        ]
+    finally:
+        cur.close()
+        conn.close()
+
+
+def _lawyer_has_access_to_defect(defect_id, lawyer_id=None):
+    if lawyer_id is None:
+        lawyer_id = _current_user_id()
+    if not lawyer_id:
+        return False
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT 1
+            FROM defects
+            WHERE id = %s
+              AND assigned_lawyer_id = %s
+            LIMIT 1
+            """,
+            (int(defect_id), int(lawyer_id)),
+        )
+        return cur.fetchone() is not None
+    finally:
+        cur.close()
+        conn.close()
+
+
+def _assert_legal_defect_access(defect_id):
+    if _current_role_key() not in {"lawyer", "legal"}:
+        return None
+    if _lawyer_has_access_to_defect(defect_id):
+        return None
+    return jsonify({"error": "Forbidden"}), 403
+
+
+def _get_allowed_claimant_ids_for_legal():
+    lawyer_id = _current_user_id()
+    if not lawyer_id:
+        return set()
+    return {
+        item["homeowner_id"]
+        for item in get_homeowner_claimants(lawyer_user_id=lawyer_id)
+        if item.get("homeowner_id") is not None
+    }
+
+
+def _resolve_claimant_user_id(role, claimant_user_id, defects):
+    if role == "Homeowner":
+        return _current_user_id()
+
+    if role == "Legal":
+        allowed_claimant_ids = _get_allowed_claimant_ids_for_legal()
+        if claimant_user_id is not None:
+            return claimant_user_id if claimant_user_id in allowed_claimant_ids else None
+
+        derived_ids = [
+            d.get("user_id")
+            for d in defects
+            if d.get("user_id") in allowed_claimant_ids
+        ]
+        if derived_ids:
+            return derived_ids[0]
+
+        allowed_claimants = get_homeowner_claimants(lawyer_user_id=_current_user_id())
+        return allowed_claimants[0]["homeowner_id"] if allowed_claimants else None
+
+    if defects and defects[0].get("user_id"):
+        return defects[0].get("user_id")
+
+    if claimant_user_id is not None:
+        return claimant_user_id
+
+    claimants = get_homeowner_claimants()
+    return claimants[0]["homeowner_id"] if claimants else None
 
 
 def calculate_hda_compliance(reported_date, completed_date, status):
@@ -883,10 +1007,29 @@ def get_defects_for_role(role):
                 SELECT d.id, d.unit, d.description, d.reported_date, d.status, d.completed_date,
                        d.user_id, d.urgency, d.deadline, d.remarks,
                        COALESCE(d.element, '') AS element, COALESCE(d.location, '') AS location,
-                       COALESCE(s.name, '') AS scan_name
+                       COALESCE(s.name, '') AS scan_name,
+                       d.scan_id,
+                       COALESCE(d.image_path, '') AS image_path
                 FROM defects d
                 LEFT JOIN scans s ON d.scan_id = s.id
                 WHERE d.user_id = %s
+                ORDER BY d.id
+                """,
+                (user_id,)
+            )
+        elif role == "Legal":
+            user_id = _current_user_id()
+            cur.execute(
+                """
+                SELECT d.id, d.unit, d.description, d.reported_date, d.status, d.completed_date,
+                       d.user_id, d.urgency, d.deadline, d.remarks,
+                       COALESCE(d.element, '') AS element, COALESCE(d.location, '') AS location,
+                       COALESCE(s.name, '') AS scan_name,
+                       d.scan_id,
+                       COALESCE(d.image_path, '') AS image_path
+                FROM defects d
+                LEFT JOIN scans s ON d.scan_id = s.id
+                WHERE d.assigned_lawyer_id = %s
                 ORDER BY d.id
                 """,
                 (user_id,)
@@ -897,7 +1040,9 @@ def get_defects_for_role(role):
                 SELECT d.id, d.unit, d.description, d.reported_date, d.status, d.completed_date,
                        d.user_id, d.urgency, d.deadline, d.remarks,
                        COALESCE(d.element, '') AS element, COALESCE(d.location, '') AS location,
-                       COALESCE(s.name, '') AS scan_name
+                       COALESCE(s.name, '') AS scan_name,
+                       d.scan_id,
+                       COALESCE(d.image_path, '') AS image_path
                 FROM defects d
                 LEFT JOIN scans s ON d.scan_id = s.id
                 ORDER BY d.id
@@ -909,6 +1054,8 @@ def get_defects_for_role(role):
             element   = row[10] or ''
             location  = row[11] or ''
             scan_name = row[12] or ''
+            scan_id = row[13]
+            image_path = row[14] or ''
             raw_unit  = row[1]
             # project_name: explicit unit first, then scan name (taman), then location/element
             project_name = (
@@ -933,6 +1080,9 @@ def get_defects_for_role(role):
                 "remarks":        row[9] or "",
                 "element":        element,
                 "location":       location,
+                "scan_id":        scan_id,
+                "image_path":     image_path,
+                "image_url":      url_for('module2.serve_defect_image', defect_id=row[0]) if image_path else "",
             }
 
             defect["hda_compliant"] = calculate_hda_compliance(
@@ -1343,14 +1493,21 @@ def save_evidence(data):
         conn.close()
 
 
-def get_closed_evidence_appendix(role):
+def get_closed_evidence_appendix(role, claimant_user_id=None):
     """Return closed defects for role appendix view."""
     if role not in ["Homeowner", "Developer", "Legal", "Admin"]:
         return []
 
-    # Use one common source so closed-case appendix is consistent across roles.
-    source_role = "Developer"
-    defects = get_defects_for_role(source_role)
+    if role == "Legal":
+        defects = get_defects_for_role("Legal")
+    elif role == "Homeowner":
+        defects = get_defects_for_role("Homeowner")
+    else:
+        defects = get_defects_for_role("Developer")
+
+    if claimant_user_id is not None:
+        defects = [d for d in defects if d.get("user_id") == claimant_user_id]
+
     status_store = load_status()
     completion_store = load_completion_dates()
     evidence_store = load_evidence()
@@ -1733,7 +1890,13 @@ def dashboard():
     else:
         user_info = {"name": _current_actor_name() or role, "unit": ""}
 
-    homeowner_claimants = get_homeowner_claimants() if role in ["Developer", "Legal"] else []
+    homeowner_claimants = (
+        get_homeowner_claimants(lawyer_user_id=_current_user_id())
+        if role == "Legal"
+        else get_homeowner_claimants()
+        if role == "Developer"
+        else []
+    )
 
     template = (
         "module3/dashboard_homeowner.html"
@@ -1755,6 +1918,7 @@ def dashboard():
         item_service_options=list(ITEM_SERVICE_TRANSLATIONS.keys()),
         homeowner_claimants=homeowner_claimants,
         registered_developers=_get_registered_developers() if role == "Homeowner" else [],
+        available_lawyers=_get_registered_lawyers() if role == "Homeowner" else [],
         support_contact=SUPPORT_CONTACT,
         username=_current_actor_name(),
     )
@@ -1779,6 +1943,7 @@ def save_homeowner_claim_details():
     respondent_phone_number = (data.get("respondent_phone_number") or "").strip()
     respondent_address = (data.get("respondent_address") or "").strip()
     other_developer_name = (data.get("other_developer_name") or "").strip()
+    assigned_lawyer_id_raw = str(data.get("assigned_lawyer_id") or "").strip()
 
     if respondent_company_name == "others" and other_developer_name:
         respondent_company_name = other_developer_name
@@ -1786,6 +1951,12 @@ def save_homeowner_claim_details():
     selected_dev_id = None
     if respondent_company_name.isdigit():
         selected_dev_id = int(respondent_company_name)
+
+    assigned_lawyer_id = None
+    if assigned_lawyer_id_raw:
+        if not assigned_lawyer_id_raw.isdigit():
+            return jsonify({"success": False, "error": "Invalid legal representative selection."}), 400
+        assigned_lawyer_id = int(assigned_lawyer_id_raw)
 
     if not court_location:
         return jsonify({"success": False, "error": "Court location is required."}), 400
@@ -1812,6 +1983,7 @@ def save_homeowner_claim_details():
     cur = conn.cursor()
     try:
         cur.execute("ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_developer_id INTEGER")
+        cur.execute("ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER")
         cur.execute("ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS court_location VARCHAR(255)")
         cur.execute("ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS state_name VARCHAR(100)")
         cur.execute("ALTER TABLE report_homeowner_profile ADD COLUMN IF NOT EXISTS claim_amount VARCHAR(100)")
@@ -1820,6 +1992,20 @@ def save_homeowner_claim_details():
         cur.execute("ALTER TABLE report_respondent_profile ADD COLUMN IF NOT EXISTS homeowner_id INTEGER")
 
         user_id = _current_user_id()
+
+        if assigned_lawyer_id is not None:
+            cur.execute(
+                """
+                SELECT id
+                FROM users
+                WHERE id = %s
+                  AND (user_type = 'lawyer' OR role = 'Legal')
+                LIMIT 1
+                """,
+                (assigned_lawyer_id,),
+            )
+            if not cur.fetchone():
+                return jsonify({"success": False, "error": "Selected legal representative not found."}), 400
 
         # Graceful handling for registered developers
         if selected_dev_id:
@@ -1929,6 +2115,11 @@ def save_homeowner_claim_details():
                 "UPDATE defects SET assigned_developer_id = NULL WHERE user_id = %s",
                 (user_id,)
             )
+
+        cur.execute(
+            "UPDATE defects SET assigned_lawyer_id = %s WHERE user_id = %s",
+            (assigned_lawyer_id, user_id)
+        )
 
         conn.commit()
         return jsonify({"success": True, "message": "Claim details saved."})
@@ -2365,15 +2556,22 @@ def generate_ai_report_api():
             
         claimant_user_id = data.get("claimant_user_id")
         claimant_user_id = int(claimant_user_id) if str(claimant_user_id or "").strip().isdigit() else None
-        
-        if role == "Homeowner":
-            claimant_user_id = _current_user_id()
-        else:
-            if defects and defects[0].get("user_id"):
-                claimant_user_id = defects[0].get("user_id")
-            elif claimant_user_id is None:
-                claimants = get_homeowner_claimants()
-                claimant_user_id = claimants[0]["homeowner_id"] if claimants else None
+
+        claimant_user_id = _resolve_claimant_user_id(role, claimant_user_id, defects)
+        if role == "Legal" and claimant_user_id is None:
+            return jsonify({
+                "error": "No authorized homeowner selected for this lawyer.",
+                "details": "This legal account can only access cases explicitly assigned to it.",
+            }), 403
+
+        if role == "Legal" and claimant_user_id is not None:
+            defects = [d for d in defects if d.get("user_id") == claimant_user_id]
+            defects = filter_defects_by_project(defects, project_filter)
+            if not defects:
+                return jsonify({
+                    "error": "No assigned defects found for the selected homeowner.",
+                    "details": "This legal account can only generate reports for homeowners assigned to it.",
+                }), 403
 
         requirement_errors = validate_report_requirements(role=role, user_id=_current_user_id(), claimant_user_id=claimant_user_id)
         if requirement_errors:
@@ -2384,7 +2582,7 @@ def generate_ai_report_api():
                 }
             ), 400
 
-        closed_evidence_appendix = get_closed_evidence_appendix(role)
+        closed_evidence_appendix = get_closed_evidence_appendix(role, claimant_user_id=claimant_user_id)
         
         remarks_store = load_remarks()
         status_store = load_status()
@@ -2876,7 +3074,7 @@ def generate_ai_report_api():
         if "quota" in error_message.lower() or "429" in error_message:
             error_details = "API rate limit exceeded. Please try again later."
         elif "401" in error_message or "api_key" in error_message.lower():
-            error_details = "API key invalid or missing. Check your GROQ_API_KEY."
+            error_details = "API key invalid or missing. Check GROQ_API_KEY_REPORT or fallback GROQ_API_KEY."
         elif "timeout" in error_message.lower():
             error_details = "Request timed out. Please try again."
         else:
@@ -2925,15 +3123,26 @@ def export_pdf():
 
     claimant_user_id = request.form.get("claimant_user_id", "")
     claimant_user_id = int(claimant_user_id) if str(claimant_user_id).strip().isdigit() else None
-    
-    if role.lower() == "homeowner":
-        claimant_user_id = _current_user_id()
-    else:
-        if defects and defects[0].get("user_id"):
-            claimant_user_id = defects[0].get("user_id")
-        elif claimant_user_id is None:
-            claimants = get_homeowner_claimants()
-            claimant_user_id = claimants[0]["homeowner_id"] if claimants else None
+
+    claimant_user_id = _resolve_claimant_user_id(role, claimant_user_id, defects)
+    if role == "Legal" and claimant_user_id is None:
+        return jsonify(
+            {
+                "error": "No authorized homeowner selected for this lawyer.",
+                "details": "This legal account can only export assigned cases.",
+            }
+        ), 403
+
+    if role == "Legal" and claimant_user_id is not None:
+        defects = [d for d in defects if d.get("user_id") == claimant_user_id]
+        defects = filter_defects_by_project(defects, project_filter)
+        if not defects:
+            return jsonify(
+                {
+                    "error": "No assigned defects found for the selected homeowner.",
+                    "details": "This legal account can only export assigned cases.",
+                }
+            ), 403
 
     if not ai_report_text or not ai_report_text.strip():
         return jsonify(
@@ -2951,7 +3160,7 @@ def export_pdf():
             }
         ), 400
 
-    closed_evidence_appendix = get_closed_evidence_appendix(role)
+    closed_evidence_appendix = get_closed_evidence_appendix(role, claimant_user_id=claimant_user_id)
     labels = PDF_LABELS.get(language, PDF_LABELS["ms"])
     remarks_store = load_remarks()
     status_store = load_status()

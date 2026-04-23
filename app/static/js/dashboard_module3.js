@@ -271,6 +271,7 @@ function saveClaimDetails() {
         claim_amount:     g('m3-claim-amount'),
         respondent_company_name: g('m3-respondent-company-name'),
         other_developer_name:    g('m3-other-developer-name'),
+        assigned_lawyer_id:      g('m3-assigned-lawyer-id'),
         respondent_registration_number: g('m3-respondent-registration-number'),
         respondent_email: g('m3-respondent-email'),
         respondent_phone_number: g('m3-respondent-phone-number'),

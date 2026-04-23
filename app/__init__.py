@@ -26,6 +26,14 @@ def create_app():
         'postgresql://user:password@flask_db:5432/flaskdb'
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    generic_groq_api_key = (os.environ.get('GROQ_API_KEY') or '').strip()
+    app.config['GROQ_API_KEY'] = generic_groq_api_key
+    app.config['GROQ_API_KEY_REPORT'] = (
+        os.environ.get('GROQ_API_KEY_REPORT') or generic_groq_api_key
+    ).strip()
+    app.config['GROQ_API_KEY_CHATBOT'] = (
+        os.environ.get('GROQ_API_KEY_CHATBOT') or generic_groq_api_key
+    ).strip()
 
     # ── Extensions ────────────────────────────────────────────────────────────
     db.init_app(app)
@@ -48,6 +56,7 @@ def create_app():
             "ALTER TABLE defects ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE",
             "ALTER TABLE defects ADD COLUMN IF NOT EXISTS verified_by_id INTEGER REFERENCES users(id)",
             "ALTER TABLE defects ADD COLUMN IF NOT EXISTS legal_remarks TEXT",
+            "ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER REFERENCES users(id)",
         ]:
             try:
                 db.session.execute(text(stmt))

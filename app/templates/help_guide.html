@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>DLP Advisor | Help & Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,100..700,0,0&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#004ac6",
+                        "on-primary": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "on-surface": "#191c1e",
+                        "surface-container": "#eceef0",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#434655",
+                        "background": "#f7f9fb",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .step-line::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #004ac6, #93c5fd);
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+
+    <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30">
+        <div class="flex items-center gap-8">
+            <a href="{{ url_for('auth.login') }}" class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-2xl">shield</span>
+                <span class="text-xl font-black tracking-tight">DLP Advisor</span>
+            </a>
+            <nav class="hidden md:flex items-center gap-6">
+                <a class="text-primary font-bold border-b-2 border-primary pb-1" href="#">Help & Guide</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('auth.' + current_user.user_type + '_dashboard') }}"
+                class="text-sm font-semibold text-slate-500 hover:text-primary transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">arrow_back</span>
+                Back to Dashboard
+            </a>
+        </div>
+    </header>
+
+    <main class="pt-28 pb-16 px-6 max-w-4xl mx-auto">
+
+        <div class="text-center mb-12">
+            <span class="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full text-xs font-bold tracking-widest text-primary uppercase mb-4">
+                <span class="material-symbols-outlined text-sm">menu_book</span>
+                Documentation
+            </span>
+            <h1 class="text-4xl md:text-5xl font-black tracking-tight mb-3">Help & Guide</h1>
+            <p class="text-lg text-on-surface-variant max-w-xl mx-auto">Welcome, <strong>{{ current_user.full_name }}</strong>.
+                Here is your personalized workflow guide for the <span class="text-primary capitalize">{{ current_user.user_type }}</span> role.</p>
+        </div>
+
+        {% if current_user.user_type == 'homeowner' %}
+        <div class="space-y-6">
+            <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8">
+                <h2 class="text-2xl font-black tracking-tight mb-2 flex items-center gap-3">
+                    <span class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary">home</span>
+                    </span>
+                    Homeowner Guide
+                </h2>
+                <p class="text-on-surface-variant mb-8">Step-by-step workflow to report defects and generate your tribunal report.</p>
+            </div>
+
+            <div class="relative">
+                <div class="absolute left-4 top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary to-blue-300 hidden md:block -ml-[1px]"></div>
+                <ol class="space-y-6">
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">1</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Create a Project & Upload 3D Scan</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">Go to the <strong>Lidar Scans</strong> page and create a new project. Upload your 3D scan file to get started.</p>
+                            <a href="{{ url_for('module2.list_projects') }}" class="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline hover:bg-primary/10 px-2 py-1 -ml-2 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-sm">upload_file</span>
+                                Go to Lidar Scans
+                            </a>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">2</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Launch 3D Visualizer & Pin Defects</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">Open the visualizer, click directly on the 3D model to pin defects. Mark their location, type, and severity.</p>
+                            <a href="{{ url_for('module2.list_projects') }}" class="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline hover:bg-primary/10 px-2 py-1 -ml-2 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-sm">view_in_ar</span>
+                                Launch Visualizer
+                            </a>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">3</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Go to Reporting Dashboard</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">Select a lawyer from the list and fill in your claim details. All fields must be completed before proceeding.</p>
+                            <a href="{{ url_for('module3.dashboard') }}" class="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline hover:bg-primary/10 px-2 py-1 -ml-2 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-sm">bar_chart</span>
+                                Reporting Dashboard
+                            </a>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-green-600/30">4</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-green-200 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-green-400 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Generate AI Tribunal Report</h3>
+                            <p class="text-sm text-on-surface-variant">Review the auto-generated report, download the PDF, and file it with the tribunal.</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        {% elif current_user.user_type == 'developer' %}
+        <div class="space-y-6">
+            <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8">
+                <h2 class="text-2xl font-black tracking-tight mb-2 flex items-center gap-3">
+                    <span class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary">engineering</span>
+                    </span>
+                    Developer Guide
+                </h2>
+                <p class="text-on-surface-variant mb-8">Manage your assigned cases and keep homeowners updated.</p>
+            </div>
+
+            <div class="relative">
+                <div class="absolute left-4 top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary to-blue-300 hidden md:block -ml-[1px]"></div>
+                <ol class="space-y-6">
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">1</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Check Dashboard for Pending Cases</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">Your dashboard shows all cases assigned to your company. Prioritize by urgency and severity.</p>
+                            <a href="{{ url_for('auth.developer_dashboard') }}" class="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline hover:bg-primary/10 px-2 py-1 -ml-2 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-sm">dashboard</span>
+                                Open Dashboard
+                            </a>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">2</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Update Rectification Status</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">Set status to <strong>WIP</strong> (Work In Progress) or <strong>Done</strong>. Add a deadline for completion.</p>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">3</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Review Photo Evidence</h3>
+                            <p class="text-sm text-on-surface-variant">Each defect has a photo attached. Click on the photo icon to view evidence before closing a case.</p>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-green-600/30">4</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-green-200 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-green-400 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Submit Completion Report</h3>
+                            <p class="text-sm text-on-surface-variant">Once all items are fixed, submit the report. Homeowners will be notified automatically.</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        {% elif current_user.user_type == 'lawyer' %}
+        <div class="space-y-6">
+            <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8">
+                <h2 class="text-2xl font-black tracking-tight mb-2 flex items-center gap-3">
+                    <span class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary">gavel</span>
+                    </span>
+                    Legal Guide
+                </h2>
+                <p class="text-on-surface-variant mb-8">Review, verify, and generate legally binding tribunal reports for your clients.</p>
+            </div>
+
+            <div class="relative">
+                <div class="absolute left-4 top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary to-blue-300 hidden md:block -ml-[1px]"></div>
+                <ol class="space-y-6">
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">1</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">View Assigned Cases</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">Your dashboard lists all cases explicitly assigned to your firm by homeowners.</p>
+                            <a href="{{ url_for('auth.lawyer_dashboard') }}" class="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline hover:bg-primary/10 px-2 py-1 -ml-2 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-sm">folder_open</span>
+                                View Cases
+                            </a>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">2</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Launch Evidence Review Console</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">Open the evidence panel for each defect. Review all photos and notes submitted by the homeowner.</p>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">3</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Verify or Override AI Risk Assessment</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">The AI provides a preliminary risk score. Manually verify or override it based on your legal judgment.</p>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-green-600/30">4</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-green-200 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-green-400 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Generate Final PDF Report</h3>
+                            <p class="text-sm text-on-surface-variant">Download the legally binding report. File it with the appropriate tribunal body for your client.</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8 text-center">
+            <span class="material-symbols-outlined text-5xl text-slate-300 mb-4">help</span>
+            <p class="text-on-surface-variant">Role-specific guide not available for your account type.</p>
+        </div>
+        {% endif %}
+    </main>
+</body>
+</html>

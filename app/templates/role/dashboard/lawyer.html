@@ -141,9 +141,9 @@
                 <button class="p-2 text-slate-500 hover:bg-slate-200/50 rounded-lg transition-colors">
                     <span class="material-symbols-outlined">notifications</span>
                 </button>
-                <button class="p-2 text-slate-500 hover:bg-slate-200/50 rounded-lg transition-colors">
+                <a href="{{ url_for('core_features.guide') }}" class="p-2 text-slate-500 hover:bg-blue-50 hover:text-primary rounded-lg transition-colors" title="Help & Guide">
                     <span class="material-symbols-outlined">help</span>
-                </button>
+                </a>
                 <a class="p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors" href="{{ url_for('auth.logout') }}" title="Logout">
                     <span class="material-symbols-outlined">logout</span>
                 </a>

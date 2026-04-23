@@ -151,6 +151,10 @@
             </div>
             <div class="mt-auto pb-6 flex flex-col items-center gap-4">
                 <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    href="{{ url_for('core_features.guide') }}" title="Help & Guide">
+                    <span class="material-symbols-outlined">help</span>
+                </a>
+                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
                     href="{{ url_for('auth.logout') }}" title="Logout">
                     <span class="material-symbols-outlined">logout</span>
                 </a>
@@ -246,7 +250,15 @@
                                     <td class="px-4 py-4 text-sm font-medium text-on-surface-variant">{{ defect.project_name or defect.unit or 'N/A' }}</td>
                                     <td class="px-4 py-4 text-sm text-on-surface-variant max-w-[240px] truncate" title="{{ defect.desc }}">{{ defect.desc or '-' }}</td>
                                     <td class="px-4 py-4">
+                                        {% if defect.image_url %}
+                                        <a href="{{ defect.image_url }}" target="_blank" class="inline-flex">
+                                            <img src="{{ defect.image_url }}"
+                                                 alt="Defect {{ defect.id }}"
+                                                 class="w-14 h-14 rounded-xl object-cover border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                                        </a>
+                                        {% else %}
                                         <span class="material-symbols-outlined text-slate-400">image</span>
+                                        {% endif %}
                                     </td>
                                     <td class="px-4 py-4">
                                         <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
@@ -264,9 +276,10 @@
                                     </td>
                                     <td class="px-4 py-4 text-sm text-slate-400">-</td>
                                     <td class="px-8 py-4 text-right">
-                                        <a href="{{ url_for('module3.dashboard') }}"
+                                        <a href="{{ defect.image_url if defect.image_url else url_for('module3.dashboard') }}"
+                                           {% if defect.image_url %}target="_blank"{% endif %}
                                            class="text-xs font-bold text-primary hover:underline flex items-center justify-end gap-1">
-                                            Update Status <span class="material-symbols-outlined text-xs">arrow_forward</span>
+                                            {{ 'View Image' if defect.image_url else 'Update Status' }} <span class="material-symbols-outlined text-xs">arrow_forward</span>
                                         </a>
                                     </td>
                                 </tr>

@@ -148,6 +148,12 @@ def _auto_assign_images(metadata: dict, defects: List[Defect]) -> bool:
 
     return assigned
 
+def _lawyer_forbidden(defect: Defect) -> bool:
+    if current_user.user_type != 'lawyer':
+        return False
+    return defect.assigned_lawyer_id != current_user.id
+
+
 @module2.route('/dlp_info', methods=['GET'])
 def dlp_info():
     return jsonify(DLP_RULES)
@@ -220,6 +226,8 @@ def get_scan_defects(scan_id):
 @login_required
 def get_defect_details(defect_id):
     defect = Defect.query.get_or_404(defect_id)
+    if _lawyer_forbidden(defect):
+        abort(403)
     image_url = None
     if defect.image_path:
         image_url = url_for('module2.serve_defect_image', defect_id=defect_id)
@@ -242,6 +250,8 @@ def get_defect_details(defect_id):
 @login_required
 def update_defect_status(defect_id):
     defect = Defect.query.get_or_404(defect_id)
+    if _lawyer_forbidden(defect):
+        abort(403)
     data = request.get_json()
     # Note: Lidar code checked current_user.role == 'developer'. In pcd-v32, the attribute is user_type
     if 'status' in data and current_user.user_type == 'developer':
@@ -261,6 +271,8 @@ def update_defect_status(defect_id):
 @login_required
 def delete_defect(defect_id):
     defect = Defect.query.get_or_404(defect_id)
+    if _lawyer_forbidden(defect):
+        abort(403)
     db.session.delete(defect)
     db.session.commit()
     return jsonify({'message': 'Defect deleted successfully'})
@@ -413,12 +425,18 @@ def legal_evidence_review():
     if current_user.user_type not in ('lawyer', 'legal', 'admin'):
         abort(403)
 
-    # Fetch all defects that have a photographic evidence image attached.
-    # Lawyers can review both unverified and already-verified defects.
-    defects_with_evidence = Defect.query.filter(
+    # Lawyers can review only defects explicitly assigned to them.
+    defects_query = Defect.query.filter(
         Defect.image_path.isnot(None),
         Defect.image_path != '',
-    ).order_by(Defect.is_verified.asc(), Defect.created_at.desc()).all()
+    )
+    if current_user.user_type in ('lawyer', 'legal'):
+        defects_query = defects_query.filter(Defect.assigned_lawyer_id == current_user.id)
+
+    defects_with_evidence = defects_query.order_by(
+        Defect.is_verified.asc(),
+        Defect.created_at.desc()
+    ).all()
 
     # Build lightweight dicts to pass to the template (avoids lazy-load issues)
     defect_data = []
@@ -455,6 +473,8 @@ def api_legal_verify_defect(defect_id):
         return jsonify({'error': 'Unauthorized'}), 403
 
     defect = Defect.query.get_or_404(defect_id)
+    if _lawyer_forbidden(defect):
+        return jsonify({'error': 'Forbidden'}), 403
     payload = request.get_json(silent=True) or {}
 
     manual_severity    = (payload.get('manual_severity') or '').strip()

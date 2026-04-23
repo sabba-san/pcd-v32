@@ -167,16 +167,27 @@ def _fetch_respondent_profile(session, homeowner_id=None, respondent_user_id=Non
     return None
 
 
-def get_homeowner_claimants():
+def get_homeowner_claimants(lawyer_user_id=None):
     from ..extensions import db
     try:
-        result = db.session.execute(text(
-            """
-            SELECT homeowner_id, name, address, email
-            FROM report_homeowner_profile
-            ORDER BY homeowner_id ASC
-            """
-        ))
+        if lawyer_user_id is not None:
+            result = db.session.execute(text(
+                """
+                SELECT DISTINCT hp.homeowner_id, hp.name, hp.address, hp.email
+                FROM report_homeowner_profile hp
+                JOIN defects d ON d.user_id = hp.homeowner_id
+                WHERE d.assigned_lawyer_id = :lawyer_user_id
+                ORDER BY hp.homeowner_id ASC
+                """
+            ), {"lawyer_user_id": lawyer_user_id})
+        else:
+            result = db.session.execute(text(
+                """
+                SELECT homeowner_id, name, address, email
+                FROM report_homeowner_profile
+                ORDER BY homeowner_id ASC
+                """
+            ))
         return [
             {
                 "homeowner_id": row[0],

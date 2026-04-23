@@ -6,20 +6,42 @@ from groq import Groq
 
 from .dlp_knowledge_base import load_pdf_knowledge
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+_chatbot_client = None
 
-try:
-    client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
-    if not GROQ_API_KEY:
-        print("Groq Initialization Error: GROQ_API_KEY is not set.")
-except Exception as e:
-    print(f"Groq Initialization Error: {e}")
-    client = None
+
+def _sanitize_api_key(raw_value):
+    return (raw_value or "").strip().strip('"').strip("'").strip()
+
+
+def _get_chatbot_api_key():
+    return _sanitize_api_key(
+        os.getenv("GROQ_API_KEY_CHATBOT") or os.getenv("GROQ_API_KEY")
+    )
+
+
+def get_chatbot_client():
+    global _chatbot_client
+
+    if _chatbot_client is not None:
+        return _chatbot_client
+
+    api_key = _get_chatbot_api_key()
+    if not api_key:
+        return None
+
+    try:
+        _chatbot_client = Groq(api_key=api_key)
+    except Exception as e:
+        print(f"Groq Initialization Error: {e}")
+        _chatbot_client = None
+
+    return _chatbot_client
 
 # Load the PDF text when the app starts
 PDF_CONTEXT = load_pdf_knowledge()
 
 def process_query(user_query):
+    client = get_chatbot_client()
     if not client:
         return "Error: AI Client not initialized. Check your API key."
 
@@ -61,6 +83,7 @@ def process_query(user_query):
         return f"AI Error: {str(e)}"
         
 def analyze_legal_text(document_text):
+    client = get_chatbot_client()
     if not client: return "Error: AI Client not initialized."
     try:
         response = client.chat.completions.create(
@@ -74,6 +97,7 @@ def analyze_legal_text(document_text):
 
 def analyze_defect_image(base64_image):
     """Sends an image to Groq's Vision Model for defect analysis."""
+    client = get_chatbot_client()
     if not client: return "Error: AI Client not initialized."
     
     prompt = """You are examining a photo of a potential property defect in Malaysia.
@@ -111,6 +135,7 @@ def analyze_defect_image(base64_image):
 
 def analyze_pdf_document(pdf_bytes):
     """Extracts text from a PDF and sends it to Groq for legal summarization."""
+    client = get_chatbot_client()
     if not client: return "Error: AI Client not initialized."
     
     try:
