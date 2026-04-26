@@ -391,6 +391,14 @@ def _ensure_module3_tables():
     except Exception as e:
         current_app.logger.debug(f"Note: assigned_lawyer_id column might already exist: {e}")
 
+    # Ensure completion_dates.defect_id has a unique constraint (required for ON CONFLICT upsert).
+    try:
+        db.session.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_completion_dates_defect_id ON completion_dates (defect_id)"
+        ))
+    except Exception as e:
+        current_app.logger.debug(f"Note: completion_dates unique index: {e}")
+
     db.session.commit()
 
 
@@ -1074,7 +1082,7 @@ def get_defects_for_role(role):
                 "reported_date":  _to_iso(row[3]),
                 "status":         row[4] or "Reported",
                 "completed_date": _to_iso(row[5]),
-                "owner_id":       row[6],
+                "user_id":        row[6],
                 "urgency":        row[7],
                 "deadline":       _to_iso(row[8]),
                 "remarks":        row[9] or "",
@@ -2350,6 +2358,22 @@ def evidence_exists(defect_id):
         "defect_id": defect_id
     })
 
+
+# =================================================
+# SERVE EVIDENCE IMAGE FILE
+# =================================================
+@routes.route("/evidence_image/<path:filename>")
+@login_required
+def serve_evidence_image(filename):
+    """
+    Serve an evidence image file stored in app/evidence/ (outside static/).
+    Only authenticated users can access these files.
+    """
+    from flask import send_from_directory
+    evidence_dir = os.path.join(current_app.root_path, "evidence")
+    return send_from_directory(evidence_dir, filename)
+
+
 # =================================================
 # ADD / SAVE REMARK (NOTE)
 # =================================================
@@ -2474,13 +2498,11 @@ def update_status():
                 "UPDATE defects SET completed_date = %s WHERE id = %s",
                 (effective_completed_date, int(defect_id)),
             )
+            # Upsert: delete any existing row then insert fresh.
+            # (Avoids ON CONFLICT which requires a unique index that may not exist on older DBs.)
+            cur.execute("DELETE FROM completion_dates WHERE defect_id = %s", (int(defect_id),))
             cur.execute(
-                """
-                INSERT INTO completion_dates (defect_id, completion_date)
-                VALUES (%s, %s)
-                ON CONFLICT (defect_id) DO UPDATE
-                SET completion_date = EXCLUDED.completion_date
-                """,
+                "INSERT INTO completion_dates (defect_id, completion_date) VALUES (%s, %s)",
                 (int(defect_id), effective_completed_date),
             )
         else:

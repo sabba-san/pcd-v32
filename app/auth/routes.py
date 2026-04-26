@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import db
 from ..models import User, Defect, Scan
@@ -155,6 +155,8 @@ def reg_housedeveloper():
 @login_required
 def homeowner_dashboard():
     """Homeowner dashboard: show the current user's reported defects in Recent Activity."""
+    if current_user.user_type != 'homeowner':
+        abort(403)
     recent_defects = (
         Defect.query
         .filter_by(user_id=current_user.id)
@@ -169,6 +171,8 @@ def homeowner_dashboard():
 @login_required
 def lawyer_dashboard():
     """Lawyer dashboard: show only defects explicitly assigned to this lawyer."""
+    if current_user.user_type != 'lawyer':
+        abort(403)
     defects = (
         Defect.query
         .filter_by(assigned_lawyer_id=current_user.id)
@@ -199,6 +203,8 @@ def lawyer_dashboard():
 @auth.route('/dashboard/developer')
 @login_required
 def developer_dashboard():
+    if current_user.user_type != 'developer':
+        abort(403)
     defects = get_defects_for_role("Developer")
     stats = calculate_stats(defects)
     return render_template('role/dashboard/housedeveloper.html', defects=defects, stats=stats)

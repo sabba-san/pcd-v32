@@ -12,13 +12,15 @@ def _sanitize_api_key(raw_value: str) -> str:
 def _get_api_key_for_scope(scope: str = "report") -> str:
     if scope == "chatbot":
         return _sanitize_api_key(
-            os.getenv("GROQ_API_KEY_CHATBOT") or os.getenv("GROQ_API_KEY")
+            os.getenv("GROQ_API_KEY_CHATBOT") or os.getenv("GROQ_API_KEY") or
+            os.getenv("LLM_API_KEY_CHATBOT") or os.getenv("LLM_API_KEY")
         )
     if scope == "report":
         return _sanitize_api_key(
-            os.getenv("GROQ_API_KEY_REPORT") or os.getenv("GROQ_API_KEY")
+            os.getenv("GROQ_API_KEY_REPORT") or os.getenv("GROQ_API_KEY") or
+            os.getenv("LLM_API_KEY_REPORT") or os.getenv("LLM_API_KEY")
         )
-    return _sanitize_api_key(os.getenv("GROQ_API_KEY"))
+    return _sanitize_api_key(os.getenv("GROQ_API_KEY") or os.getenv("LLM_API_KEY"))
 
 
 def get_ai_client(scope: str = "report"):
@@ -37,7 +39,7 @@ def get_ai_client(scope: str = "report"):
 
     if not api_key:
         raise RuntimeError(
-            "Groq API key not set. Define GROQ_API_KEY_REPORT/GROQ_API_KEY_CHATBOT or fallback GROQ_API_KEY."
+            "Groq API key not set. Define LLM_API_KEY_REPORT/LLM_API_KEY_CHATBOT or fallback LLM_API_KEY."
         )
 
     _clients[cache_key] = Groq(api_key=api_key)
