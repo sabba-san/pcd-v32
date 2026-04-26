@@ -201,7 +201,7 @@ class Remark(db.Model):
 class CompletionDate(db.Model):
     __tablename__ = 'completion_dates'
     id = db.Column(db.Integer, primary_key=True)
-    defect_id = db.Column(db.Integer, db.ForeignKey('defects.id', ondelete='CASCADE'), nullable=False)
+    defect_id = db.Column(db.Integer, db.ForeignKey('defects.id', ondelete='CASCADE'), nullable=False, unique=True)
     completion_date = db.Column(db.Date, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.now())
     updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())

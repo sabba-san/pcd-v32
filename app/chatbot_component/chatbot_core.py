@@ -15,7 +15,8 @@ def _sanitize_api_key(raw_value):
 
 def _get_chatbot_api_key():
     return _sanitize_api_key(
-        os.getenv("GROQ_API_KEY_CHATBOT") or os.getenv("GROQ_API_KEY")
+        os.getenv("GROQ_API_KEY_CHATBOT") or os.getenv("GROQ_API_KEY") or
+        os.getenv("LLM_API_KEY_CHATBOT") or os.getenv("LLM_API_KEY")
     )
 
 

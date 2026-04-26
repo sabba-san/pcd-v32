@@ -348,6 +348,7 @@
                         <tr class="bg-surface-container-highest/30">
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">ID</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Project / Taman</th>
+                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">PHOTO</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Description</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Status</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Remarks</th>
@@ -403,7 +404,7 @@ window.M3_CONFIG = {
     initial_court_location:{{ (claim_input.court_location if claim_input and claim_input.court_location else '') | tojson }},
 };
 window.STATE_COURT_MAP = {{ state_court_map | tojson }};
-window.M3_TABLE_COLS = 6;
+window.M3_TABLE_COLS = 7;
 
 window.allDefects = [
 {% for d in defects %}
@@ -421,6 +422,8 @@ window.allDefects = [
     evidence_uploaded: {{ d.evidence_uploaded | lower }},
     evidence_filename: {{ (d.evidence_filename or '') | tojson }},
     evidence_uploaded_at: {{ (d.evidence_uploaded_at or '') | tojson }},
+    evidence_path: {{ (d.evidence_filename or '') | tojson }},
+    image_url: {{ (d.image_url or '') | tojson }},
 },
 {% endfor %}
 ];
@@ -437,9 +440,24 @@ window.buildRow = function(d, statusClass) {
             ? `${d.desc} <span style="color:#94a3b8;font-size:.82rem;">[${d.defect_type}]</span>`
             : d.desc)
         : '<span style="color:#94a3b8;">No description</span>';
+
+    const placeholderHtml = '<div style="width:48px;height:48px;background:#f1f5f9;border-radius:6px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;color:#94a3b8"><span class=\'material-symbols-outlined\' style=\'font-size:20px\'>image_not_supported</span></div>';
+    let photoHtml = placeholderHtml;
+    // Priority: 1) uploaded evidence via module3 route, 2) scan snapshot via module2 route
+    let imgSrc = null;
+    if (d.evidence_path) {
+        imgSrc = `/module3/evidence_image/${d.evidence_path}`;
+    } else if (d.image_url) {
+        imgSrc = d.image_url;
+    }
+    if (imgSrc) {
+        photoHtml = `<img src="${imgSrc}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.08)" alt="Defect Photo" onerror="m3ImgError(this)">`;
+    }
+
     return `
         <td class="m3-td">#${d.id}</td>
         <td class="m3-td">${projectLabel}</td>
+        <td class="m3-td">${photoHtml}</td>
         <td class="m3-td" style="max-width:260px;">${descText}</td>
         <td class="m3-td"><span class="m3-badge ${statusClass}">${d.display_status || d.status || 'Reported'}</span></td>
         <td class="m3-td" style="max-width:180px;">${d.remarks || '-'}</td>
@@ -449,15 +467,18 @@ window.buildRow = function(d, statusClass) {
                     class="text-xs font-semibold border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-50 flex items-center gap-1">
                     <span class="material-symbols-outlined" style="font-size:14px;">edit_note</span>Note
                 </button>
-                <button onclick="showUploadHint(${d.id})"
-                    class="text-xs font-semibold border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-50 flex items-center gap-1">
-                    <span class="material-symbols-outlined" style="font-size:14px;">upload</span>Evidence
-                </button>
             </div>
-            <input type="file" id="m3-file-${d.id}" accept=".jpg,.jpeg,.png,.tif,.tiff" style="display:none" onchange="uploadEvidence(${d.id})">
             ${evidenceBadge}
         </td>`;
 };
+
+function m3ImgError(img) {
+    img.onerror = null;
+    var ph = document.createElement('div');
+    ph.style.cssText = 'width:48px;height:48px;background:#f1f5f9;border-radius:6px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;color:#94a3b8';
+    ph.innerHTML = '<span class="material-symbols-outlined" style="font-size:20px">image_not_supported</span>';
+    img.parentNode.replaceChild(ph, img);
+}
 </script>
 <script src="{{ url_for('static', filename='js/dashboard_module3.js') }}"></script>
 </body>
