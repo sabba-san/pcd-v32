@@ -30,7 +30,7 @@ def get_chatbot_client():
     if not api_key:
         return None
 
-     try:
+    try:
         _chatbot_client = Groq(api_key=api_key)
     except Exception as e:
         import logging
