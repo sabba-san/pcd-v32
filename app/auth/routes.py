@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, session
 from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import db
 from ..models import User, Defect, Scan
@@ -35,6 +35,7 @@ def login():
 @login_required
 def logout():
     logout_user()
+    session.clear()
     return redirect(url_for('auth.login'))
 
 
@@ -42,6 +43,8 @@ def logout():
 
 @auth.route('/register')
 def register():
+    logout_user()
+    session.clear()
     return render_template('role/register/selection.html')
 
 
@@ -50,6 +53,8 @@ def register():
 @auth.route('/register/homeowner', methods=['GET', 'POST'])
 def reg_homeowner():
     if request.method == 'POST':
+        logout_user()
+        session.clear()
         email    = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
 
@@ -64,11 +69,11 @@ def reg_homeowner():
 
         user = User(
             user_type              = 'homeowner',
-            full_name              = request.form.get('full_name', '').strip(),
-            email                  = email,
-            housing_project        = housing_project,
-            ic_number              = request.form.get('ic_number', '').strip(),
-            phone_number           = request.form.get('phone', '').strip(),
+            full_name              = request.form.get('full_name', '').strip()[:150],
+            email                  = email[:150],
+            housing_project        = housing_project[:150],
+            ic_number              = request.form.get('ic_number', '').strip()[:20],
+            phone_number           = request.form.get('phone', '').strip()[:30],
             correspondence_address = request.form.get('address', '').strip(),
         )
 
@@ -87,6 +92,8 @@ def reg_homeowner():
 @auth.route('/register/lawyer', methods=['GET', 'POST'])
 def reg_lawyer():
     if request.method == 'POST':
+        logout_user()
+        session.clear()
         email    = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
 
@@ -96,10 +103,10 @@ def reg_lawyer():
 
         user = User(
             user_type      = 'lawyer',
-            full_name      = request.form.get('full_name', '').strip(),
-            email          = email,
-            law_firm_name  = request.form.get('firm_name', '').strip(),
-            bar_council_id = request.form.get('bar_id', '').strip(),
+            full_name      = request.form.get('full_name', '').strip()[:150],
+            email          = email[:150],
+            law_firm_name  = request.form.get('firm_name', '').strip()[:150],
+            bar_council_id = request.form.get('bar_id', '').strip()[:50],
         )
         user.set_password(password)
         db.session.add(user)
@@ -116,6 +123,8 @@ def reg_lawyer():
 @auth.route('/register/developer', methods=['GET', 'POST'])
 def reg_housedeveloper():
     if request.method == 'POST':
+        logout_user()
+        session.clear()
         email    = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
 
@@ -129,15 +138,15 @@ def reg_housedeveloper():
 
         user = User(
             user_type            = 'developer',
-            full_name            = request.form.get('full_name', '').strip(),
-            email                = email,
-            company_name         = company_name,
-            ssm_registration     = request.form.get('ssm', '').strip(),
+            full_name            = request.form.get('full_name', '').strip()[:150],
+            email                = email[:150],
+            company_name         = company_name[:150],
+            ssm_registration     = request.form.get('ssm', '').strip()[:50],
             company_address      = request.form.get('address', '').strip(),
-            phone_number         = request.form.get('phone', '').strip(),
-            fax_email            = request.form.get('fax_email', '').strip(),
-            representative_name  = request.form.get('representative_name', '').strip(),
-            representative_nric  = request.form.get('representative_nric', '').strip(),
+            phone_number         = request.form.get('phone', '').strip()[:30],
+            fax_email            = request.form.get('fax_email', '').strip()[:150],
+            representative_name  = request.form.get('representative_name', '').strip()[:150],
+            representative_nric  = request.form.get('representative_nric', '').strip()[:20],
         )
         user.set_password(password)
         db.session.add(user)

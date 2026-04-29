@@ -5,23 +5,26 @@ import os
 
 HISTORY_DIR = "data/conversations"
 os.makedirs(HISTORY_DIR, exist_ok=True)
-HISTORY_FILE = os.path.join(HISTORY_DIR, "chat_history.json")
+def get_history_file(user_id="guest"):
+    return os.path.join(HISTORY_DIR, f"chat_history_{user_id}.json")
 
-def load_history():
-    if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, 'r') as f:
+def load_history(user_id="guest"):
+    file_path = get_history_file(user_id)
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
             return json.load(f)
     return []
 
-def save_history(entry):
-    history = load_history()
+def save_history(entry, user_id="guest"):
+    history = load_history(user_id)
     history.append(entry)
-    with open(HISTORY_FILE, 'w') as f:
+    with open(get_history_file(user_id), 'w') as f:
         json.dump(history, f)
 
-def clear_history():
-    if os.path.exists(HISTORY_FILE):
-        os.remove(HISTORY_FILE)
+def clear_history(user_id="guest"):
+    file_path = get_history_file(user_id)
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
-def view_history():
-    return load_history()
+def view_history(user_id="guest"):
+    return load_history(user_id)

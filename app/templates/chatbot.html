@@ -10,18 +10,204 @@
     <meta name="user-id" content="{{ current_user.id }}">
     <style>
         @media print {
+            /* ===== PAGE SETUP ===== */
             @page {
                 size: A4 portrait;
-                margin: 20mm;
+                margin: 15mm 20mm;
             }
-            body {
+
+            /* ===== STEP 1: Hide everything ===== */
+            body * {
+                visibility: hidden;
+            }
+
+            /* ===== STEP 2: Reveal only the report container that is currently visible ===== */
+            #assessmentReportArea,
+            #assessmentReportArea * {
+                visibility: visible;
+            }
+            #noticeLetterOutputArea,
+            #noticeLetterOutputArea * {
+                visibility: visible;
+            }
+
+            /* ===== STEP 3: Position the report to fill the page ===== */
+            #assessmentReportArea {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                overflow: visible !important;
+            }
+            #noticeLetterOutputArea {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                box-shadow: none !important;
+                border: none !important;
+                overflow: visible !important;
                 background: white !important;
+            }
+
+            /* ===== STEP 4: Clean up body and layout ===== */
+            html, body {
+                background: white !important;
+                height: auto !important;
+                overflow: visible !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
-            /* Prevent page breaks inside important sections */
-            .avoid-page-break {
+            .app-container {
+                display: block !important;
+                height: auto !important;
+            }
+
+            /* ===== STEP 5: Force-hide all UI chrome ===== */
+            .sidebar,
+            .chat-input-area,
+            .chat-input,
+            #sendBtn,
+            #notification,
+            .content-header,
+            .assessment-form,
+            .scanner-container,
+            .welcome-screen,
+            #newChatBtn,
+            .sidebar-footer,
+            .sidebar-nav,
+            .sidebar-header,
+            .main-content::before,
+            .main-content::after {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            /* ===== STEP 6: Hide print/copy/action buttons inside the report ===== */
+            /* Covers both [class*="print:hidden"] Tailwind-style and .no-print */
+            .no-print,
+            [class*="print:hidden"],
+            #assessmentReportArea button,
+            #noticeLetterOutputArea button {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            /* ===== STEP 7: Prevent bad page-breaks ===== */
+            .avoid-page-break,
+            #assessmentReportArea h3,
+            #assessmentReportArea p,
+            #noticeLetterOutputArea p {
                 page-break-inside: avoid;
+            }
+
+            /* ===== STEP 8: Notice Letter — single-page compact fit ===== */
+            #letterContent {
+                font-size: 11pt !important;
+                line-height: 1.35 !important;
+                color: #000 !important;
+            }
+            #letterContent p {
+                margin-bottom: 8px !important;
+            }
+            #letterContent div[style*="margin-bottom: 40px"],
+            #letterContent div[style*="margin-bottom: 30px"] {
+                margin-bottom: 10px !important;
+            }
+            #letterContent table {
+                margin-bottom: 12px !important;
+            }
+            #letterContent ol,
+            #letterContent ul {
+                margin-top: 4px !important;
+                margin-bottom: 4px !important;
+                padding-left: 18px !important;
+            }
+            /* Signature block — keep together, reduce breathing room */
+            #letterContent .avoid-page-break:last-of-type {
+                page-break-inside: avoid;
+                margin-top: 10px !important;
+            }
+            #letterContent p[style*="margin-bottom: 60px"] {
+                margin-bottom: 20px !important;
+            }
+            #letterContent hr {
+                margin-top: 12px !important;
+                margin-bottom: 8px !important;
+            }
+            /* Disclaimer — smaller, less space */
+            #letterContent p[style*="font-size: 12px"] {
+                font-size: 8pt !important;
+                margin-top: 6px !important;
+            }
+
+            /* ===== STEP 9: Strip UI highlights from Notice Letter for print ===== */
+            /* .scanner-result strong applies green bg + border in the UI — remove for print */
+            #noticeLetterOutputArea strong,
+            #noticeLetterOutputArea b,
+            #letterContent strong,
+            #letterContent b {
+                background: transparent !important;
+                background-color: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                color: #000 !important;
+                padding: 0 !important;
+                border-radius: 0 !important;
+            }
+            /* Strip the container's left accent border, glow, and tinted background */
+            #noticeLetterOutputArea {
+                background: white !important;
+                border-left: none !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            /* Also strip any coloured neon-green CSS custom property text */
+            #letterContent * {
+                text-shadow: none !important;
+            }
+
+            /* ===== STEP 10: Strip UI highlights from DLP Report for print ===== */
+            /* Same .scanner-result strong green pill — strip from the report area */
+            #assessmentReportArea strong,
+            #assessmentReportArea b {
+                background: transparent !important;
+                background-color: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                color: #000 !important;
+                padding: 0 !important;
+                border-radius: 0 !important;
+            }
+            /* Strip the container's left accent border, glow, and tinted background */
+            #assessmentReportArea {
+                background: white !important;
+                border-left: none !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            /* Inline-colored spans: neon-green (retention sum, VALID status, "Generated on"),
+               amber (EXPIRING SOON), red (EXPIRED, OVERDUE, tribunal warning) — all → black */
+            #assessmentReportArea span[style*="color"],
+            #assessmentReportArea p[style*="color"] {
+                color: #000 !important;
+            }
+            /* Headings generated by the report use var(--neon-green) via .scanner-result h3 */
+            #assessmentReportArea h3 {
+                color: #000 !important;
+                border-bottom-color: #ccc !important;
+            }
+            /* Remove any text glow from the report */
+            #assessmentReportArea * {
+                text-shadow: none !important;
             }
         }
     </style>
@@ -405,7 +591,7 @@
                     
                     <div style="margin-top: 40px; display: flex; gap: 15px; justify-content: center; border-top: 1px solid var(--border-dim); padding-top: 20px;" class="print:hidden">
                         <button class="btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('letterContent').innerText); alert('Letter copied to clipboard!');">📋 Copy to Clipboard</button>
-                        <button class="btn-secondary" onclick="window.print()">🖨️ Print / Save as PDF</button>
+                        <button class="btn-secondary" onclick="printNoticeLetter()">🖨️ Print / Save as PDF</button>
                     </div>
                 </div>
             </section>
@@ -474,5 +660,22 @@
     
     <!-- Cache buster set to v7 here as well -->
     <script src="{{ url_for('static', filename='js/app.js') }}?v=8"></script>
+
+    <script>
+        /**
+         * Prints the Notice Letter with a clean default filename.
+         * Temporarily swaps document.title so the browser's "Save As" dialog
+         * defaults to "Formal_Notice_of_Defects" instead of the page title.
+         */
+        function printNoticeLetter() {
+            const originalTitle = document.title;
+            document.title = 'Formal Notice of Defects';
+            window.print();
+            // Restore after a short delay — long enough for the print dialog to read it
+            setTimeout(function() {
+                document.title = originalTitle;
+            }, 1500);
+        }
+    </script>
 </body>
 </html>

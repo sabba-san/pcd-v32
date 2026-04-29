@@ -293,33 +293,51 @@ def _now_app_timezone():
         return datetime.now()
 
 
+VALID_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.tif', '.tiff', '.gif', '.bmp', '.webp'}
+
+def _is_valid_image_path(path):
+    """Return True only if the path has a recognised image extension."""
+    if not path:
+        return False
+    ext = os.path.splitext(str(path))[1].lower()
+    return ext in VALID_IMAGE_EXTENSIONS
+
 def _resolve_evidence_image_path(evidence_dir, defect_id, evidence_filename=None):
+    """Resolve an absolute path to an evidence image.
+
+    Returns None if no file can be found OR the resolved file does not carry a
+    recognised image extension (guards against placeholder/junk filenames like
+    'gambar' being treated as valid images).
+    """
     if not evidence_dir or not os.path.isdir(evidence_dir):
         return None
 
-    # 1) Try exact filename from metadata.
+    # Only proceed if we have a real filename (not literals like '-' or 'gambar')
     candidate_name = (evidence_filename or "").strip()
-    if candidate_name and candidate_name != "-":
+
+    # 1) Try exact filename from metadata — must have a valid image extension.
+    if candidate_name and candidate_name not in ("-", "gambar", "image") and _is_valid_image_path(candidate_name):
         direct_candidate = os.path.join(evidence_dir, os.path.basename(candidate_name))
         if os.path.exists(direct_candidate):
             return direct_candidate
 
-    # 2) Case-insensitive search by metadata basename.
-    if candidate_name and candidate_name != "-":
+        # Case-insensitive fallback
         basename_lower = os.path.basename(candidate_name).lower()
         for fname in os.listdir(evidence_dir):
             if fname.lower() == basename_lower:
                 full_path = os.path.join(evidence_dir, fname)
-                if os.path.isfile(full_path):
+                if os.path.isfile(full_path) and _is_valid_image_path(full_path):
                     return full_path
 
-    # 3) Fallback by legacy defect_<id> naming, case-insensitive and any extension.
-    prefix = f"defect_{defect_id}.".lower()
-    for fname in os.listdir(evidence_dir):
-        if fname.lower().startswith(prefix):
-            full_path = os.path.join(evidence_dir, fname)
-            if os.path.isfile(full_path):
-                return full_path
+    # 2) Legacy defect_<id>.ext naming — only when we have a valid filename metadata
+    #    (prevents matching pre-seeded placeholder files when no evidence was uploaded).
+    if candidate_name and candidate_name not in ("-", "gambar", "image") and _is_valid_image_path(candidate_name):
+        prefix = f"defect_{defect_id}.".lower()
+        for fname in os.listdir(evidence_dir):
+            if fname.lower().startswith(prefix) and _is_valid_image_path(fname):
+                full_path = os.path.join(evidence_dir, fname)
+                if os.path.isfile(full_path):
+                    return full_path
 
     return None
 
@@ -1465,7 +1483,7 @@ def load_evidence():
     try:
         cur.execute(
             """
-            SELECT DISTINCT ON (defect_id) defect_id, filename, uploaded_at
+            SELECT DISTINCT ON (defect_id) defect_id, filename, uploaded_at, file_path
             FROM evidence
             ORDER BY defect_id, uploaded_at DESC
             """
@@ -1474,8 +1492,9 @@ def load_evidence():
             str(defect_id): {
                 "filename": filename,
                 "uploaded_at": str(uploaded_at),
+                "file_path": file_path,
             }
-            for defect_id, filename, uploaded_at in cur.fetchall()
+            for defect_id, filename, uploaded_at, file_path in cur.fetchall()
         }
     finally:
         cur.close()
@@ -1488,11 +1507,12 @@ def save_evidence(data):
         for defect_id, item in data.items():
             cur.execute("DELETE FROM evidence WHERE defect_id = %s", (int(defect_id),))
             cur.execute(
-                "INSERT INTO evidence (defect_id, filename, uploaded_at) VALUES (%s, %s, %s)",
+                "INSERT INTO evidence (defect_id, filename, uploaded_at, file_path) VALUES (%s, %s, %s, %s)",
                 (
                     int(defect_id),
                     item.get("filename"),
                     item.get("uploaded_at", _now_app_timezone().strftime("%Y-%m-%d %H:%M:%S")),
+                    item.get("file_path", item.get("filename")),
                 ),
             )
         conn.commit()
@@ -1539,6 +1559,7 @@ def get_closed_evidence_appendix(role, claimant_user_id=None):
                 "completed_date": completed_date or "-",
                 "hda_compliant": calculate_hda_compliance(d.get("reported_date"), completed_date, status),
                 "filename": evidence.get("filename", "-"),
+                "file_path": evidence.get("file_path"),
                 "uploaded_at": evidence.get("uploaded_at", "-"),
             }
         )
@@ -1577,23 +1598,34 @@ def build_closed_appendix_lines(closed_evidence_appendix, language):
         if language == "ms":
             appendix_lines.append(f"{header_prefix} Kecacatan ID {item.get('id', '-')}:")
             appendix_lines.append(f"Unit: {item.get('unit', '-')}")
-            appendix_lines.append(f"Tarikh Dilaporkan: {item.get('reported_date', '-')}")
-            appendix_lines.append(f"Tarikh Siap: {item.get('completed_date', '-')}")
+            appendix_lines.append(f"Tarikh Dilaporkan: {format_pdf_date(item.get('reported_date'))}")
+            appendix_lines.append(f"Tarikh Siap: {format_pdf_date(item.get('completed_date'))}")
             appendix_lines.append(f"Tempoh Siap (Hari): {closed_days if closed_days is not None else '-'}")
             appendix_lines.append(f"Pematuhan HDA (30 Hari): {'Ya' if item.get('hda_compliant') else 'Tidak'}")
             appendix_lines.append(f"Peraturan Ditutup: Ditutup selepas {AUTO_CLOSE_DAYS} hari dari tarikh siap")
-            appendix_lines.append(f"Muat Naik: {item.get('uploaded_at', '-')}")
-            appendix_lines.append("Gambar Kecacatan: gambar")
+            appendix_lines.append(f"Muat Naik: {format_pdf_date(item.get('uploaded_at'))}")
+            # Use a special marker ONLY when a real image filename is linked.
+            # This prevents the PDF renderer from attempting to draw placeholder files.
+            _fn_ms = (item.get('filename') or '').strip()
+            if _fn_ms and _fn_ms not in ('-', 'gambar', 'image') and _is_valid_image_path(_fn_ms):
+                appendix_lines.append("Gambar Kecacatan: [imej]")
+            else:
+                appendix_lines.append("Gambar Kecacatan: Tiada bukti imej dimuat naik.")
         else:
             appendix_lines.append(f"{header_prefix} Defect ID {item.get('id', '-')}:")
             appendix_lines.append(f"Unit: {item.get('unit', '-')}")
-            appendix_lines.append(f"Reported Date: {item.get('reported_date', '-')}")
-            appendix_lines.append(f"Completed: {item.get('completed_date', '-')}")
+            appendix_lines.append(f"Reported Date: {format_pdf_date(item.get('reported_date'))}")
+            appendix_lines.append(f"Completed: {format_pdf_date(item.get('completed_date'))}")
             appendix_lines.append(f"Days to Complete: {closed_days if closed_days is not None else '-'}")
             appendix_lines.append(f"HDA Compliance (30 Days): {'Yes' if item.get('hda_compliant') else 'No'}")
             appendix_lines.append(f"Closed Rule: Closed after {AUTO_CLOSE_DAYS} days from completion")
-            appendix_lines.append(f"Uploaded: {item.get('uploaded_at', '-')}")
-            appendix_lines.append("Defect Image: image")
+            appendix_lines.append(f"Uploaded: {format_pdf_date(item.get('uploaded_at'))}")
+            # Use a special marker ONLY when a real image filename is linked.
+            _fn_en = (item.get('filename') or '').strip()
+            if _fn_en and _fn_en not in ('-', 'gambar', 'image') and _is_valid_image_path(_fn_en):
+                appendix_lines.append("Defect Image: [image]")
+            else:
+                appendix_lines.append("Defect Image: No evidence image uploaded.")
 
         appendix_lines.append("")
 
@@ -1756,6 +1788,35 @@ def draw_wrapped_text(pdf, text, x, y, max_width, font_name="Helvetica", font_si
         pdf.drawString(x, y, line)
         y -= leading
     return y
+
+def format_pdf_date(date_val):
+    if not date_val or date_val == "-":
+        return "-"
+    if hasattr(date_val, 'strftime'):
+        return date_val.strftime('%Y-%m-%d %H:%M')
+    elif isinstance(date_val, str):
+        try:
+            from datetime import datetime
+            dt = datetime.fromisoformat(date_val.replace('Z', '+00:00'))
+            return dt.strftime('%Y-%m-%d %H:%M')
+        except ValueError:
+            return date_val
+    return str(date_val)
+
+def draw_table_row(pdf, label_text, colon_x, val_x, val_text, y, max_val_width, font_name="Helvetica", font_size=9, leading=14):
+    pdf.setFont(font_name, font_size)
+    orig_y = y
+    
+    y_label = y
+    for line in str(label_text).split('\n'):
+        pdf.drawString(60, y_label, line)
+        y_label -= leading
+        
+    pdf.drawString(colon_x, orig_y, ":")
+    y_val = draw_wrapped_text(pdf, str(val_text), val_x, orig_y, max_val_width, font_name, font_size, leading)
+    
+    # Return the lowest y to start the next row
+    return min(y_label, y_val)
 
 # =================================================
 # DASHBOARD ROUTE (THIS MAKES THE UI OPEN)
@@ -2302,7 +2363,8 @@ def upload_evidence():
         evidence_img = load_evidence()
         evidence_img[defect_id] = {
             "filename": filename,
-            "uploaded_at": uploaded_at
+            "uploaded_at": uploaded_at,
+            "file_path": filename
         }
         save_evidence(evidence_img)
 
@@ -2645,6 +2707,12 @@ def generate_ai_report_api():
 
         defects = [d for d in defects if not d.get("closed")]
         
+        if not defects and not closed_evidence_appendix:
+            return jsonify({
+                "error": "No defects available to generate report",
+                "details": "All defects are closed or none exist."
+            }), 400
+        
         # Validate: Check for required fields in defects
         missing_fields = []
         for d in defects:
@@ -2897,30 +2965,23 @@ def generate_ai_report_api():
 
         # FORCE STATUS LANGUAGE IN AI PREVIEW (REGEX SAFE)
         if language == "ms":
-            report = re.sub(
-                r"(Current Status|Status Semasa|Status)\s*:\s*Completed",
-                "Status Semasa: Telah Diselesaikan",
-                report,
-                flags=re.IGNORECASE
-            )
-            report = re.sub(
-                r"(Current Status|Status Semasa|Status)\s*:\s*Pending",
-                "Status Semasa: Belum Diselesaikan",
-                report,
-                flags=re.IGNORECASE
-            )
-            report = re.sub(
-                r"(Current Status|Status Semasa|Status)\s*:\s*In Progress",
-                "Status Semasa: Dalam Tindakan",
-                report,
-                flags=re.IGNORECASE
-            )
-            report = re.sub(
-                r"(Current Status|Status Semasa|Status)\s*:\s*Delayed",
-                "Status Semasa: Tertangguh",
-                report,
-                flags=re.IGNORECASE
-            )
+            status_ms = {
+                'Reported': 'Dilaporkan',
+                'WIP': 'Dalam Tindakan',
+                'In Progress': 'Dalam Tindakan',
+                'Done': 'Telah Diselesaikan',
+                'Completed': 'Telah Diselesaikan',
+                'Closed': 'Ditutup',
+                'Pending': 'Belum Diselesaikan',
+                'Delayed': 'Tertangguh'
+            }
+            for eng_status, ms_status in status_ms.items():
+                report = re.sub(
+                    rf"(Current Status|Status Semasa|Status)\s*:\s*{re.escape(eng_status)}",
+                    rf"\g<1>: {ms_status}",
+                    report,
+                    flags=re.IGNORECASE
+                )
 
             # Force overdue + HDA boolean wording to Bahasa Malaysia.
             report = re.sub(
@@ -3205,9 +3266,11 @@ def export_pdf():
         if evidence_data:
             d["evidence_uploaded"] = True
             d["evidence_filename"] = evidence_data.get("filename")
+            d["evidence_file_path"] = evidence_data.get("file_path")
         else:
             d["evidence_uploaded"] = False
             d["evidence_filename"] = None
+            d["evidence_file_path"] = None
 
         d["hda_compliant"] = calculate_hda_compliance(
             d["reported_date"],
@@ -3230,7 +3293,7 @@ def export_pdf():
     if role in ["Homeowner", "Developer", "Legal", "Admin"]:
         defects = [d for d in defects if not d.get("closed")]
 
-    if not defects:
+    if not defects and not closed_evidence_appendix:
         return jsonify(
             {
                 "error": (
@@ -3489,45 +3552,33 @@ def export_pdf():
     claimant_name = current_user.full_name if current_user.is_authenticated and _current_role_key() == "homeowner" else claimant.get('name', '')
 
     if language == "en":
-        pdf.drawString(60, y, "Claimant Name")
-        pdf.drawString(200, y, f": {claimant_name}")
-        y -= 18
-        pdf.drawString(60, y, "IC/Passport No.")
+        y = draw_table_row(pdf, "Claimant Name", 200, 210, claimant_name, y, width - 260)
+        
         # Encrypt NRIC before displaying (simulation of encryption at rest)
         encrypted_nric = encrypt_text(claimant.get('national_id', ''))
         decrypted_nric = decrypt_text(encrypted_nric)
 
-        pdf.drawString(200, y, f": {decrypted_nric}")
-        y -= 18
-        pdf.drawString(60, y, "Correspondence Address")
+        y = draw_table_row(pdf, "IC/Passport No.", 200, 210, decrypted_nric, y, width - 260)
+        
         claimant_address = str(claimant.get('address_line_1') or '-').strip()
-        pdf.drawString(200, y, f": {claimant_address}")
-        y -= 18
-        pdf.drawString(60, y, "Phone No.")
-        pdf.drawString(200, y, f": {claimant.get('phone_number', '')}")
-        y -= 18
-        pdf.drawString(60, y, "Fax/Email")
-        pdf.drawString(200, y, f": {claimant.get('email', '')}")
+        y = draw_table_row(pdf, "Correspondence Address", 200, 210, claimant_address, y, width - 260)
+        
+        y = draw_table_row(pdf, "Phone No.", 200, 210, claimant.get('phone_number', ''), y, width - 260)
+        y = draw_table_row(pdf, "Fax/Email", 200, 210, claimant.get('email', ''), y, width - 260)
     else:
-        pdf.drawString(60, y, "Nama Pihak Yang Menuntut")
-        pdf.drawString(200, y, f": {claimant_name}")
-        y -= 18
-        pdf.drawString(60, y, "No. Kad Pengenalan/Pasport")
+        y = draw_table_row(pdf, "Nama Pihak Yang Menuntut", 200, 210, claimant_name, y, width - 260)
+        
         # Encrypt NRIC before displaying (simulation of encryption at rest)
         encrypted_nric = encrypt_text(claimant.get('national_id', ''))
         decrypted_nric = decrypt_text(encrypted_nric)
 
-        pdf.drawString(200, y, f": {decrypted_nric}")
-        y -= 18
-        pdf.drawString(60, y, "Alamat Surat Menyurat")
+        y = draw_table_row(pdf, "No. Kad Pengenalan/Pasport", 200, 210, decrypted_nric, y, width - 260)
+        
         claimant_address = str(claimant.get('address_line_1') or '-').strip()
-        pdf.drawString(200, y, f": {claimant_address}")
-        y -= 18
-        pdf.drawString(60, y, "No. Telefon")
-        pdf.drawString(200, y, f": {claimant.get('phone_number', '')}")
-        y -= 18
-        pdf.drawString(60, y, "No. Faks/ E-mel")
-        pdf.drawString(200, y, f": {claimant.get('email', '')}")
+        y = draw_table_row(pdf, "Alamat Surat Menyurat", 200, 210, claimant_address, y, width - 260)
+        
+        y = draw_table_row(pdf, "No. Telefon", 200, 210, claimant.get('phone_number', ''), y, width - 260)
+        y = draw_table_row(pdf, "No. Faks/ E-mel", 200, 210, claimant.get('email', ''), y, width - 260)
     
     # --- PENENTANG (Respondent/Developer) ---
     y -= 45
@@ -3547,51 +3598,25 @@ def export_pdf():
     pdf.setFont("Helvetica", 9)
     respondent = report_data['respondent']
     if language == "en":
-        pdf.drawString(60, y, "Name of Respondent/Company/")
-        pdf.drawString(200, y, f": {respondent.get('name', '')}")
-        y -= 12
-        pdf.drawString(60, y, "Corporation/Organisation/Firm")
-        y -= 18
-
-        pdf.drawString(60, y, "Identity Card No./")
-        pdf.drawString(200, y, f": {respondent.get('registration_no', '')}")
-        y -= 12
-        pdf.drawString(60, y, "Company Registration No./")
-        y -= 12
-        pdf.drawString(60, y, "Corporation/Organisation/Firm")
-        y -= 18
-
-        pdf.drawString(60, y, "Correspondence Address")
-        pdf.drawString(200, y, f": {respondent.get('address_line_1', '')}")
-        y -= 16
-
-        pdf.drawString(60, y, "Telephone No.")
-        pdf.drawString(200, y, f": {respondent.get('phone_number', '')}")
-        y -= 16
-
-        pdf.drawString(60, y, "Fax/E-mail")
-        pdf.drawString(200, y, f": {respondent.get('email', '')}")
+        y = draw_table_row(pdf, "Name of Respondent/Company/\nCorporation/Organisation/Firm", 200, 210, respondent.get('name', ''), y, width - 260)
+        y -= 4
+        y = draw_table_row(pdf, "Identity Card No./\nCompany Registration No./\nCorporation/Organisation/Firm", 200, 210, respondent.get('registration_no', ''), y, width - 260)
+        y -= 4
+        y = draw_table_row(pdf, "Correspondence Address", 200, 210, respondent.get('address_line_1', ''), y, width - 260)
+        y -= 4
+        y = draw_table_row(pdf, "Telephone No.", 200, 210, respondent.get('phone_number', ''), y, width - 260)
+        y -= 4
+        y = draw_table_row(pdf, "Fax/E-mail", 200, 210, respondent.get('email', ''), y, width - 260)
     else:
-        pdf.drawString(60, y, "Nama Penentang/Syarikat/")
-        pdf.drawString(200, y, f": {respondent.get('name', '')}")
-        y -= 12
-        pdf.drawString(60, y, "Pertubuhan Perbadanan/Firma")
-        y -= 18
-        pdf.drawString(60, y, "No. Kad Pengenalan/")
-        pdf.drawString(200, y, f": {respondent.get('registration_no', '')}")
-        y -= 12
-        pdf.drawString(60, y, "No. Pendaftaran Syarikat/")
-        y -= 12
-        pdf.drawString(60, y, "Pertubuhan Perbadanan/Firma")
-        y -= 18
-        pdf.drawString(60, y, "Alamat Surat Menyurat")
-        pdf.drawString(200, y, f": {respondent.get('address_line_1', '')}")
-        y -= 16
-        pdf.drawString(60, y, "No. Telefon")
-        pdf.drawString(200, y, f": {respondent.get('phone_number', '')}")
-        y -= 16
-        pdf.drawString(60, y, "No. Faks/E-mel")
-        pdf.drawString(200, y, f": {respondent.get('email', '')}")
+        y = draw_table_row(pdf, "Nama Penentang/Syarikat/\nPertubuhan Perbadanan/Firma", 200, 210, respondent.get('name', ''), y, width - 260)
+        y -= 4
+        y = draw_table_row(pdf, "No. Kad Pengenalan/\nNo. Pendaftaran Syarikat/\nPertubuhan Perbadanan/Firma", 200, 210, respondent.get('registration_no', ''), y, width - 260)
+        y -= 4
+        y = draw_table_row(pdf, "Alamat Surat Menyurat", 200, 210, respondent.get('address_line_1', ''), y, width - 260)
+        y -= 4
+        y = draw_table_row(pdf, "No. Telefon", 200, 210, respondent.get('phone_number', ''), y, width - 260)
+        y -= 4
+        y = draw_table_row(pdf, "No. Faks/E-mel", 200, 210, respondent.get('email', ''), y, width - 260)
 
     # Move y below the PENENTANG box
     y = box_top - box_height - 30
@@ -3854,7 +3879,8 @@ def export_pdf():
 
         # ---- Reported Date ----
         pdf.drawString(LABEL_X, y, labels.get("reported_date", "Reported Date"))
-        pdf.drawString(VALUE_X, y, f": {defect.get('reported_date', '-')}")
+        clean_reported_date = format_pdf_date(defect.get('reported_date'))
+        pdf.drawString(VALUE_X, y, f": {clean_reported_date}")
         y -= 14
 
 
@@ -3932,11 +3958,28 @@ def export_pdf():
             )
 
         # ---- Bukti Kecacatan ----
-        image_path = _resolve_evidence_image_path(
-            evidence_dir,
-            defect.get("id"),
-            defect.get("evidence_filename"),
-        )
+        real_image_path = defect.get("image_path")
+        image_path = None
+        if real_image_path:
+            candidate_path = os.path.join(current_app.instance_path, 'uploads', 'upload_data', real_image_path)
+            if os.path.exists(candidate_path):
+                image_path = candidate_path
+
+        if not image_path and defect.get("evidence_file_path"):
+            # Try to resolve via file_path from the database (must be a valid image extension)
+            raw_fp = defect.get("evidence_file_path", "").strip()
+            if raw_fp and _is_valid_image_path(raw_fp):
+                # Look in unified evidence directory first
+                static_candidate = os.path.join(evidence_dir, os.path.basename(raw_fp))
+                if os.path.exists(static_candidate):
+                    image_path = static_candidate
+
+        if not image_path:
+            image_path = _resolve_evidence_image_path(
+                evidence_dir,
+                defect.get("id"),
+                defect.get("evidence_filename"),
+            )
 
         # If evidence exists → draw it
         if image_path:
@@ -3950,26 +3993,31 @@ def export_pdf():
             pdf.drawString(LABEL_X, y, f"{labels['evidence']}:")
             y -= 10
 
-            pdf.drawImage(
-                ImageReader(image_path),
-                LABEL_X,
-                y - 110,
-                width=200,
-                height=110
-            )
+            try:
+                pdf.drawImage(
+                    ImageReader(image_path),
+                    LABEL_X,
+                    y - 110,
+                    width=200,
+                    height=110
+                )
+            except Exception:
+                pdf.setFont("Helvetica-Oblique", 8)
+                pdf.drawString(LABEL_X, y - 10, f"Error: {labels.get('evidence', 'Evidence')} image not found.")
 
             y -= 125
 
             # EVIDENCE UPLOAD TIMESTAMP
             evidence_img = load_evidence()
             upload_time = evidence_img.get(str(defect['id']), {}).get("uploaded_at", "-")
+            clean_upload_time = format_pdf_date(upload_time)
 
             pdf.setFont("Helvetica", 8)
 
             if language == "en":
-                pdf.drawString(LABEL_X, y - 5, f"Uploaded At: {upload_time}")
+                pdf.drawString(LABEL_X, y - 5, f"Uploaded At: {clean_upload_time}")
             else:
-                pdf.drawString(LABEL_X, y - 5, f"Tarikh Muat Naik: {upload_time}")
+                pdf.drawString(LABEL_X, y - 5, f"Tarikh Muat Naik: {clean_upload_time}")
 
             y -= 15
 
@@ -4369,24 +4417,47 @@ def export_pdf():
                 font_size = 9
 
             x = 70 if line.startswith(":") else 50
-            y = draw_wrapped_text(pdf, line, x, y, width - 100, font_name, font_size, 14)
+            # Clean trigger text for display
+            display_line = line.replace(" [imej]", "").replace(" [image]", "")
+            y = draw_wrapped_text(pdf, display_line, x, y, width - 100, font_name, font_size, 14)
 
-            if line.startswith("Defect Image:") or line.startswith("Gambar Kecacatan:"):
+            # Only trigger image drawing for the special marker lines, NOT for the
+            # text-only fallback lines ('Gambar Kecacatan: Tiada bukti imej...')
+            _is_image_trigger = (
+                line.startswith("Defect Image: [image]") or
+                line.startswith("Gambar Kecacatan: [imej]")
+            )
+            if _is_image_trigger:
                 appendix_image_path = None
                 if current_appendix_item:
-                    appendix_image_path = _resolve_evidence_image_path(
-                        evidence_dir,
-                        current_appendix_item.get("id"),
-                        current_appendix_item.get("filename"),
-                    )
+                    # 1. Try resolving via file_path column (new uploads stored via Evidence model)
+                    raw_fp = (current_appendix_item.get("file_path") or "").strip()
+                    if raw_fp and _is_valid_image_path(raw_fp):
+                        # Look in unified evidence directory (app/evidence)
+                        static_candidate = os.path.join(evidence_dir, os.path.basename(raw_fp))
+                        if os.path.exists(static_candidate):
+                            appendix_image_path = static_candidate
 
-                if appendix_image_path:
+                    # 2. Fallback: legacy evidence dir resolution (only if valid filename)
+                    if not appendix_image_path:
+                        appendix_image_path = _resolve_evidence_image_path(
+                            evidence_dir,
+                            current_appendix_item.get("id"),
+                            current_appendix_item.get("filename"),
+                        )
+
+                if appendix_image_path and _is_valid_image_path(appendix_image_path) and os.path.exists(appendix_image_path):
                     if y < 170:
                         draw_footer(pdf, width, labels)
                         pdf.showPage()
                         y = height - 50
-                    pdf.drawImage(ImageReader(appendix_image_path), 70, y - 95, width=180, height=95)
-                    y -= 110
+                    try:
+                        pdf.drawImage(ImageReader(appendix_image_path), 70, y - 95, width=180, height=95)
+                        y -= 110
+                    except Exception:
+                        pdf.setFont("Helvetica-Oblique", 8)
+                        pdf.drawString(70, y - 10, "Bukti imej tidak dapat dimuatkan.")
+                        y -= 25
 
     # ============================================
     # SIGNATURE & METERAI (HALAMAN BERASINGAN)

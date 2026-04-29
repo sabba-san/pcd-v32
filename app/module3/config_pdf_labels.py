@@ -13,6 +13,9 @@ PDF_LABELS = {
 
         # HARD STATUS TRANSLATION
         "status_map": {
+            "Reported": "Dilaporkan",
+            "WIP": "Dalam Tindakan",
+            "Done": "Telah Diselesaikan",
             "Pending": "Belum Diselesaikan",
             "In Progress": "Dalam Proses",
             "Completed": "Telah Diselesaikan",
@@ -48,6 +51,9 @@ PDF_LABELS = {
 
         # ENGLISH = identity
         "status_map": {
+            "Reported": "Reported",
+            "WIP": "WIP",
+            "Done": "Done",
             "Pending": "Pending",
             "In Progress": "In Progress",
             "Completed": "Completed",

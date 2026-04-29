@@ -13,7 +13,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
 from ..extensions import db
-from ..models import Defect, Scan
+from ..models import Defect, Scan, Evidence
 from .utils import load_upload_metadata, upload_root, metadata_path, scan_metadata_path
 from .pdf_utils import extract_pdf_images
 from .glb_snapshot import extract_snapshots
@@ -347,14 +347,13 @@ def report_defect(scan_id):
         import uuid
         safe_name   = secure_filename(evidence_file.filename)
         unique_name = f"{uuid.uuid4().hex}_{safe_name}"
-        evidence_dir = os.path.join(
-            current_app.instance_path, 'uploads', 'upload_data', 'evidence'
-        )
+        # Save to unified evidence directory (app/evidence)
+        evidence_dir = os.path.join(current_app.root_path, "evidence")
         os.makedirs(evidence_dir, exist_ok=True)
         save_path = os.path.join(evidence_dir, unique_name)
         evidence_file.save(save_path)
-        # Store relative path so it can be served back via serve_defect_image
-        image_path = os.path.join('evidence', unique_name)
+        # Store simple filename as image_path for consistency with module3
+        image_path = unique_name
 
     # ── Persist defect record ────────────────────────────────────────────────
     defect = Defect(
@@ -375,6 +374,19 @@ def report_defect(scan_id):
         deadline=deadline,
     )
     db.session.add(defect)
+    db.session.flush() # Ensure defect.id is populated for the Evidence record
+    
+    # ── Update evidence table for PDF generator ──────────────────────────────
+    if image_path:
+        new_evidence = Evidence(
+            defect_id=defect.id,
+            filename=image_path,
+            file_path=image_path,
+            file_type=ext.lstrip('.'),
+            uploaded_at=reported_at
+        )
+        db.session.add(new_evidence)
+
     db.session.commit()
 
     image_url = url_for('module2.serve_defect_image', defect_id=defect.id) if image_path else None
@@ -412,6 +424,13 @@ def serve_defect_image(defect_id):
     defect = Defect.query.get_or_404(defect_id)
     if not defect.image_path:
         abort(404)
+    
+    # 1. Try unified evidence directory first
+    evidence_dir = os.path.join(current_app.root_path, "evidence")
+    if os.path.exists(os.path.join(evidence_dir, defect.image_path)):
+        return send_from_directory(evidence_dir, defect.image_path)
+        
+    # 2. Fallback to legacy upload_data directory
     upload_dir = os.path.join(current_app.instance_path, 'uploads', 'upload_data')
     return send_from_directory(upload_dir, defect.image_path)
 

@@ -41,6 +41,50 @@ def get_chatbot_client():
 # Load the PDF text when the app starts
 PDF_CONTEXT = load_pdf_knowledge()
 
+# ---------------------------------------------------------------------------
+# Retrieval helper — keyword-based top-N paragraph selector
+# ---------------------------------------------------------------------------
+DEFAULT_CHUNK_SIZE = 400   # characters per paragraph chunk
+TOP_K_CHUNKS = 3            # number of most-relevant chunks to pass to LLM
+
+def _retrieve_relevant_context(query: str, full_text: str,
+                               top_k: int = TOP_K_CHUNKS,
+                               chunk_size: int = DEFAULT_CHUNK_SIZE) -> str:
+    """Split the corpus into fixed-size paragraphs and return the top-k chunks
+    ranked by the number of query keywords they contain.  This keeps the
+    context payload small and focused rather than dumping the full PDF."""
+    if not full_text:
+        return "No legal documents available."
+
+    # Tokenise the query into meaningful keywords (≥ 3 chars)
+    keywords = [w.lower() for w in query.split() if len(w) >= 3]
+
+    # Split corpus into overlapping chunks
+    chunks = []
+    for i in range(0, len(full_text), chunk_size // 2):
+        chunk = full_text[i : i + chunk_size].strip()
+        if chunk:
+            chunks.append(chunk)
+
+    if not chunks:
+        return "No legal documents available."
+
+    if not keywords:
+        # No useful keywords — return the very first chunks as fallback
+        return "\n\n".join(chunks[:top_k])
+
+    # Score each chunk by keyword hits
+    scored = []
+    for chunk in chunks:
+        lower_chunk = chunk.lower()
+        score = sum(lower_chunk.count(kw) for kw in keywords)
+        scored.append((score, chunk))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top_chunks = [c for _, c in scored[:top_k]]
+    return "\n\n".join(top_chunks)
+
+
 def process_query(user_query):
     client = get_chatbot_client()
     if not client:
@@ -48,36 +92,73 @@ def process_query(user_query):
 
     # 1. INSTANT GREETING INTERCEPTOR (Saves API calls and responds instantly)
     clean_message = user_query.lower().strip()
-    basic_greetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening', 'hi there', 'hello there', 'who are you', 'how are you']
-    
+    basic_greetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon',
+                       'good evening', 'hi there', 'hello there', 'who are you', 'how are you']
+
     if clean_message in basic_greetings:
-        return "Hello! I am your Superchat Legal Assistant. I can help you understand your Defect Liability Period (DLP), review your SPA clauses, or calculate your claim timelines. How can I help you today?"
+        return ("Hello! I am your Superchat Legal Assistant. I can help you understand your "
+                "Defect Liability Period (DLP), review your SPA clauses, or calculate your "
+                "claim timelines. How can I help you today?")
 
-    # Groq's Llama model can read huge amounts of text. 
-    # We pass the first 50,000 characters to keep it fast and safe.
-    safe_context = PDF_CONTEXT[:50000] if PDF_CONTEXT else "No documents available."
+    # 2. OPTIMISED RETRIEVAL — top-3 relevant paragraphs only (~1,200 chars max)
+    safe_context = _retrieve_relevant_context(user_query, PDF_CONTEXT)
 
-    # 2. UPDATED SYSTEM PROMPT
-    prompt = f"""You are 'Superchat', a specialized legal assistant for Malaysian Property Law.
-    Read the following official legal documents carefully.
-    
-    Rules for responding:
-    1. If the user is just making small talk, reply politely and concisely, then offer to help with property law. Do NOT append the legal disclaimer for basic small talk.
-    2. For property law questions, answer using ONLY the provided Document Text.
-    3. If it is a legal question and the Document Text does not contain the answer, strictly reply: "I don't have sufficient information from the uploaded legal documents to answer this."
-    4. End every legal-related response with: "This is not legal advice. Please consult a qualified lawyer."
+    # 2.5 CONTEXT-AWARE INJECTION
+    user_context_str = ""
+    try:
+        from flask_login import current_user
+        from app.models import Defect
+        
+        if current_user and current_user.is_authenticated:
+            user_context_str = f"\n\nCURRENT USER DATA:\nUser Profile: Name={current_user.full_name}, Role={current_user.user_type}. "
+            
+            if current_user.user_type == 'homeowner':
+                defects = Defect.query.filter_by(user_id=current_user.id).all()
+            elif current_user.user_type == 'developer':
+                defects = Defect.query.filter_by(assigned_developer_id=current_user.id).all()
+            elif current_user.user_type == 'lawyer':
+                defects = Defect.query.filter_by(assigned_lawyer_id=current_user.id).all()
+            else:
+                defects = Defect.query.filter_by(user_id=current_user.id).all()
+            
+            if defects:
+                for d in defects:
+                    desc = d.description or d.defect_type or "No description"
+                    user_context_str += f"Defect #{d.id}: {desc}, Status: {d.status}, Severity: {d.severity}. "
+            else:
+                user_context_str += "The user currently has no reported defects."
+                
+            user_context_str += "\nInstruction: If the user asks about their specific case or defects, use the CURRENT USER DATA above to provide a personalized assessment based on the Malaysian Property Law context provided."
+    except Exception as e:
+        print(f"Error injecting user context: {e}")
 
-    Document Text:
-    {safe_context}
-    
-    User Question: {user_query}
-    """
+    # 3. OPTIMISED SYSTEM PROMPT — concise, direct, token-efficient
+    system_prompt = (
+        "You are an expert Malaysian Property Law AI named 'Superchat'. "
+        "Answer the user's question accurately using ONLY the provided Document Text. "
+        "Be CONCISE and DIRECT to the point. "
+        "Keep responses under 3 short paragraphs unless explicitly asked for a detailed explanation. "
+        "Do not use filler words. "
+        "For small talk, reply politely and briefly — do NOT add a legal disclaimer. "
+        "For legal questions, end every response with: "
+        "'This is not legal advice. Please consult a qualified lawyer.' "
+        "If the Document Text does not contain the answer, reply ONLY: "
+        "'I don't have sufficient information from the uploaded legal documents to answer this.'"
+        f"{user_context_str}"
+    )
+
+    user_content = f"Document Text:\n{safe_context}\n\nUser Question: {user_query}"
 
     try:
+        # 4. max_tokens=300 caps output length → faster responses
         chat_completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_content},
+            ],
             model="llama-3.3-70b-versatile",
-            temperature=0.3 # Slightly higher temperature allows for a more natural conversation
+            temperature=0.3,
+            max_tokens=300,
         )
         return chat_completion.choices[0].message.content
     except Exception as e:

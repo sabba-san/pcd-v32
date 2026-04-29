@@ -145,6 +145,8 @@ module1 = Blueprint('module1', __name__, url_prefix='/api')
 @module1.route('/chat', methods=['POST'])
 def api_chat():
     try:
+        from flask_login import current_user
+        
         data = request.json
         message = data.get('message', '').strip()
         
@@ -154,7 +156,8 @@ def api_chat():
         response_text = process_query(message)
         
         try:
-            save_history({"user": message, "bot": response_text})
+            user_id = current_user.id if current_user.is_authenticated else "guest"
+            save_history({"user": message, "bot": response_text}, user_id=user_id)
         except Exception:
             pass # Ignore history save errors
             
