@@ -159,5 +159,5 @@ DATA JSON:
         # --------------------------------
         # FAIL SAFE
         # --------------------------------
-        print("AI translation failed:", e)
+        current_app.logger.error(f"AI translation failed: {e}")
         return defects

@@ -451,7 +451,7 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
         return case_info, claimant, respondent, negeri_codes, role_contexts, nota_penting
     except Exception as e:
         # Avoid crashing the report page if possible, but logging is vital
-        print(f"Error loading report metadata: {e}")
+        current_app.logger.error(f"Error loading report metadata: {e}")
         raise e
 
 
@@ -621,7 +621,7 @@ def get_or_create_claim_number(state_name, negeri_codes, case_key, homeowner_id=
         return new_claim_id
     except Exception as e:
         db.session.rollback()
-        print(f"Error in get_or_create_claim_number: {e}")
+        current_app.logger.error(f"Error in get_or_create_claim_number: {e}")
         return f"TTPM/ERR/{datetime.now().year}/000000"
 
 # ==================================================

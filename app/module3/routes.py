@@ -39,7 +39,6 @@ import json
 import re
 import hashlib
 import base64
-from functools import wraps
 def get_connection():
     from ..extensions import db
     return db.engine.raw_connection()
@@ -65,7 +64,6 @@ except ImportError:  # pragma: no cover - fallback for direct execution from mod
         validate_report_requirements,
     )
     from report_generator import generate_ai_report
-# from prompts import get_language_config
 try:
     from .ai_translate_cached import (
         translate_defects_cached,
@@ -1472,11 +1470,6 @@ def decrypt_text(text):
         return ""
     return base64.b64decode(text.encode()).decode()
 
-# AUTO BACKUP FUNCTION
-def backup_versions():
-    # Versions are persisted in the report_versions table.
-    return None
-
 def load_evidence():
     conn = get_connection()
     cur = conn.cursor()
@@ -1893,10 +1886,9 @@ def dashboard():
     remarks_store = load_remarks()
     status_store = load_status()
     completion_store = load_completion_dates()
-    evidence_store = load_evidence()
-    evidence_store = load_evidence()
+        evidence_store = load_evidence()
 
-    for d in defects:
+        for d in defects:
         # Status is shared across all roles
         d["status"] = status_store.get(str(d["id"]), d["status"])
 
@@ -2196,123 +2188,6 @@ def save_homeowner_claim_details():
         cur.close()
         conn.close()
 
-
-@routes.route("/debug/claim_state", methods=["GET"])
-@login_required
-def debug_claim_state():
-    """Temporary debug route to inspect report metadata rows before generation."""
-    def _serialize_row(columns, row):
-        if not row:
-            return None
-        payload = {}
-        for key, value in zip(columns, row):
-            if hasattr(value, "isoformat"):
-                payload[key] = value.isoformat()
-            else:
-                payload[key] = value
-        return payload
-
-    current_role = _current_role()
-    role = current_role.capitalize() if current_role else "Homeowner"
-    if role == "Lawyer":
-        role = "Legal"
-
-    user_id = _current_user_id()
-    requirement_errors = validate_report_requirements(role=role, user_id=user_id, claimant_user_id=user_id)
-
-    conn = get_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute(
-            """
-            SELECT homeowner_id, name, ic_number, email, phone_number, address,
-                   court_location, state_name, claim_amount, item_service,
-                   transaction_date, updated_at
-            FROM report_homeowner_profile
-            WHERE homeowner_id = %s
-            """,
-            (user_id,),
-        )
-        homeowner_row = cur.fetchone()
-
-        cur.execute(
-            """
-            SELECT respondent_id, company_name, registration_number, email,
-                   phone_number, address, updated_at
-            FROM report_respondent_profile
-            WHERE homeowner_id = %s
-            ORDER BY updated_at DESC, respondent_id ASC
-            LIMIT 1
-            """
-            ,
-            (user_id,),
-        )
-        first_respondent_row = cur.fetchone()
-
-        cur.execute(
-            """
-            SELECT id, full_name, email, phone_number, unit, company_name, user_type
-            FROM users
-            WHERE id = %s
-            """,
-            (user_id,),
-        )
-        user_row = cur.fetchone()
-    finally:
-        cur.close()
-        conn.close()
-
-    return jsonify(
-        {
-            "debug_note": {
-                "why_missing_data_happens": [
-                    "HTML inputs may render but fail to map if the expected ids/names are missing or mismatched.",
-                    "Frontend JS may submit an incomplete payload even when the form looks filled in.",
-                    "Backend persistence may save only part of the claim profile, so later validation still sees missing DB columns.",
-                ],
-                "homeowner_report_rule": "Homeowner report generation validates the homeowner profile plus the respondent profile explicitly linked by homeowner_id.",
-            },
-            "request_context": {
-                "current_user_id": user_id,
-                "current_role": current_role,
-                "normalized_role": role,
-            },
-            "user_row": _serialize_row(
-                ["id", "full_name", "email", "phone_number", "unit", "company_name", "user_type"],
-                user_row,
-            ),
-            "report_homeowner_profile": _serialize_row(
-                [
-                    "homeowner_id",
-                    "name",
-                    "ic_number",
-                    "email",
-                    "phone_number",
-                    "address",
-                    "court_location",
-                    "state_name",
-                    "claim_amount",
-                    "item_service",
-                    "transaction_date",
-                    "updated_at",
-                ],
-                homeowner_row,
-            ),
-            "report_respondent_profile_linked_row": _serialize_row(
-                [
-                    "respondent_id",
-                    "company_name",
-                    "registration_number",
-                    "email",
-                    "phone_number",
-                    "address",
-                    "updated_at",
-                ],
-                first_respondent_row,
-            ),
-            "validation_errors": requirement_errors,
-        }
-    )
 
 # =================================================
 # UPLOAD EVIDENCE IMAGE

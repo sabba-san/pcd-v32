@@ -30,10 +30,11 @@ def get_chatbot_client():
     if not api_key:
         return None
 
-    try:
+     try:
         _chatbot_client = Groq(api_key=api_key)
     except Exception as e:
-        print(f"Groq Initialization Error: {e}")
+        import logging
+        logging.error(f"Groq Initialization Error: {e}")
         _chatbot_client = None
 
     return _chatbot_client
@@ -130,7 +131,8 @@ def process_query(user_query):
                 
             user_context_str += "\nInstruction: If the user asks about their specific case or defects, use the CURRENT USER DATA above to provide a personalized assessment based on the Malaysian Property Law context provided."
     except Exception as e:
-        print(f"Error injecting user context: {e}")
+        import logging
+        logging.error(f"Error injecting user context: {e}")
 
     # 3. OPTIMISED SYSTEM PROMPT — concise, direct, token-efficient
     system_prompt = (
