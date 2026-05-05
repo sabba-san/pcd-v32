@@ -2220,15 +2220,39 @@ def upload_evidence():
                 "error": "File type not allowed. Allowed types: jpg, jpeg, png, tif, tiff"
             }), 400
 
+        from app.models import Defect
+        from app.utils.auth_helper import authorize_defect_access
+        defect = Defect.query.get(defect_id)
+        if not defect:
+            return jsonify({"error": "Defect not found"}), 404
+        authorize_defect_access(defect)
+
+        import uuid
+        from PIL import Image
+
+        # Magic Bytes Validation
+        try:
+            head = file.read(512)
+            file.seek(0)
+            img = Image.open(file)
+            img.verify()
+            file.seek(0)
+        except Exception:
+            return jsonify({"error": "Invalid image content."}), 400
+
         # Create evidence directory if not exists
-        evidence_dir = os.path.join(current_app.root_path, "evidence")
+        evidence_dir = os.path.realpath(os.path.join(current_app.root_path, "evidence"))
         os.makedirs(evidence_dir, exist_ok=True)
         
         # Get original extension
         ext = file.filename.rsplit('.', 1)[1].lower()
 
-        filename = f"defect_{defect_id}.{ext}"
-        filepath = os.path.join(evidence_dir, filename)
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        filepath = os.path.realpath(os.path.join(evidence_dir, filename))
+
+        # Path Traversal Protection
+        if not filepath.startswith(evidence_dir):
+            return jsonify({"error": "Invalid file path."}), 400
 
         file.save(filepath)
 
@@ -2281,6 +2305,13 @@ def evidence_exists(defect_id):
     """
     Check if evidence image exists for a defect.
     """
+    from app.models import Defect
+    from app.utils.auth_helper import authorize_defect_access
+    defect = Defect.query.get(defect_id)
+    if not defect:
+        return jsonify({"exists": False, "defect_id": defect_id})
+    authorize_defect_access(defect)
+
     evidence_dir = os.path.join(current_app.root_path, "evidence")
 
     for ext in ALLOWED_EXTENSIONS:
@@ -2327,6 +2358,13 @@ def add_remark():
         return jsonify({"error": "Unauthorized"}), 403
 
     defect_id = str(data.get("id"))
+
+    from app.models import Defect
+    from app.utils.auth_helper import authorize_defect_access
+    defect = Defect.query.get(defect_id)
+    if not defect:
+        return jsonify({"error": "Defect not found"}), 404
+    authorize_defect_access(defect)
     remark = data.get("remark")
 
     if remark and len(remark) > 0:
@@ -2366,6 +2404,13 @@ def update_status():
     role = _current_role()
 
     defect_id = str(data.get("id"))
+
+    from app.models import Defect
+    from app.utils.auth_helper import authorize_defect_access
+    defect = Defect.query.get(defect_id)
+    if not defect:
+        return jsonify({"success": False, "message": "Defect not found"}), 404
+    authorize_defect_access(defect)
     requested_status = data.get("status")
     # Closed is system-derived only (auto-close), never manually set.
     new_status = requested_status
@@ -3267,6 +3312,24 @@ def export_pdf():
     # START PDF GENERATION
     # Generate PDF using service
     evidence_dir = os.path.join(current_app.root_path, "evidence")
+    
+    # Extract project_name from report_data to pass explicitly
+    from app.models import User
+    c_user_id = claimant_user_id or _current_user_id()
+    c_user = User.query.get(c_user_id) if c_user_id else current_user
+    
+    # Use housing_project from the homeowner's profile if available
+    project_name = getattr(c_user, 'housing_project', None)
+    if not project_name or project_name.strip() in ["", "-"]:
+        project_name = report_data.get("case_info", {}).get("project_name", "-")
+    if not project_name or project_name.strip() in ["", "-"]:
+        # Final fallback
+        project_name = "Taman Desa Murni"
+        
+    report_data['project_name'] = project_name
+    
+    current_app.logger.info(f"DEBUG: Using project_name = {project_name} for PDF")
+    
     buffer, filename = generate_tribunal_pdf(
         defects=defects,
         report_data=report_data,
@@ -3276,6 +3339,7 @@ def export_pdf():
         evidence_dir=evidence_dir,
         closed_evidence_appendix=closed_evidence_appendix,
         role=role,
+        project_name_override=project_name,
     )
     
     # AUDIT LOG: PDF EXPORTED
@@ -3363,6 +3427,16 @@ def update_profile():
                 flash('Profile picture updated successfully.', 'success')
         elif file and file.filename != '':
             flash('Invalid file type. Only .jpg, .jpeg, .png are allowed.', 'error')
+
+    # 3. Update Phone Number
+    new_phone = request.form.get('phone_number', '').strip()
+    if new_phone:
+        current_user.phone_number = new_phone
+
+    # 4. Update Correspondence Address
+    new_address = request.form.get('correspondence_address', '').strip()
+    if new_address:
+        current_user.correspondence_address = new_address
 
     db.session.commit()
     return redirect(url_for('module3.profile'))

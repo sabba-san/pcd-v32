@@ -75,6 +75,7 @@ def reg_homeowner():
             ic_number              = request.form.get('ic_number', '').strip()[:20],
             phone_number           = request.form.get('phone', '').strip()[:30],
             correspondence_address = request.form.get('address', '').strip(),
+            unit                   = request.form.get('unit', '').strip()[:100],
         )
 
         user.set_password(password)

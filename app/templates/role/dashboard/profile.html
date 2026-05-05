@@ -150,8 +150,34 @@
                         <span class="material-symbols-outlined">fingerprint</span>
                     </div>
                     <div>
-                        <p class="text-[0.7rem] font-bold uppercase tracking-widest text-on-surface-variant">Identity Code</p>
+                        <p class="text-[0.7rem] font-bold uppercase tracking-widest text-on-surface-variant">Identity Card</p>
                         <p class="font-bold text-on-surface">{{ user.ic_number or 'USR-' + (user.id|string).zfill(4) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phone Number -->
+            <div class="bg-white p-6 rounded-2xl flex items-center justify-between transition-all duration-300 hover:border-primary/30 border border-transparent tonal-shadow">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined">phone</span>
+                    </div>
+                    <div>
+                        <p class="text-[0.7rem] font-bold uppercase tracking-widest text-on-surface-variant">Phone Number</p>
+                        <p class="font-bold text-on-surface">{{ user.phone_number or 'Not set — update in Settings' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Correspondence Address -->
+            <div class="bg-white p-6 rounded-2xl flex items-center justify-between transition-all duration-300 hover:border-primary/30 border border-transparent tonal-shadow">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined">home</span>
+                    </div>
+                    <div>
+                        <p class="text-[0.7rem] font-bold uppercase tracking-widest text-on-surface-variant">Correspondence Address</p>
+                        <p class="font-bold text-on-surface">{{ user.correspondence_address or 'Not set — update in Settings' }}</p>
                     </div>
                 </div>
             </div>
