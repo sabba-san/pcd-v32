@@ -18,6 +18,7 @@ from .utils import load_upload_metadata, upload_root, metadata_path, scan_metada
 from .pdf_utils import extract_pdf_images
 from .glb_snapshot import extract_snapshots
 
+from app.utils.auth_helper import authorize_defect_access
 from ..chatbot_component.dlp_knowledge_base import DLP_RULES
 
 module2 = Blueprint('module2', __name__)
@@ -148,10 +149,6 @@ def _auto_assign_images(metadata: dict, defects: List[Defect]) -> bool:
 
     return assigned
 
-def _lawyer_forbidden(defect: Defect) -> bool:
-    if current_user.user_type != 'lawyer':
-        return False
-    return defect.assigned_lawyer_id != current_user.id
 
 
 @module2.route('/dlp_info', methods=['GET'])
@@ -226,8 +223,7 @@ def get_scan_defects(scan_id):
 @login_required
 def get_defect_details(defect_id):
     defect = Defect.query.get_or_404(defect_id)
-    if _lawyer_forbidden(defect):
-        abort(403)
+    authorize_defect_access(defect)
     image_url = None
     if defect.image_path:
         image_url = url_for('module2.serve_defect_image', defect_id=defect_id)
@@ -250,8 +246,7 @@ def get_defect_details(defect_id):
 @login_required
 def update_defect_status(defect_id):
     defect = Defect.query.get_or_404(defect_id)
-    if _lawyer_forbidden(defect):
-        abort(403)
+    authorize_defect_access(defect)
     data = request.get_json()
     # Note: Lidar code checked current_user.role == 'developer'. In pcd-v32, the attribute is user_type
     if 'status' in data and current_user.user_type == 'developer':
@@ -271,8 +266,7 @@ def update_defect_status(defect_id):
 @login_required
 def delete_defect(defect_id):
     defect = Defect.query.get_or_404(defect_id)
-    if _lawyer_forbidden(defect):
-        abort(403)
+    authorize_defect_access(defect)
     db.session.delete(defect)
     db.session.commit()
     return jsonify({'message': 'Defect deleted successfully'})
@@ -328,7 +322,16 @@ def report_defect(scan_id):
     severity    = request.form.get('severity', 'Medium').strip()
     location    = request.form.get('location', '').strip()
     notes       = request.form.get('notes', '').strip()
-    reported_at = datetime.now(timezone.utc)
+    
+    reported_date_str = request.form.get('reported_date')
+    if reported_date_str:
+        try:
+            reported_at = datetime.strptime(reported_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+        except ValueError:
+            reported_at = datetime.now(timezone.utc)
+    else:
+        reported_at = datetime.now(timezone.utc)
+        
     deadline = _parse_deadline_value(request.form.get('deadline'), reported_at)
 
     if not description:
@@ -345,12 +348,37 @@ def report_defect(scan_id):
             return jsonify({'error': f'Invalid file type. Allowed: {", ".join(ALLOWED_EVIDENCE_EXTS)}'}), 400
 
         import uuid
-        safe_name   = secure_filename(evidence_file.filename)
-        unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+        from PIL import Image
+
+        if ext != '.pdf':
+            # Magic Bytes Validation
+            try:
+                head = evidence_file.read(512)
+                evidence_file.seek(0)
+                img = Image.open(evidence_file)
+                img.verify()
+                evidence_file.seek(0)
+            except Exception:
+                return jsonify({'error': 'Invalid image content.'}), 400
+        else:
+            try:
+                head = evidence_file.read(512)
+                evidence_file.seek(0)
+                if not head.startswith(b'%PDF'):
+                    raise ValueError("Invalid PDF content.")
+            except Exception:
+                return jsonify({'error': 'Invalid PDF content.'}), 400
+
+        unique_name = f"{uuid.uuid4().hex}{ext}"
         # Save to unified evidence directory (app/evidence)
-        evidence_dir = os.path.join(current_app.root_path, "evidence")
+        evidence_dir = os.path.realpath(os.path.join(current_app.root_path, "evidence"))
         os.makedirs(evidence_dir, exist_ok=True)
-        save_path = os.path.join(evidence_dir, unique_name)
+        save_path = os.path.realpath(os.path.join(evidence_dir, unique_name))
+        
+        # Path Traversal Protection
+        if not save_path.startswith(evidence_dir):
+            return jsonify({'error': 'Invalid file path.'}), 400
+            
         evidence_file.save(save_path)
         # Store simple filename as image_path for consistency with module3
         image_path = unique_name
@@ -422,6 +450,7 @@ def serve_model(scan_id):
 @login_required
 def serve_defect_image(defect_id):
     defect = Defect.query.get_or_404(defect_id)
+    authorize_defect_access(defect)
     if not defect.image_path:
         abort(404)
     
@@ -492,8 +521,7 @@ def api_legal_verify_defect(defect_id):
         return jsonify({'error': 'Unauthorized'}), 403
 
     defect = Defect.query.get_or_404(defect_id)
-    if _lawyer_forbidden(defect):
-        return jsonify({'error': 'Forbidden'}), 403
+    authorize_defect_access(defect)
     payload = request.get_json(silent=True) or {}
 
     manual_severity    = (payload.get('manual_severity') or '').strip()

@@ -3045,7 +3045,6 @@ def generate_ai_report_api():
 
             versions[role] = role_versions
             save_versions(versions)
-            backup_versions()
 
         # AUDIT LOG: AI REPORT GENERATED
         _append_audit_event(

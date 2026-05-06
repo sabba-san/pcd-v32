@@ -296,7 +296,7 @@ def build_closed_appendix_lines(closed_evidence_appendix, language, auto_close_d
 
 # ---- Main PDF Generation Function ----
 
-def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels, evidence_dir, closed_evidence_appendix=None, role="Homeowner", auto_close_days=14):
+def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels, evidence_dir, closed_evidence_appendix=None, role="Homeowner", auto_close_days=14, project_name_override=None):
     """
     Generate Tribunal Claim PDF (Borang 1 TTPM format).
     
@@ -398,17 +398,9 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
     lokasi = str(report_data.get("case_info", {}).get("tribunal_location") or "-").strip().upper()
     negeri = str(report_data.get("case_info", {}).get("state_name") or "-").strip().upper()
     no_tuntutan = report_data.get("case_info", {}).get("claim_number") or "-"
-    project_name = report_data.get("case_info", {}).get("project_name") or "-"
-    
-    # Try to get project_name from defects if still default
-    if project_name == "-" and defects:
-        # Try to get from first defect's unit or project_name
-        first_defect = defects[0] if defects else {}
-        project_name = (
-            first_defect.get("project_name") or 
-            first_defect.get("unit") or 
-            "-"
-        )
+
+    # FORCEFULLY READ FROM report_data as requested
+    project_name = report_data.get("project_name", "-")
 
     if language == "en":
         pdf.drawCentredString(width/2, y, f"AT {lokasi}")
@@ -550,7 +542,7 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
         pdf.drawString(200, y, f": RM {report_data.get('case_info', {}).get('claim_amount', '-')}")
         y -= 15
         pdf.drawString(60, y, "Property Location")
-        pdf.drawString(200, y, f": {report_data.get('case_info', {}).get('project_name', '-')}")
+        pdf.drawString(200, y, f": {project_name}")
     else:
         pdf.drawString(60, y, "Barangan/Perkhidmatan")
         pdf.drawString(200, y, f": {report_data.get('case_info', {}).get('item_service', 'Pembaikan Kecacatan Dalam Tempoh DLP')}")
@@ -562,7 +554,7 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
         pdf.drawString(200, y, f": RM {report_data.get('case_info', {}).get('claim_amount', '-')}")
         y -= 15
         pdf.drawString(60, y, "Lokasi Harta")
-        pdf.drawString(200, y, f": {report_data.get('case_info', {}).get('project_name', '-')}")
+        pdf.drawString(200, y, f": {project_name}")
     
     # ============================================
     # PAGE 2: SUMMARY & DEFECT LIST

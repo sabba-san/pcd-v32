@@ -406,10 +406,17 @@
           class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition-shadow">
       </div>
 
-      <div>
-        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Deadline Date</label>
-        <input type="date" id="reportDeadline" name="deadline"
-          class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition-shadow">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Reported Date <span class="text-red-500">*</span></label>
+          <input type="date" id="reportDate" name="reported_date" required
+            class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition-shadow">
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Deadline Date</label>
+          <input type="date" id="reportDeadline" name="deadline"
+            class="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition-shadow">
+        </div>
       </div>
 
       <!-- Photo Evidence Upload -->
@@ -629,6 +636,8 @@
         document.getElementById('reportDefectType').value  = 'Unknown';
         document.getElementById('reportSeverity').value    = 'Medium';
         document.getElementById('reportLocation').value    = '';
+        const now = new Date();
+        document.getElementById('reportDate').value = now.toISOString().slice(0, 10);
         const defaultDeadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         document.getElementById('reportDeadline').value = defaultDeadline.toISOString().slice(0, 10);
         document.getElementById('reportEvidenceFile').value = '';
@@ -687,6 +696,7 @@
         fd.append('defect_type', document.getElementById('reportDefectType').value);
         fd.append('severity',    document.getElementById('reportSeverity').value);
         fd.append('location',    document.getElementById('reportLocation').value.trim());
+        fd.append('reported_date', document.getElementById('reportDate').value);
         fd.append('deadline',    document.getElementById('reportDeadline').value);
 
         const fileInput = document.getElementById('reportEvidenceFile');

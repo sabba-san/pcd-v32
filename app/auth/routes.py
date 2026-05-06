@@ -134,8 +134,6 @@ def reg_housedeveloper():
             return redirect(url_for('auth.reg_housedeveloper'))
 
         company_name = request.form.get('company_name', '').strip()
-        if company_name == 'others':
-            company_name = request.form.get('other_company_name', '').strip()
 
         user = User(
             user_type            = 'developer',
