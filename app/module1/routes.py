@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify
 # Safe Imports with Error Handling
 try:
     from ..chatbot_component.chatbot_core import process_query, analyze_legal_text, analyze_defect_image, analyze_pdf_document
-    from ..chatbot_component.conversation_logger import save_history
+    from ..chatbot_component.conversation_logger import save_history, load_history
     from ..chatbot_component.dlp_knowledge_base import get_all_guidelines, get_all_legal_references
     from ..chatbot_component.feedback_manager import save_feedback
 except Exception as e:
@@ -18,7 +18,8 @@ except Exception as e:
     analyze_defect_image = lambda x: f"Backend Error: {error_msg}"
     analyze_pdf_document = lambda x: f"Backend Error: {error_msg}"
     
-    save_history = lambda x: None
+    save_history = lambda x, **kwargs: None
+    load_history = lambda user_id="guest": []
     get_all_guidelines = lambda: []
     get_all_legal_references = lambda: []
     save_feedback = lambda *args, **kwargs: None 
@@ -48,6 +49,19 @@ def api_chat():
         
     except Exception as e:
         print(f"ROUTE ERROR: {e}")
+        return jsonify({"error": f"Server Error: {str(e)}"}), 500
+
+@module1.route('/chat/history', methods=['GET'])
+def api_chat_history():
+    from flask_login import current_user, login_required
+    if not current_user.is_authenticated:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    try:
+        history = load_history(user_id=current_user.id)
+        return jsonify({"history": history})
+    except Exception as e:
+        print(f"HISTORY FETCH ERROR: {e}")
         return jsonify({"error": f"Server Error: {str(e)}"}), 500
 
 @module1.route('/analyze', methods=['POST'])

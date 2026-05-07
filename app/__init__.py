@@ -26,6 +26,11 @@ def create_app():
         'postgresql://user:password@flask_db:5432/flaskdb'
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
+    # ── Security config ───────────────────────────────────────────────────────
+    app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     generic_groq_api_key = (os.environ.get('GROQ_API_KEY') or '').strip()
     app.config['GROQ_API_KEY'] = generic_groq_api_key
     app.config['GROQ_API_KEY_REPORT'] = (

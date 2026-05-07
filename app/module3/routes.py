@@ -80,18 +80,9 @@ except ImportError:  # pragma: no cover - fallback for direct execution from mod
     )
 
 SUPPORT_CONTACT = "1800-700-321 | support@dlp-project.edu.my"
-SIMULATED_LOGIN_USER_ID = int(os.getenv("SIMULATED_LOGIN_USER_ID", "1"))
 AUTO_CLOSE_DAYS = int(os.getenv("AUTO_CLOSE_DAYS", "14"))
 APP_TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Kuala_Lumpur")
-ENABLE_DEMO_LOGIN_FALLBACK = os.getenv("ENABLE_DEMO_LOGIN_FALLBACK", "0") == "1"
 SESSION_IDLE_TIMEOUT_MINUTES = int(os.getenv("SESSION_IDLE_TIMEOUT_MINUTES", "120"))
-
-DEMO_USERS = {
-    "homeowner": {"password": "home123", "role": "Homeowner", "user_id": SIMULATED_LOGIN_USER_ID},
-    "developer": {"password": "dev123", "role": "Developer", "user_id": None},
-    "legal": {"password": "legal123", "role": "Legal", "user_id": None},
-    "admin": {"password": "admin123", "role": "Admin", "user_id": None},
-}
 
 STATE_COURT_MAP = {
     "Johor": {
@@ -358,7 +349,7 @@ def _current_actor_name():
 
 
 def _current_user_id():
-    return current_user.id if current_user.is_authenticated else None or (SIMULATED_LOGIN_USER_ID if ENABLE_DEMO_LOGIN_FALLBACK else None)
+    return current_user.id if current_user.is_authenticated else None
 
 
 def _append_audit_event(action, role=None, defect_id=None, filename=None, new_status=None, details=None):
@@ -546,14 +537,6 @@ def _get_login_account(username, password, selected_role):
 
         if _is_password_hash(stored_password):
             password_valid = check_password_hash(stored_password, password)
-        else:
-            password_valid = stored_password == password
-            if password_valid:
-                cur.execute(
-                    "UPDATE login_accounts SET password = %s WHERE username = %s",
-                    (generate_password_hash(password), row[0]),
-                )
-                conn.commit()
 
         if not password_valid:
             return None

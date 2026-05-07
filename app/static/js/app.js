@@ -176,18 +176,48 @@ class DLPChatbotApp {
     // ==========================================================
     // 1. CONVERSATION MANAGEMENT
     // ==========================================================
-    loadSavedData() {
+    async loadSavedData() {
         if (localStorage.getItem('theme') === 'light') {
             document.body.classList.add('light-mode');
         }
 
-        const saved = localStorage.getItem(this.storageKey);
-        if (saved) {
-            try {
-                this.conversations = JSON.parse(saved);
-            } catch (e) {
-                console.error("Error loading history", e);
-                this.conversations = [];
+        let loadedFromBackend = false;
+        try {
+            const response = await fetch('/api/chat/history');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.history && data.history.length > 0) {
+                    const newChatId = Date.now();
+                    const messages = [];
+                    data.history.forEach(entry => {
+                        if (entry.user) messages.push({ text: entry.user, sender: 'user', timestamp: new Date() });
+                        if (entry.bot) messages.push({ text: entry.bot, sender: 'bot', timestamp: new Date() });
+                    });
+                    
+                    const restoredChat = {
+                        id: newChatId,
+                        title: data.history[0].user ? data.history[0].user.substring(0, 30) + (data.history[0].user.length > 30 ? '...' : '') : "Restored Chat",
+                        messages: messages
+                    };
+                    
+                    this.conversations = [restoredChat];
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.conversations));
+                    loadedFromBackend = true;
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch backend history:", e);
+        }
+
+        if (!loadedFromBackend) {
+            const saved = localStorage.getItem(this.storageKey);
+            if (saved) {
+                try {
+                    this.conversations = JSON.parse(saved);
+                } catch (e) {
+                    console.error("Error loading history", e);
+                    this.conversations = [];
+                }
             }
         }
 
