@@ -24,9 +24,19 @@ def create_app():
     
     # DigitalOcean App Platform Database URL injection
     database_url = os.environ.get('DATABASE_URL')
-    if database_url and database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
-        
+    if database_url:
+        database_url = database_url.strip().strip('"').strip("'")
+        # Check if DO failed to interpolate the variable (usually due to a wrong DB component name)
+        if database_url.startswith('${'):
+            print(f"\n[CRITICAL DEPLOYMENT ERROR]: DigitalOcean did not interpolate DATABASE_URL!")
+            print(f"Value is literal: '{database_url}'.")
+            print(f"Please ensure your DigitalOcean Database component is EXACTLY named 'db' (if using ${{db.DATABASE_URL}})")
+            print(f"or update your App-Level Environment Variable to match the exact database name.\n")
+            # Fallback to local dev to prevent crashing during build/inspection phases
+            database_url = None
+        elif database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+            
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///local_dev.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
