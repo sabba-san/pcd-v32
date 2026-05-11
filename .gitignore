@@ -38,6 +38,7 @@ Thumbs.db
 
 # Ignore the data folder if it contains sensitive or large files (like database dumps)
 # data/
+data/conversations/*.json
 
 # Ignore logs
 *.log
