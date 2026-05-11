@@ -16,8 +16,8 @@ COPY . /usr/src/app
 # 6. Set the Flask App environment variable (CRITICAL)
 ENV FLASK_APP=app:app
 
-# 7. Expose the port
-EXPOSE 5000
+# 7. Expose a default port (DO injects $PORT at runtime)
+EXPOSE 8080
 
-# 8. Start the app
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+# 8. Start the app using Gunicorn WSGI for production stability
+CMD gunicorn --bind 0.0.0.0:${PORT:-8080} app:app

@@ -13,3 +13,4 @@ pypdf[image]
 sentence-transformers
 pygltflib
 reportlab
+whitenoise

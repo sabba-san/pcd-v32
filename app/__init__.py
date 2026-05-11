@@ -21,10 +21,13 @@ def create_app():
 
     # ── Core config ───────────────────────────────────────────────────────────
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        'DATABASE_URL',
-        'postgresql://user:password@flask_db:5432/flaskdb'
-    )
+    
+    # DigitalOcean App Platform Database URL injection
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url and database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///local_dev.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # ── Security config ───────────────────────────────────────────────────────
@@ -43,6 +46,14 @@ def create_app():
     # ── Extensions ────────────────────────────────────────────────────────────
     db.init_app(app)
     login_manager.init_app(app)
+
+    # ── Production Static File Handling ───────────────────────────────────────
+    # If whitenoise is installed, it will serve static files efficiently via Gunicorn
+    try:
+        from whitenoise import WhiteNoise
+        app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(app.root_path, 'static'), prefix='static/')
+    except ImportError:
+        pass # Fallback to standard Flask static routing
 
     # ── Blueprints ────────────────────────────────────────────────────────────
     app.register_blueprint(module1)

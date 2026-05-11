@@ -25,5 +25,6 @@ dependencies:
     - pypdf[image]
     - pygltflib
     - reportlab
+    - whitenoise
   
     # add other pip deps here
