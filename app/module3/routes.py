@@ -1043,6 +1043,23 @@ def get_defects_for_role(role):
                 """,
                 (user_id,)
             )
+        elif role == "Developer":
+            user_id = _current_user_id()
+            cur.execute(
+                """
+                SELECT d.id, d.unit, d.description, d.reported_date, d.status, d.completed_date,
+                       d.user_id, d.urgency, d.deadline, d.remarks,
+                       COALESCE(d.element, '') AS element, COALESCE(d.location, '') AS location,
+                       COALESCE(s.name, '') AS scan_name,
+                       d.scan_id,
+                       COALESCE(d.image_path, '') AS image_path
+                FROM defects d
+                LEFT JOIN scans s ON d.scan_id = s.id
+                WHERE d.assigned_developer_id = %s
+                ORDER BY d.id
+                """,
+                (user_id,)
+            )
         else:
             cur.execute(
                 """
