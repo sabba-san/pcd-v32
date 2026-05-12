@@ -1,295 +1,208 @@
 <!DOCTYPE html>
 <html class="light" lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>DLP Advisor | Developer Registration</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet">
+    <title>Register | DLP Advisor Developer</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
-                    "colors": {
-                        "secondary-fixed-dim": "#b4c5ff",
-                        "inverse-primary": "#b4c5ff",
-                        "surface-bright": "#f7f9fb",
-                        "on-tertiary-fixed": "#360f00",
-                        "on-tertiary-container": "#ffede6",
-                        "on-tertiary": "#ffffff",
-                        "primary-fixed": "#dbe1ff",
-                        "error": "#ba1a1a",
-                        "primary": "#004ac6",
-                        "on-primary-fixed-variant": "#003ea8",
-                        "on-background": "#191c1e",
-                        "surface-container": "#eceef0",
-                        "on-secondary-fixed": "#00174b",
-                        "tertiary-container": "#bc4800",
-                        "surface": "#f7f9fb",
-                        "inverse-surface": "#2d3133",
+                    colors: {
+                        background: "#f7f9fb",
+                        primary: "#004ac6",
                         "primary-container": "#2563eb",
-                        "error-container": "#ffdad6",
-                        "secondary-container": "#acbfff",
-                        "on-surface-variant": "#434655",
-                        "tertiary-fixed-dim": "#ffb596",
-                        "surface-container-lowest": "#ffffff",
-                        "surface-variant": "#e0e3e5",
-                        "on-error": "#ffffff",
-                        "tertiary-fixed": "#ffdbcd",
-                        "surface-tint": "#0053db",
-                        "primary-fixed-dim": "#b4c5ff",
-                        "on-tertiary-fixed-variant": "#7d2d00",
-                        "tertiary": "#943700",
-                        "surface-container-high": "#e6e8ea",
-                        "secondary": "#495c95",
-                        "surface-container-highest": "#e0e3e5",
-                        "surface-container-low": "#f2f4f6",
-                        "on-secondary": "#ffffff",
-                        "background": "#f7f9fb",
-                        "outline": "#737686",
-                        "on-error-container": "#93000a",
-                        "surface-dim": "#d8dadc",
-                        "on-surface": "#191c1e",
-                        "on-primary-fixed": "#00174b",
-                        "secondary-fixed": "#dbe1ff",
-                        "inverse-on-surface": "#eff1f3",
-                        "outline-variant": "#c3c6d7",
                         "on-primary": "#ffffff",
-                        "on-secondary-fixed-variant": "#31447b",
-                        "on-secondary-container": "#394c84",
-                        "on-primary-container": "#eeefff"
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#434655",
+                        outline: "#737686",
+                        "surface-container-lowest": "#ffffff",
                     },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                    "fontFamily": {
-                        "headline": ["Manrope"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        body: ["Inter"],
+                        label: ["Inter"]
                     }
                 },
             },
         }
     </script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
-        }
-
-        h1,
-        h2,
-        h3,
-        .headline {
-            font-family: 'Manrope', sans-serif;
-        }
-
-        .bg-dot-pattern {
-            background-image: radial-gradient(#d1d5db 0.5px, transparent 0.5px);
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .brand-font { font-family: 'Manrope', sans-serif; }
+        .dot-pattern {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 0);
             background-size: 24px 24px;
+            background-position: -19px -19px;
         }
-
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
     </style>
 </head>
 
-<body class="bg-surface bg-dot-pattern min-h-screen flex flex-col">
+<body class="bg-background dot-pattern min-h-screen flex flex-col">
     <!-- TopNavBar -->
-    <header class="w-full top-0 sticky bg-[#f7f9fb] shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.05)] z-50">
-        <div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
-            <div class="text-2xl font-bold tracking-tight text-[#191c1e] dark:text-white">DLP Advisor</div>
-            <nav class="hidden md:flex gap-8 items-center">
-                <a class="text-[#434655] dark:text-slate-400 hover:text-[#004ac6] transition-colors font-body text-sm font-medium"
-                    href="#">Features</a>
-
-                <a class="text-[#434655] dark:text-slate-400 hover:text-[#004ac6] transition-colors font-body text-sm font-medium"
-                    href="{{ url_for('auth.login') }}">Login</a>
-                <a class="bg-primary text-on-primary px-6 py-2 rounded-lg font-semibold text-sm hover:bg-primary-container transition-all active:scale-95"
-                    href="{{ url_for('auth.register') }}">Register</a>
-            </nav>
-            <button class="md:hidden text-[#191c1e]">
+    <header class="bg-[#f7f9fb] sticky top-0 z-50">
+        <nav class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+            <div class="text-2xl font-bold tracking-tight text-[#191c1e] brand-font uppercase">
+                DLP Advisor</div>
+            <div class="hidden md:flex items-center gap-8">
+                <a class="text-[#434655] hover:text-[#191c1e] font-medium transition-colors duration-200" href="{{ url_for('auth.features') }}">Features</a>
+                <a class="text-[#434655] hover:text-[#191c1e] font-medium transition-colors duration-200" href="{{ url_for('auth.login') }}">Login</a>
+                <a class="bg-primary text-white px-6 py-2 rounded-full font-bold shadow-lg hover:opacity-90 transition-all scale-100 active:scale-95" href="{{ url_for('auth.register') }}">Register</a>
+            </div>
+            <!-- Mobile Menu Toggle -->
+            <button class="md:hidden text-on-surface">
                 <span class="material-symbols-outlined">menu</span>
             </button>
-        </div>
+        </nav>
     </header>
-    <!-- Main Registration Section -->
-    <main class="flex-grow flex items-center justify-center px-4 py-12 md:py-20">
-        <div
-            class="relative w-full max-w-4xl bg-surface-container-lowest rounded-[16px] shadow-[0px_8px_32px_rgba(0,0,0,0.04)] overflow-hidden">
-            <!-- Decorative Element -->
-            <div class="absolute -top-12 -right-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none">
-            </div>
-            <div class="relative p-8 md:p-12">
-                <!-- Header -->
-                <div class="flex flex-col items-start mb-10">
-                    <div
-                        class="w-12 h-12 bg-primary flex items-center justify-center rounded-xl mb-4 shadow-lg shadow-primary/20">
-                        <span class="material-symbols-outlined text-white"
-                            style="font-variation-settings: 'FILL' 1;">domain</span>
+
+    <main class="flex-grow flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        <!-- Decorative gradients -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-300/10 rounded-full blur-3xl"></div>
+        
+        <!-- Registration Card -->
+        <div class="relative w-full max-w-3xl bg-surface-container-lowest rounded-xl shadow-[0_40px_100px_-20px_rgba(0,74,198,0.08)] overflow-hidden border border-slate-200/50">
+            <!-- Decorative circle fading in top-right -->
+            <div class="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16 pointer-events-none"></div>
+            
+            <div class="p-8 md:p-12 relative z-10">
+                <!-- Card Header -->
+                <div class="flex flex-col items-center text-center mb-10">
+                    <div class="w-14 h-14 bg-primary rounded-lg flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-white text-3xl">domain</span>
                     </div>
-                    <h1 class="text-3xl font-extrabold text-on-surface tracking-tight mb-1">Create Account as House
-                        Developer</h1>
-                    <p class="text-on-surface-variant font-medium">Join the DLP Advisor Platform.</p>
+                    <h1 class="text-3xl font-extrabold text-on-surface mb-2">Create Account as Developer</h1>
+                    <p class="text-on-surface-variant text-base">Join the DLP Advisor Platform.</p>
                 </div>
-                <!-- Form -->
+                
+                <!-- Registration Form -->
                 <form class="space-y-6" method="POST">
-                    <!-- Row 1: Full Name and Email -->
+                    
+                    <!-- Row 1: Full Name & Email -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label
-                                class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                                for="full_name">Full Name</label>
-                            <input
-                                class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
-                                id="full_name" name="full_name" placeholder="e.g. John Doe" type="text">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Full Name</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="full_name" name="full_name" placeholder="John Doe" type="text" required>
                         </div>
                         <div class="space-y-2">
-                            <label
-                                class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                                for="email">Email</label>
-                            <input
-                                class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
-                                id="email" name="email" placeholder="john@example.com" type="email">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Email</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="email" name="email" placeholder="john@example.com" type="email" required>
                         </div>
                     </div>
 
-                    <!-- Row 3: Company Details -->
+                    <!-- Row 2: Company Name & SSM -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-4">
-                            <div class="space-y-2">
-                                <label
-                                    class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                                    for="company_name">Company Name (Nama Syarikat)</label>
-                                <input
-                                    class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
-                                    id="company_name" name="company_name" placeholder="e.g., Prima Bina Sdn Bhd" type="text" required>
-                            </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Company Name</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="company_name" name="company_name" placeholder="Prima Bina Sdn Bhd" type="text" required>
                         </div>
                         <div class="space-y-2">
-                            <label
-                                class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                                for="ssm">Company Registration No. (SSM)</label>
-                            <input
-                                class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
-                                id="ssm" name="ssm" placeholder="1234567-X" type="text">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Company Reg No. (SSM)</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="ssm" name="ssm" placeholder="1234567-X" type="text" required>
                         </div>
                     </div>
-                    <!-- Row 4: Company Address -->
+
+                    <!-- Row 3: Company Address -->
                     <div class="space-y-2">
-                        <label class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                            for="address">Company Address (Alamat Surat Menyurat)</label>
-                        <textarea
-                            class="w-full bg-[#F0F4F8] border-none rounded-[20px] px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
-                            id="address" name="address" placeholder="Full mailing address..." rows="3"></textarea>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Company Address</label>
+                        <textarea class="w-full px-6 py-4 rounded-2xl border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline resize-none"
+                            id="address" name="address" placeholder="Full mailing address..." rows="3" required></textarea>
                     </div>
-                    <!-- Row 5: Contacts -->
+
+                    <!-- Row 4: Phone & Fax/Email -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label
-                                class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                                for="phone">Contact Number (No. Telefon Syarikat)</label>
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Contact Number</label>
                             <div class="flex">
-                                <span
-                                    class="flex items-center px-4 bg-[#e2e8f0] rounded-l-full text-xs font-bold text-on-surface-variant border-r border-white">+60</span>
-                                <input
-                                    class="w-full bg-[#F0F4F8] border-none rounded-r-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
-                                    id="phone" name="phone" placeholder="12-3456789" type="tel">
+                                <span class="flex items-center px-4 bg-[#e2e8f0] rounded-l-full text-xs font-bold text-on-surface-variant border-r border-white">+60</span>
+                                <input class="w-full px-6 py-4 rounded-r-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                    id="phone" name="phone" placeholder="12-345 6789" type="tel" required>
                             </div>
                         </div>
                         <div class="space-y-2">
-                            <label
-                                class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                                for="fax_email">Fax / Email (No. Faks/E-mel)</label>
-                            <input
-                                class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
-                                id="fax_email" name="fax_email" placeholder="fax@company.com" type="text">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Fax / Secondary Email</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="fax_email" name="fax_email" placeholder="fax@company.com" type="text" required>
                         </div>
                     </div>
-                    <!-- Row 6: Representative -->
+
+                    <!-- Row 5: Rep Name & NRIC -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label
-                                class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                                for="representative_name">Representative Staff Name (Nama Wakil/Pekerja)</label>
-                            <input
-                                class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
-                                id="representative_name" name="representative_name"
-                                placeholder="Full name of representative" type="text">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Representative Name</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="representative_name" name="representative_name" placeholder="Full name of representative" type="text" required>
                         </div>
                         <div class="space-y-2">
-                            <label
-                                class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                                for="representative_nric">Representative NRIC (No. Kad Pengenalan)</label>
-                            <input
-                                class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm"
-                                id="representative_nric" name="representative_nric" placeholder="YYMMDD-SS-XXXX"
-                                maxlength="20" type="text">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Representative NRIC</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="representative_nric" name="representative_nric" placeholder="YYMMDD-SS-XXXX" type="text" maxlength="20" required>
                         </div>
                     </div>
-                    <!-- Row 7: Password -->
+
+                    <!-- Row 6: Password -->
                     <div class="space-y-2">
-                        <label class="block text-[11px] font-bold text-on-surface-variant tracking-wider uppercase ml-1"
-                            for="password">Password</label>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Password</label>
                         <div class="relative">
-                            <input
-                                class="w-full bg-[#F0F4F8] border-none rounded-full px-6 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all font-body text-sm pr-12"
-                                id="password" name="password" placeholder="••••••••" type="password">
-                            <button
-                                class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors"
-                                type="button" id="toggle-password">
-                                <span class="material-symbols-outlined text-xl">visibility</span>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="password" name="password" placeholder="••••••••" type="password" required>
+                            <button class="absolute right-5 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" type="button" id="toggle-password">
+                                <span class="material-symbols-outlined">visibility</span>
                             </button>
                         </div>
-                        <p class="text-[10px] font-bold text-outline tracking-widest uppercase ml-1">MINIMUM 8
-                            CHARACTERS
-                            WITH ONE SPECIAL CHARACTER</p>
+                        <p class="text-[10px] font-bold text-outline px-4 tracking-widest uppercase">MINIMUM 8 CHARACTERS WITH ONE SPECIAL CHARACTER</p>
                     </div>
-                    <!-- Action Button -->
-                    <button
-                        class="w-full bg-primary hover:bg-primary-container text-white font-bold py-4 rounded-full shadow-lg shadow-primary/20 transition-all active:scale-95 text-base tracking-wide mt-4"
-                        type="submit">
-                        Register
-                    </button>
+
+                    <!-- Submit Button -->
+                    <div class="pt-4">
+                        <button class="w-full py-4 rounded-full bg-gradient-to-b from-primary to-primary-container text-white font-bold text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" type="submit">
+                            Register
+                        </button>
+                    </div>
                 </form>
-                <!-- Footer Link -->
-                <div class="mt-8 pt-8 border-t border-surface-container text-center">
-                    <p class="text-sm text-on-surface-variant">
-                        Already have an account? <a class="text-primary font-bold hover:underline"
-                            href="{{ url_for('auth.login') }}">Log in here</a>
+
+                <!-- Bottom Text -->
+                <div class="mt-8 text-center">
+                    <p class="text-on-surface-variant">
+                        Already have an account? <a class="text-primary font-bold hover:underline" href="{{ url_for('auth.login') }}">Log in here</a>
                     </p>
                 </div>
             </div>
         </div>
     </main>
+
     <!-- Footer -->
-    <footer class="w-full border-t border-slate-200 dark:border-slate-800 bg-[#f7f9fb] dark:bg-slate-950">
-        <div class="flex flex-col md:flex-row justify-between items-center px-8 py-12 max-w-7xl mx-auto gap-6">
+    <footer class="bg-[#f7f9fb] border-t border-slate-200 py-12 mt-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-8">
             <div class="flex flex-col items-center md:items-start gap-2">
-                <div class="text-xl font-bold text-[#191c1e] dark:text-white">DLP Advisor</div>
-                <p class="text-[#434655] dark:text-slate-500 text-sm">© 2025 DLP Advisor. All rights reserved.</p>
+                <div class="text-lg font-bold text-[#191c1e] brand-font uppercase">Dlp advisor</div>
+                <p class="text-sm text-on-surface-variant max-w-xs text-center md:text-left">
+                    Professional defect management for modern legal and property advisors.
+                </p>
             </div>
-            <div class="flex gap-8">
-                <a class="text-[#434655] dark:text-slate-500 text-sm font-medium hover:underline" href="#">Privacy
-                    Policy</a>
-                <a class="text-[#434655] dark:text-slate-500 text-sm font-medium hover:underline" href="#">Terms of
-                    Service</a>
-                <a class="text-[#434655] dark:text-slate-500 text-sm font-medium hover:underline" href="#">Support
-                    Center</a>
-                <a class="text-[#434655] dark:text-slate-500 text-sm font-medium hover:underline" href="#">Contact</a>
+            <div class="flex flex-wrap justify-center gap-6 md:gap-12">
+                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-colors" href="#">Privacy Policy</a>
+                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-colors" href="#">Terms of Service</a>
+                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-colors" href="#">Cookie Policy</a>
+            </div>
+            <div class="text-sm text-[#434655] text-center md:text-right">
+                &copy; 2025 DLP Advisor Defect Management. <br class="hidden md:block"> All rights reserved.
             </div>
         </div>
     </footer>
+
     <script>
         document.getElementById('toggle-password').addEventListener('click', function () {
             const input = document.getElementById('password');
@@ -298,9 +211,6 @@
             input.type = isPassword ? 'text' : 'password';
             icon.textContent = isPassword ? 'visibility_off' : 'visibility';
         });
-
-
     </script>
 </body>
-
 </html>

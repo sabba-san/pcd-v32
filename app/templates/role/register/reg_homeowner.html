@@ -52,7 +52,7 @@
             <div class="text-2xl font-bold tracking-tight text-[#191c1e] brand-font uppercase">
                 DLP Advisor</div>
             <div class="hidden md:flex items-center gap-8">
-                <a class="text-[#434655] hover:text-[#191c1e] font-medium transition-colors duration-200" href="/features">Features</a>
+                <a class="text-[#434655] hover:text-[#191c1e] font-medium transition-colors duration-200" href="{{ url_for('auth.features') }}">Features</a>
                 <a class="text-[#434655] hover:text-[#191c1e] font-medium transition-colors duration-200" href="{{ url_for('auth.login') }}">Login</a>
                 <a class="bg-primary text-white px-6 py-2 rounded-full font-bold shadow-lg hover:opacity-90 transition-all scale-100 active:scale-95" href="{{ url_for('auth.register') }}">Register</a>
             </div>
@@ -105,7 +105,7 @@
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Select Housing Project</label>
                             <div class="relative">
-                                <select class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface appearance-none"
+                                <select class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] bg-none focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface appearance-none"
                                     id="housing_project" name="housing_project" onchange="handleProjectChange(this)" required>
                                     <option value="" disabled selected>Choose a property...</option>
                                     <option value="Skyline Residences - Phase 1">Skyline Residences - Phase 1</option>
