@@ -741,16 +741,22 @@ def admin_scan_audit():
     from sqlalchemy import text as sa_text
     from ..extensions import db as _db
     rows = _db.session.execute(
-        sa_text("SELECT id, name, user_id, created_at FROM scans ORDER BY id ASC")
+        sa_text("SELECT id, name, user_id, model_path, created_at FROM scans ORDER BY id ASC")
     ).fetchall()
-    html = "<h2 style='font-family:monospace'>Scan Audit</h2><table border='1' style='font-family:monospace;border-collapse:collapse'>"
-    html += "<tr><th>ID</th><th>Name</th><th>user_id</th><th>created_at</th><th>Action</th></tr>"
+    html = "<h2 style='font-family:monospace'>Scan Audit</h2><table border='1' style='font-family:monospace;border-collapse:collapse;font-size:12px'>"
+    html += "<tr><th>ID</th><th>Name</th><th>user_id</th><th>model_path (key!)</th><th>created_at</th><th>Action</th></tr>"
     for r in rows:
         delete_url = f"/admin/scan-delete/{r[0]}?token={_ADMIN_TOKEN}"
-        html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td>"
-        html += f"<td><form method='POST' action='{delete_url}'><button style='color:red' onclick=\"return confirm('Delete scan {r[0]} ({r[1]})?')\">DELETE</button></form></td></tr>"
+        model_path_val = r[3] or '<em style="color:red">NULL</em>'
+        is_url = str(r[3] or '').startswith('http')
+        path_color = 'green' if is_url else 'red'
+        html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td>"
+        html += f"<td style='color:{path_color};max-width:400px;word-break:break-all'>{model_path_val}</td>"
+        html += f"<td>{r[4]}</td>"
+        html += f"<td><form method='POST' action='{delete_url}'><button style='color:red' onclick=\"return confirm('Delete scan {r[0]}?')\">DELETE</button></form></td></tr>"
     html += "</table>"
     html += f"<p style='font-family:monospace;color:gray'>Total: {len(rows)} scan(s)</p>"
+    html += "<p style='font-family:monospace'><b>GREEN</b> = stored on Spaces (good) | <b>RED</b> = local filename or NULL (bad)</p>"
     return html
 
 @module2.route('/admin/scan-delete/<int:scan_id>', methods=['POST'])
