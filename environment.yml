@@ -26,5 +26,6 @@ dependencies:
     - pygltflib
     - reportlab
     - whitenoise
-  
-    # add other pip deps here
+    - boto3
+
+  # add other pip deps here
