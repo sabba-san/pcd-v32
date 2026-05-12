@@ -718,3 +718,47 @@ def upload_scan():
         db.session.rollback()
         flash(f'An error occurred: {exc}', 'error')
         return redirect(request.url)
+
+
+# ── TEMPORARY ADMIN DIAGNOSTIC ROUTE ─────────────────────────────────────────
+# PURPOSE: One-time use to inspect and clean orphaned scan records in production.
+# REMOVE THIS ROUTE after cleaning the database.
+# Access: GET /admin/scan-audit?token=dlp-admin-cleanup-2026
+# Delete: POST /admin/scan-delete/<scan_id>?token=dlp-admin-cleanup-2026
+
+_ADMIN_TOKEN = "dlp-admin-cleanup-2026"
+
+@module2.route('/admin/scan-audit')
+def admin_scan_audit():
+    """TEMPORARY: List all scans in the DB with their user_id for debugging."""
+    if request.args.get('token') != _ADMIN_TOKEN:
+        abort(403)
+    from sqlalchemy import text as sa_text
+    from ..extensions import db as _db
+    rows = _db.session.execute(
+        sa_text("SELECT id, name, user_id, created_at FROM scans ORDER BY id ASC")
+    ).fetchall()
+    html = "<h2 style='font-family:monospace'>Scan Audit</h2><table border='1' style='font-family:monospace;border-collapse:collapse'>"
+    html += "<tr><th>ID</th><th>Name</th><th>user_id</th><th>created_at</th><th>Action</th></tr>"
+    for r in rows:
+        delete_url = f"/admin/scan-delete/{r[0]}?token={_ADMIN_TOKEN}"
+        html += f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td>"
+        html += f"<td><form method='POST' action='{delete_url}'><button style='color:red' onclick=\"return confirm('Delete scan {r[0]} ({r[1]})?')\">DELETE</button></form></td></tr>"
+    html += "</table>"
+    html += f"<p style='font-family:monospace;color:gray'>Total: {len(rows)} scan(s)</p>"
+    return html
+
+@module2.route('/admin/scan-delete/<int:scan_id>', methods=['POST'])
+def admin_scan_delete(scan_id):
+    """TEMPORARY: Delete a specific scan record and its defects."""
+    if request.args.get('token') != _ADMIN_TOKEN:
+        abort(403)
+    scan = Scan.query.get(scan_id)
+    if not scan:
+        return f"Scan {scan_id} not found.", 404
+    scan_name = scan.name
+    # Remove associated defects first to avoid FK constraint errors
+    Defect.query.filter_by(scan_id=scan_id).delete()
+    db.session.delete(scan)
+    db.session.commit()
+    return f"<p style='font-family:monospace;color:green'>Scan #{scan_id} '{scan_name}' and its defects deleted successfully.</p><a href='/admin/scan-audit?token={_ADMIN_TOKEN}'>Back to audit</a>"
