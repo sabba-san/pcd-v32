@@ -82,7 +82,7 @@ def reg_homeowner():
         db.session.add(user)
         db.session.commit()
 
-        flash('Registration successful! Please log in.', 'success')
+        flash('Account created successfully! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('role/register/reg_homeowner.html')
@@ -113,7 +113,7 @@ def reg_lawyer():
         db.session.add(user)
         db.session.commit()
 
-        flash('Registration successful! Please log in.', 'success')
+        flash('Account created successfully! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('role/register/reg_lawyer.html')
@@ -151,7 +151,7 @@ def reg_housedeveloper():
         db.session.add(user)
         db.session.commit()
 
-        flash('Registration successful! Please log in.', 'success')
+        flash('Account created successfully! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('role/register/reg_housedeveloper.html')
