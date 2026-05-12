@@ -91,6 +91,7 @@ class Scan(db.Model):
     name = db.Column(db.String(255), nullable=False)
     model_path = db.Column(db.String(500))  # Path to 3D model file
     created_at = db.Column(db.DateTime, default=db.func.now())
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Linking scan to user
 
     defects = db.relationship('Defect', backref='scan', lazy=True)
 

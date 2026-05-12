@@ -83,6 +83,7 @@ def create_app():
             "ALTER TABLE defects ADD COLUMN IF NOT EXISTS verified_by_id INTEGER REFERENCES users(id)",
             "ALTER TABLE defects ADD COLUMN IF NOT EXISTS legal_remarks TEXT",
             "ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER REFERENCES users(id)",
+            "ALTER TABLE scans ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)",
         ]:
             try:
                 db.session.execute(text(stmt))

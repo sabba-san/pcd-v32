@@ -161,7 +161,7 @@ def dlp_info():
 @login_required
 def list_projects():
     """List all scans/projects in the database"""
-    scans = Scan.query.order_by(Scan.created_at.desc()).all()
+    scans = Scan.query.filter_by(user_id=current_user.id).order_by(Scan.created_at.desc()).all()
     
     projects = []
     for scan in scans:
@@ -644,7 +644,7 @@ def upload_scan():
 
         # Create Scan record
         scan_label = project_name or f'Scan {timestamp}'
-        scan = Scan(name=scan_label, model_path=glb_name)
+        scan = Scan(name=scan_label, model_path=glb_name, user_id=current_user.id)
         db.session.add(scan)
         db.session.flush()  # get scan.id before commit
 
