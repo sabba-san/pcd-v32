@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Features | DLP Advisor</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        background: "#f7f9fb",
+                        primary: "#004ac6",
+                        "primary-container": "#2563eb",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#434655",
+                        "surface-container-lowest": "#ffffff",
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        body: ["Inter"],
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .brand-font { font-family: 'Manrope', sans-serif; }
+        .dot-pattern {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 0);
+            background-size: 24px 24px;
+            background-position: -19px -19px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background dot-pattern min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <header class="bg-[#f7f9fb] sticky top-0 z-50">
+        <nav class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+            <div class="text-2xl font-bold tracking-tight text-[#191c1e] brand-font uppercase">
+                DLP Advisor
+            </div>
+            <div class="hidden md:flex items-center gap-8">
+                <a class="text-primary font-bold transition-colors duration-200" href="/features">Features</a>
+                <a class="text-[#434655] hover:text-[#191c1e] font-medium transition-colors duration-200" href="{{ url_for('auth.login') }}">Login</a>
+                <a class="bg-primary text-white px-6 py-2 rounded-full font-bold shadow-lg hover:opacity-90 transition-all scale-100 active:scale-95" href="{{ url_for('auth.register') }}">Register</a>
+            </div>
+            <button class="md:hidden text-on-surface">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+        </nav>
+    </header>
+
+    <main class="flex-grow flex flex-col items-center px-4 py-16 relative overflow-hidden">
+        <!-- Hero Section -->
+        <div class="text-center max-w-3xl mb-20 relative z-10">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-on-surface mb-6 leading-tight tracking-tight">
+                Empowering Property Defect Management.
+            </h1>
+            <p class="text-xl text-on-surface-variant font-medium">
+                DLP Advisor streamlines everything from visual defect mapping to legal compliance, giving Homeowners, Developers, and Lawyers a unified source of truth.
+            </p>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl w-full relative z-10">
+            
+            <!-- Feature 1 -->
+            <div class="bg-surface-container-lowest p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,74,198,0.08)] border border-blue-50 hover:-translate-y-1 transition-transform duration-300">
+                <div class="w-16 h-16 bg-blue-50 text-primary rounded-2xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-4xl">view_in_ar</span>
+                </div>
+                <h3 class="text-2xl font-bold text-on-surface mb-3">3D Defect Visualizer</h3>
+                <p class="text-on-surface-variant leading-relaxed">
+                    Upload GLB models to interactively map and pinpoint property defects visually in a rich 3D environment, ensuring ultimate clarity on structural issues.
+                </p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="bg-surface-container-lowest p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,74,198,0.08)] border border-blue-50 hover:-translate-y-1 transition-transform duration-300">
+                <div class="w-16 h-16 bg-blue-50 text-primary rounded-2xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-4xl">smart_toy</span>
+                </div>
+                <h3 class="text-2xl font-bold text-on-surface mb-3">AI-Powered Legal Chatbot</h3>
+                <p class="text-on-surface-variant leading-relaxed">
+                    Get instant, intelligent answers regarding Defect Liability Period (DLP) rules, housing tribunal regulations, and compliance standards right when you need them.
+                </p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="bg-surface-container-lowest p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,74,198,0.08)] border border-blue-50 hover:-translate-y-1 transition-transform duration-300">
+                <div class="w-16 h-16 bg-blue-50 text-primary rounded-2xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-4xl">dashboard</span>
+                </div>
+                <h3 class="text-2xl font-bold text-on-surface mb-3">Role-Based Dashboards</h3>
+                <p class="text-on-surface-variant leading-relaxed">
+                    Experience isolated, secure, and tailored portals specifically designed for Homeowners, Developers, and Lawyers to manage tasks without overlap.
+                </p>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="bg-surface-container-lowest p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,74,198,0.08)] border border-blue-50 hover:-translate-y-1 transition-transform duration-300">
+                <div class="w-16 h-16 bg-blue-50 text-primary rounded-2xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-4xl">summarize</span>
+                </div>
+                <h3 class="text-2xl font-bold text-on-surface mb-3">Automated Defect Reports</h3>
+                <p class="text-on-surface-variant leading-relaxed">
+                    Streamline your claims and compliance with easy tracking, evidence collection, and automated PDF report generation ready for the housing tribunal.
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Decorative background blobs -->
+        <div class="absolute top-1/4 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-0 w-96 h-96 bg-blue-300/10 rounded-full blur-3xl pointer-events-none"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#f7f9fb] border-t border-slate-200 py-12 mt-auto">
+        <div class="flex justify-center items-center px-8 max-w-7xl mx-auto">
+            <div class="text-sm text-slate-500 text-center">
+                &copy; 2025 DLP Advisor Defect Management. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

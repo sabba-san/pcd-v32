@@ -9,6 +9,14 @@ from ..module3.routes import get_defects_for_role, calculate_stats
 auth = Blueprint('auth', __name__)
 
 
+# ── Public Pages ────────────────────────────────────────────────────────────
+
+@auth.route('/features')
+def features():
+    """Renders the global Features highlights page."""
+    return render_template('features.html')
+
+
 # ── Login / Logout ────────────────────────────────────────────────────────────
 
 @auth.route('/login', methods=['GET', 'POST'])

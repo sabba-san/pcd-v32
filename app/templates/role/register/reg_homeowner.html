@@ -1,297 +1,219 @@
 <!DOCTYPE html>
 <html class="light" lang="en">
-
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>DLP Advisor | Homeowner Registration</title>
-    <link href="https://fonts.googleapis.com" rel="preconnect" />
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Register | DLP Advisor Homeowner</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "inverse-primary": "#b4c5ff",
-                        "secondary-fixed-dim": "#b4c5ff",
-                        "background": "#f7f9fb",
-                        "surface": "#f7f9fb",
-                        "primary": "#004ac6",
-                        "on-primary-container": "#eeefff",
-                        "surface-container": "#eceef0",
-                        "on-surface": "#191c1e",
-                        "on-error": "#ffffff",
-                        "inverse-surface": "#2d3133",
-                        "surface-tint": "#0053db",
-                        "surface-container-low": "#f2f4f6",
-                        "surface-container-high": "#e6e8ea",
-                        "primary-fixed": "#dbe1ff",
-                        "on-tertiary-fixed-variant": "#7d2d00",
-                        "tertiary": "#943700",
-                        "on-primary": "#ffffff",
-                        "on-secondary-container": "#394c84",
-                        "on-tertiary-container": "#ffede6",
-                        "error": "#ba1a1a",
-                        "secondary-fixed": "#dbe1ff",
-                        "on-primary-fixed-variant": "#003ea8",
-                        "on-secondary": "#ffffff",
-                        "on-background": "#191c1e",
-                        "tertiary-fixed": "#ffdbcd",
-                        "primary-fixed-dim": "#b4c5ff",
-                        "surface-container-lowest": "#ffffff",
-                        "on-tertiary-fixed": "#360f00",
-                        "tertiary-container": "#bc4800",
-                        "surface-dim": "#d8dadc",
-                        "error-container": "#ffdad6",
-                        "on-surface-variant": "#434655",
-                        "outline": "#737686",
-                        "outline-variant": "#c3c6d7",
-                        "surface-variant": "#e0e3e5",
-                        "inverse-on-surface": "#eff1f3",
-                        "surface-container-highest": "#e0e3e5",
-                        "on-error-container": "#93000a",
-                        "on-tertiary": "#ffffff",
+                        background: "#f7f9fb",
+                        primary: "#004ac6",
                         "primary-container": "#2563eb",
-                        "on-secondary-fixed-variant": "#31447b",
-                        "on-secondary-fixed": "#00174b",
-                        "surface-bright": "#f7f9fb",
-                        "on-primary-fixed": "#00174b",
-                        "secondary-container": "#acbfff",
-                        "tertiary-fixed-dim": "#ffb596",
-                        "secondary": "#495c95"
-                    },
-                    borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#434655",
+                        outline: "#737686",
+                        "surface-container-lowest": "#ffffff",
                     },
                     fontFamily: {
-                        "headline": ["Manrope"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
+                        headline: ["Manrope"],
+                        body: ["Inter"],
+                        label: ["Inter"]
                     }
                 },
             },
         }
     </script>
     <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .brand-font { font-family: 'Manrope', sans-serif; }
+        .dot-pattern {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 0);
+            background-size: 24px 24px;
+            background-position: -19px -19px;
+        }
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-
-        .blueprint-bg {
-            background-color: #f7f9fb;
-            background-image: radial-gradient(#004ac610 1px, transparent 1px);
-            background-size: 40px 40px;
         }
     </style>
 </head>
 
-<body class="font-body bg-surface text-on-surface min-h-screen flex flex-col blueprint-bg">
-
-    <!-- Header -->
-    <header class="bg-[#f7f9fb] border-none flex justify-between items-center w-full px-8 py-6 max-w-7xl mx-auto">
-        <div class="text-2xl font-extrabold text-[#004ac6] uppercase tracking-wider font-headline">
-            DLP Advisor
-        </div>
-        <nav class="hidden md:flex items-center gap-8">
-            <a class="text-[#434655] font-medium hover:text-[#2563eb] transition-colors duration-200"
-                href="#">Features</a>
-            <a class="text-[#434655] font-medium hover:text-[#2563eb] transition-colors duration-200"
-                href="#">Support</a>
-            <a class="text-[#434655] font-medium hover:text-[#2563eb] transition-colors duration-200"
-                href="{{ url_for('auth.login') }}">Login</a>
-            <a class="bg-primary-container text-on-primary-container px-6 py-2.5 rounded-lg font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all"
-                href="{{ url_for('auth.register') }}">
-                Register
-            </a>
+<body class="bg-background dot-pattern min-h-screen flex flex-col">
+    <!-- TopNavBar -->
+    <header class="bg-[#f7f9fb] sticky top-0 z-50">
+        <nav class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+            <div class="text-2xl font-bold tracking-tight text-[#191c1e] brand-font uppercase">
+                DLP Advisor</div>
+            <div class="hidden md:flex items-center gap-8">
+                <a class="text-[#434655] hover:text-[#191c1e] font-medium transition-colors duration-200" href="/features">Features</a>
+                <a class="text-[#434655] hover:text-[#191c1e] font-medium transition-colors duration-200" href="{{ url_for('auth.login') }}">Login</a>
+                <a class="bg-primary text-white px-6 py-2 rounded-full font-bold shadow-lg hover:opacity-90 transition-all scale-100 active:scale-95" href="{{ url_for('auth.register') }}">Register</a>
+            </div>
+            <!-- Mobile Menu Toggle -->
+            <button class="md:hidden text-on-surface">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
         </nav>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-grow flex items-center justify-center px-4 py-8">
-        <div
-            class="w-full max-w-3xl bg-surface-container-lowest rounded-[2rem] shadow-[0_24px_48px_rgba(25,28,30,0.06)] p-8 md:p-10 relative overflow-hidden">
-
-            <!-- Decorative corner accent -->
-            <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full"></div>
-
-            <!-- Card Header -->
-            <div class="flex flex-col items-center mb-8">
-                <div class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
-                    <span class="material-symbols-outlined text-primary text-3xl">apartment</span>
+    <main class="flex-grow flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        <!-- Decorative gradients -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-300/10 rounded-full blur-3xl"></div>
+        
+        <!-- Registration Card -->
+        <div class="relative w-full max-w-2xl bg-surface-container-lowest rounded-xl shadow-[0_40px_100px_-20px_rgba(0,74,198,0.08)] overflow-hidden border border-slate-200/50">
+            <!-- Decorative circle fading in top-right -->
+            <div class="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16 pointer-events-none"></div>
+            
+            <div class="p-8 md:p-12 relative z-10">
+                <!-- Card Header -->
+                <div class="flex flex-col items-center text-center mb-10">
+                    <div class="w-14 h-14 bg-primary rounded-lg flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-white text-3xl">house</span>
+                    </div>
+                    <h1 class="text-3xl font-extrabold text-on-surface mb-2">Create Account as Homeowner</h1>
+                    <p class="text-on-surface-variant text-base">Join the DLP Advisor Platform.</p>
                 </div>
-                <h1 class="font-headline font-extrabold text-3xl text-on-surface tracking-tight">Create Account</h1>
-                <p class="text-on-surface-variant mt-2 text-center max-w-md text-sm">Enter your details to begin
-                    managing your property's structural integrity.</p>
-            </div>
-
-            <!-- Registration Form -->
-            <form class="space-y-5" method="POST">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-
-                    <!-- Full Name -->
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="full_name">Full
-                            Name</label>
-                        <input
-                            class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
-                            id="full_name" name="full_name" placeholder="John Doe" type="text" />
+                
+                <!-- Registration Form -->
+                <form class="space-y-6" method="POST">
+                    
+                    <!-- Row 1: Full Name & Email -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Full Name</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="full_name" name="full_name" placeholder="John Doe" type="text" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Email Address</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="email" name="email" placeholder="john@example.com" type="email" required>
+                        </div>
                     </div>
 
-                    <!-- Email Address -->
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="email">Email
-                            Address</label>
-                        <input
-                            class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
-                            id="email" name="email" placeholder="john@example.com" type="email" />
+                    <!-- Row 2: Housing Project & Unit -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Select Housing Project</label>
+                            <div class="relative">
+                                <select class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface appearance-none"
+                                    id="housing_project" name="housing_project" onchange="handleProjectChange(this)" required>
+                                    <option value="" disabled selected>Choose a property...</option>
+                                    <option value="Skyline Residences - Phase 1">Skyline Residences - Phase 1</option>
+                                    <option value="The Orchard Commons">The Orchard Commons</option>
+                                    <option value="Emerald Heights Tower B">Emerald Heights Tower B</option>
+                                    <option value="Oakwood Gardens Phase 4">Oakwood Gardens Phase 4</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+                            </div>
+                            <!-- Conditional Other Property Input -->
+                            <div id="other-property-wrapper" class="hidden mt-2">
+                                <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                    id="other_property" name="other_property" placeholder="Type your property name..." type="text">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">House Unit No.</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="unit" name="unit" placeholder="e.g. A-12-03" type="text" required>
+                        </div>
                     </div>
 
-                    <!-- Housing Project -->
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="housing_project">Select
-                            Housing Project</label>
+                    <!-- Row 3: IC Number & Phone -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">IC Number</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="ic_number" name="ic_number" placeholder="XXXXXX-XX-XXXX" type="text" maxlength="20" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Phone Number</label>
+                            <div class="flex">
+                                <span class="flex items-center px-4 bg-[#e2e8f0] rounded-l-full text-xs font-bold text-on-surface-variant border-r border-white">+60</span>
+                                <input class="w-full px-6 py-4 rounded-r-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                    id="phone" name="phone" placeholder="12-345 6789" type="tel" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Address -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Correspondence Address</label>
+                        <textarea class="w-full px-6 py-4 rounded-2xl border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline resize-none"
+                            id="address" name="address" placeholder="Full mailing address..." rows="3" required></textarea>
+                    </div>
+
+                    <!-- Row 5: Password -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Password</label>
                         <div class="relative">
-                            <select
-                                class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 pr-10 text-on-surface appearance-none [background-image:none] transition-all text-sm"
-                                id="housing_project" name="housing_project" onchange="handleProjectChange(this)">
-                                <option disabled selected>Choose a property...</option>
-                                <option>Skyline Residences - Phase 1</option>
-                                <option>The Orchard Commons</option>
-                                <option>Emerald Heights Tower B</option>
-                                <option>Oakwood Gardens Phase 4</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <span
-                                class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-xl">expand_more</span>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="password" name="password" placeholder="••••••••" type="password" required>
+                            <button class="absolute right-5 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" type="button" id="toggle-password">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
                         </div>
-                        <!-- Shown only when "Other" is selected -->
-                        <div id="other-property-wrapper" class="hidden mt-2">
-                            <input
-                                class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
-                                id="other_property" name="other_property" placeholder="Type your property name..."
-                                type="text" />
-                        </div>
+                        <p class="text-[10px] font-bold text-outline px-4 tracking-widest uppercase">MINIMUM 8 CHARACTERS WITH ONE SPECIAL CHARACTER</p>
                     </div>
 
-                    <!-- IC Number -->
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="ic_number">IC
-                            Number</label>
-                        <input
-                            class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
-                            id="ic_number" name="ic_number" placeholder="XXXXXX-XX-XXXX" maxlength="20" type="text" />
+                    <!-- Submit Button -->
+                    <div class="pt-4">
+                        <button class="w-full py-4 rounded-full bg-gradient-to-b from-primary to-primary-container text-white font-bold text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" type="submit">
+                            Register
+                        </button>
                     </div>
+                </form>
 
-                    <!-- House Unit No. -->
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="unit">House Unit No.</label>
-                        <input
-                            class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
-                            id="unit" name="unit" placeholder="e.g. A-12-03 or No. 42" type="text" />
-                    </div>
-
-                    <!-- Phone Number -->
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="phone">Phone
-                            Number</label>
-                        <div class="flex gap-2">
-                            <div
-                                class="flex items-center bg-[#f0f4ff] px-3 rounded-xl text-on-surface-variant font-medium text-sm">
-                                +60</div>
-                            <input
-                                class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
-                                id="phone" name="phone" placeholder="12-345 6789" type="tel" />
-                        </div>
-                    </div>
-
-                    <!-- Password -->
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-on-surface-variant ml-1"
-                            for="password">Password</label>
-                        <div class="relative">
-                            <input
-                                class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline text-sm"
-                                id="password" name="password" placeholder="••••••••••••" type="password" />
-                            <span
-                                class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-on-surface-variant hover:text-primary transition-colors text-xl"
-                                id="toggle-password">visibility</span>
-                        </div>
-                    </div>
-
-                    <!-- Correspondence Address -->
-                    <div class="space-y-1.5 md:col-span-2">
-                        <label class="text-xs font-semibold text-on-surface-variant ml-1" for="address">Correspondence
-                            Address</label>
-                        <textarea
-                            class="w-full bg-[#f0f4ff] border-none focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-3 text-on-surface transition-all placeholder:text-outline resize-none text-sm"
-                            id="address" name="address" placeholder="Enter your full mailing address..."
-                            rows="3"></textarea>
-                    </div>
-
-                </div>
-
-                <p class="text-[10px] uppercase tracking-widest text-outline-variant mt-1 ml-1 font-bold">Minimum 8
-                    characters with one special character</p>
-
-                <!-- Submit -->
-                <div class="pt-2">
-                    <button
-                        class="w-full bg-gradient-to-b from-primary to-primary-container text-white py-3.5 rounded-xl font-bold text-base shadow-[0_8px_20px_rgba(0,74,198,0.25)] hover:shadow-[0_12px_24px_rgba(0,74,198,0.35)] hover:-translate-y-0.5 active:scale-95 active:translate-y-0 transition-all"
-                        type="submit">
-                        Register
-                    </button>
-                </div>
-
-                <!-- Already have account -->
-                <div class="text-center pt-2">
-                    <p class="text-sm text-on-surface-variant">
-                        Already have an account?
-                        <a class="text-primary font-bold hover:underline" href="{{ url_for('auth.login') }}">Log in
-                            here</a>
+                <!-- Bottom Text -->
+                <div class="mt-8 text-center">
+                    <p class="text-on-surface-variant">
+                        Already have an account? <a class="text-primary font-bold hover:underline" href="{{ url_for('auth.login') }}">Log in here</a>
                     </p>
                 </div>
-
-            </form>
+            </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-[#f7f9fb] border-t border-[#434655]/10 py-10 w-full">
-        <div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
-            <div class="text-lg font-bold text-[#004ac6] font-headline uppercase tracking-tight">DLP Advisor</div>
-            <div class="flex gap-8">
-                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-all duration-300" href="#">Privacy
-                    Policy</a>
-                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-all duration-300" href="#">Terms of
-                    Service</a>
-                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-all duration-300" href="#">Contact
-                    Support</a>
+    <footer class="bg-[#f7f9fb] border-t border-slate-200 py-12 mt-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-8">
+            <div class="flex flex-col items-center md:items-start gap-2">
+                <div class="text-lg font-bold text-[#191c1e] brand-font uppercase">Dlp advisor</div>
+                <p class="text-sm text-on-surface-variant max-w-xs text-center md:text-left">
+                    Professional defect management for modern legal and property advisors.
+                </p>
             </div>
-            <p class="text-sm text-[#434655] opacity-60">&copy; 2025 DLP Advisor. All rights reserved.</p>
+            <div class="flex flex-wrap justify-center gap-6 md:gap-12">
+                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-colors" href="#">Privacy Policy</a>
+                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-colors" href="#">Terms of Service</a>
+                <a class="text-sm text-[#434655] hover:text-[#004ac6] transition-colors" href="#">Cookie Policy</a>
+            </div>
+            <div class="text-sm text-[#434655] text-center md:text-right">
+                &copy; 2025 DLP Advisor Defect Management. <br class="hidden md:block"> All rights reserved.
+            </div>
         </div>
     </footer>
 
-    <!-- Scripts -->
     <script>
-        // Password visibility toggle
         document.getElementById('toggle-password').addEventListener('click', function () {
             const input = document.getElementById('password');
+            const icon = this.querySelector('.material-symbols-outlined');
             const isPassword = input.type === 'password';
             input.type = isPassword ? 'text' : 'password';
-            this.textContent = isPassword ? 'visibility_off' : 'visibility';
+            icon.textContent = isPassword ? 'visibility_off' : 'visibility';
         });
 
-        // Show/hide "Other" property name input
+        // Dropdown toggle logic
         function handleProjectChange(select) {
             const wrapper = document.getElementById('other-property-wrapper');
             const otherInput = document.getElementById('other_property');
@@ -305,7 +227,5 @@
             }
         }
     </script>
-
 </body>
-
 </html>
