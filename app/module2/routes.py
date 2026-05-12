@@ -17,6 +17,7 @@ from ..models import Defect, Scan, Evidence
 from .utils import load_upload_metadata, upload_root, metadata_path, scan_metadata_path
 from .pdf_utils import extract_pdf_images
 from .glb_snapshot import extract_snapshots
+from .storage import upload_glb, get_glb_url
 
 from app.utils.auth_helper import authorize_defect_access
 from ..chatbot_component.dlp_knowledge_base import DLP_RULES
@@ -184,7 +185,8 @@ def list_projects():
 def visualize_scan(scan_id):
     scan = Scan.query.get_or_404(scan_id)
     defects = Defect.query.filter_by(scan_id=scan_id).all()
-    model_url = url_for('module2.serve_model', scan_id=scan_id) if scan.model_path else None
+    # get_glb_url handles both Spaces URLs (production) and local serve route (dev)
+    model_url = get_glb_url(scan.model_path, scan_id)
     
     upload_metadata = load_upload_metadata(scan_id)
     
@@ -606,7 +608,7 @@ def upload_scan():
         os.makedirs(root, exist_ok=True)
 
         timestamp = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
-        glb_name  = secure_filename(glb_file.filename)
+        glb_name  = f"{timestamp}_{secure_filename(glb_file.filename)}"
         glb_path  = os.path.join(root, glb_name)
         glb_file.save(glb_path)
 
@@ -642,9 +644,12 @@ def upload_scan():
             current_app.logger.warning("GLB snapshot extraction failed: %s", exc)
             snapshots = []
 
+        # Upload GLB to DO Spaces (production) or keep local path (development)
+        stored_model_path = upload_glb(glb_path, glb_name)
+
         # Create Scan record
         scan_label = project_name or f'Scan {timestamp}'
-        scan = Scan(name=scan_label, model_path=glb_name, user_id=current_user.id)
+        scan = Scan(name=scan_label, model_path=stored_model_path, user_id=current_user.id)
         db.session.add(scan)
         db.session.flush()  # get scan.id before commit
 

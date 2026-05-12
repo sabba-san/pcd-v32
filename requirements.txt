@@ -14,3 +14,4 @@ sentence-transformers
 pygltflib
 reportlab
 whitenoise
+boto3
