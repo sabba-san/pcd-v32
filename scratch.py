@@ -1,23 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>AI Report</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+import os
+import glob
 
-<div class="container">
-    <h1>{{ role }} AI Report</h1>
-
-    <pre style="white-space: pre-wrap;">{{ report }}</pre>
-
-    <form action="{{ url_for('module3.export_pdf') }}" method="POST">
-        <input type="hidden" name="role" value="{{ role }}">
-        <button class="btn btn-success">Export PDF</button>
-    </form>
-</div>
-
-
+snippet = """
     <!-- TOAST NOTIFICATIONS -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -56,6 +40,20 @@
         </script>
       {% endif %}
     {% endwith %}
+"""
 
-</body>
-</html>
+for filepath in glob.glob("app/templates/**/*.html", recursive=True):
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    if "<!-- TOAST NOTIFICATIONS -->" in content:
+        continue
+    
+    # Replace </body> with the snippet + </body>
+    if "</body>" in content:
+        new_content = content.replace("</body>", snippet + "\n</body>")
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(new_content)
+        print(f"Injected into {filepath}")
+    else:
+        print(f"Skipped {filepath} (no </body> tag found)")

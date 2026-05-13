@@ -2339,7 +2339,24 @@ def serve_evidence_image(filename):
     Serve an evidence image file stored in app/evidence/ (outside static/).
     Only authenticated users can access these files.
     """
-    from flask import send_from_directory
+    from flask import send_from_directory, abort
+    
+    # Find defect associated with this evidence file
+    from app.models import Evidence
+    evidence = Evidence.query.filter_by(filename=filename).first()
+    if not evidence:
+        abort(404)
+    
+    # Check if user has access to the defect
+    from app.models import Defect
+    defect = Defect.query.get(evidence.defect_id)
+    if not defect:
+        abort(404)
+    
+    # Reuse existing authorization helper (it aborts internally on failure)
+    from app.utils.auth_helper import authorize_defect_access
+    authorize_defect_access(defect)
+    
     evidence_dir = os.path.join(current_app.root_path, "evidence")
     return send_from_directory(evidence_dir, filename)
 

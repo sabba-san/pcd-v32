@@ -184,6 +184,8 @@ def list_projects():
 @login_required
 def visualize_scan(scan_id):
     scan = Scan.query.get_or_404(scan_id)
+    if scan.user_id != current_user.id:
+        abort(403)
     defects = Defect.query.filter_by(scan_id=scan_id).all()
     # get_glb_url handles both Spaces URLs (production) and local serve route (dev)
     model_url = get_glb_url(scan.model_path, scan_id)
@@ -201,6 +203,8 @@ def visualize_scan(scan_id):
 @login_required
 def get_scan_defects(scan_id):
     scan = Scan.query.get_or_404(scan_id)
+    if scan.user_id != current_user.id:
+        abort(403)
     defects = Defect.query.filter_by(scan_id=scan_id).all()
     
     metadata = load_upload_metadata(scan_id)
@@ -441,6 +445,8 @@ def report_defect(scan_id):
 @login_required
 def serve_model(scan_id):
     scan = Scan.query.get_or_404(scan_id)
+    if scan.user_id != current_user.id:
+        abort(403)
     if not scan.model_path:
         abort(404)
     upload_dir = os.path.join(current_app.instance_path, 'uploads', 'upload_data')
@@ -563,6 +569,8 @@ def api_legal_verify_defect(defect_id):
 @login_required
 def view_project(scan_id):
     scan = Scan.query.get_or_404(scan_id)
+    if scan.user_id != current_user.id:
+        abort(403)
     defects = Defect.query.filter_by(scan_id=scan_id).all()
     model_url = url_for('module2.serve_model', scan_id=scan_id) if scan.model_path else None
     
