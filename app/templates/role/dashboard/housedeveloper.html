@@ -125,47 +125,90 @@
         </div>
     </header>
     <div class="flex min-h-screen">
-        <aside
-            class="bg-slate-100 dark:bg-slate-950 w-16 fixed left-0 top-[65px] h-[calc(100vh-65px)] flex flex-col items-center border-r border-slate-200 dark:border-slate-800 z-40">
-            <div class="py-6 flex flex-col gap-4 w-full items-center">
-                <a class="p-2 text-blue-700 dark:text-blue-400 bg-white dark:bg-slate-900 rounded-lg shadow-sm" href="#"
-                    title="ASMARINDA12">
-                    <span class="material-symbols-outlined">domain</span>
-                </a>
-                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                    href="#" title="Dashboard">
-                    <span class="material-symbols-outlined">dashboard</span>
-                </a>
-                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                    href="{{ url_for('module2.list_projects') }}" title="Lidar Scans">
-                    <span class="material-symbols-outlined">build</span>
-                </a>
-                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                    href="{{ url_for('module2.list_projects') }}" title="Inspections">
-                    <span class="material-symbols-outlined">fact_check</span>
-                </a>
-                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                    href="{{ url_for('module3.dashboard') }}" title="Reports">
-                    <span class="material-symbols-outlined">analytics</span>
+        <!-- EXPANDED SIDEBAR - Desktop: w-64, Mobile: collapsed -->
+        <aside id="sidebar"
+            class="bg-slate-50 dark:bg-slate-950 w-64 fixed left-0 top-[65px] h-[calc(100vh-65px)] flex flex-col border-r border-slate-200 dark:border-slate-800 z-40
+                   transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+
+            <!-- Logo / Company -->
+            <div class="px-4 py-6 border-b border-slate-200 dark:border-slate-800">
+                <a href="#" class="flex items-center gap-3 p-2 text-blue-700 dark:text-blue-400 bg-primary-container/20 rounded-lg">
+                    <span class="material-symbols-outlined text-xl">domain</span>
+                    <span class="font-bold text-sm truncate">{{ current_user.company_name or 'Developer' }}</span>
                 </a>
             </div>
-            <div class="mt-auto pb-6 flex flex-col items-center gap-4">
-                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                    href="{{ url_for('core_features.guide') }}" title="Help & Guide">
-                    <span class="material-symbols-outlined">help</span>
+
+            <!-- Main Navigation -->
+            <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+                <a href="{{ url_for('module3.dashboard') }}"
+                   class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-200
+                          {% if request.endpoint == 'module3.dashboard' %}bg-primary/10 text-primary font-semibold{% endif %}">
+                    <span class="material-symbols-outlined text-xl">dashboard</span>
+                    <span class="text-sm font-medium">Dashboard</span>
                 </a>
-                <a class="p-2 text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                    href="{{ url_for('auth.logout') }}" title="Logout">
-                    <span class="material-symbols-outlined">logout</span>
+
+                <a href="{{ url_for('module2.list_projects') }}"
+                   class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-200
+                          {% if request.endpoint == 'module2.list_projects' %}bg-primary/10 text-primary font-semibold{% endif %}">
+                    <span class="material-symbols-outlined text-xl">3d_rotation</span>
+                    <span class="text-sm font-medium">Lidar Scans</span>
                 </a>
+
+                <a href="{{ url_for('module2.list_projects') }}"
+                   class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-200
+                          {% if request.endpoint == 'module2.list_projects' %}bg-primary/10 text-primary font-semibold{% endif %}">
+                    <span class="material-symbols-outlined text-xl">fact_check</span>
+                    <span class="text-sm font-medium">Inspections</span>
+                </a>
+
+                <a href="{{ url_for('module3.dashboard') }}"
+                   class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-200
+                          {% if request.endpoint == 'module3.dashboard' %}bg-primary/10 text-primary font-semibold{% endif %}">
+                    <span class="material-symbols-outlined text-xl">analytics</span>
+                    <span class="text-sm font-medium">Reports</span>
+                </a>
+
+                <a href="{{ url_for('module3.dashboard') }}"
+                   class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-200
+                          {% if request.endpoint == 'module3.dashboard' %}bg-primary/10 text-primary font-semibold{% endif %}">
+                    <span class="material-symbols-outlined text-xl">task_alt</span>
+                    <span class="text-sm font-medium">Job Sheets</span>
+                </a>
+            </nav>
+
+            <!-- Bottom Section -->
+            <div class="py-4 px-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
+                <a href="{{ url_for('core_features.guide') }}"
+                   class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-200">
+                    <span class="material-symbols-outlined text-xl">help</span>
+                    <span class="text-sm font-medium">Help & Guide</span>
+                </a>
+
+                <a href="{{ url_for('auth.logout') }}"
+                   class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all duration-200">
+                    <span class="material-symbols-outlined text-xl">logout</span>
+                    <span class="text-sm font-medium">Logout</span>
+                </a>
+
+                <!-- New Project Button -->
                 <button
-                    class="w-10 h-10 bg-primary-container text-white rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity shadow-md"
-                    title="New Project">
-                    <span class="material-symbols-outlined text-xl">add</span>
+                    class="w-full mt-2 flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-lg">add</span>
+                    <span>New Project</span>
                 </button>
             </div>
         </aside>
-        <main class="flex-1 ml-16 p-8 bg-[#F8FAFC]">
+
+        <!-- Mobile Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 lg:hidden hidden" onclick="toggleSidebar()"></div>
+
+        <!-- Mobile Toggle Button -->
+        <button id="mobile-toggle"
+            class="lg:hidden fixed bottom-6 left-6 z-50 bg-primary text-white p-3 rounded-full shadow-2xl hover:bg-primary-container transition-all active:scale-95"
+            onclick="toggleSidebar()">
+            <span class="material-symbols-outlined text-xl">menu</span>
+        </button>
+        <main class="flex-1 lg:ml-64 p-8 bg-[#F8FAFC]">
             <div class="mb-6">
                 <h2 class="text-3xl font-headline font-extrabold text-on-surface tracking-tight uppercase">{{ current_user.full_name }}</h2>
                 <div class="flex items-center gap-2 mt-2">

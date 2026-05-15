@@ -39,6 +39,10 @@ def create_app():
             
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///local_dev.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # ── File Upload Limits ─────────────────────────────────────────────────────
+    # 50MB limit for GLB/PDF uploads
+    app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
     
     # ── Security config ───────────────────────────────────────────────────────
     app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
@@ -72,6 +76,16 @@ def create_app():
     app.register_blueprint(module4)
     app.register_blueprint(auth)
     app.register_blueprint(core_features)
+
+    # ── Error Handlers ────────────────────────────────────────────────────────
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def server_error(e):
+        db.session.rollback()
+        return render_template('errors/500.html'), 500
 
     # ── Create DB tables on first run ─────────────────────────────────────────
     with app.app_context():
