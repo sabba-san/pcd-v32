@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DLP Advisor Platform - Official Feature Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #020617; display: flex; flex-direction: column; align-items: center; gap: 40px; padding: 40px 0; }
+
+        .slide-container {
+            width: 1280px;
+            height: 720px;
+            background-color: #0A0F1E;
+            color: #F8FAFC;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 60px;
+            border: 1px solid #1E293B;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        .decor-blob {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(0, 209, 255, 0.08) 0%, transparent 70%);
+            z-index: 0;
+        }
+        .blob-1 { top: -400px; right: -400px; }
+        .blob-2 { bottom: -400px; left: -400px; background: radial-gradient(circle, rgba(217, 70, 239, 0.08) 0%, transparent 70%); }
+        
+        .grid-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(30, 41, 59, 0.2) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(30, 41, 59, 0.2) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+        }
+
+        h1, h2, h3 { font-family: 'Poppins', sans-serif; position: relative; z-index: 2; }
+        .slide-title { font-size: 48px; font-weight: 700; color: #00D1FF; margin-bottom: 40px; text-transform: uppercase; letter-spacing: -1px; }
+        p, li { font-size: 22px; line-height: 1.5; color: #94A3B8; position: relative; z-index: 2; }
+        strong { color: #F1F5F9; font-weight: 600; }
+
+        .content-area { position: relative; z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; }
+
+        .title-slide { align-items: center; justify-content: center; text-align: center; }
+        .title-slide h1 { font-size: 100px; line-height: 1; margin-bottom: 20px; }
+        .title-slide h1 span { color: #D946EF; }
+        .title-slide .subtitle { font-size: 32px; color: #00D1FF; letter-spacing: 4px; font-weight: 500; }
+
+        .section-title { align-items: center; justify-content: center; text-align: center; }
+        .section-title h2 { font-size: 80px; }
+        .section-title hr { width: 120px; height: 6px; background: #D946EF; border: none; margin: 30px 0; }
+
+        .tiled-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+        .tile { background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; padding: 40px; border-radius: 20px; backdrop-filter: blur(10px); }
+        .tile i { font-size: 44px; color: #D946EF; margin-bottom: 20px; display: block; }
+        .tile h3 { font-size: 26px; margin-bottom: 15px; color: #F1F5F9; }
+
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+        .image-wrapper { border-radius: 24px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 30px 60px rgba(0,0,0,0.5); height: 420px; }
+        .image-wrapper img { width: 100%; height: 100%; object-fit: cover; background: #1E293B; }
+
+        .bullet-list ul { list-style: none; }
+        .bullet-list li { margin-bottom: 30px; padding-left: 50px; position: relative; }
+        .bullet-list li i { position: absolute; left: 0; top: 4px; color: #00D1FF; font-size: 28px; }
+
+        .bleed-image-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0; align-items: start; }
+        .bleed-image-layout .content-container { padding: 60px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
+        .bleed-image-layout .image-container { height: 720px; width: 100%; overflow: hidden; }
+        .bleed-image-layout .image-container img { width: 100%; height: 720px; object-fit: cover; background: #1E293B;}
+
+        .qa-layout { text-align: center; }
+        .qa-layout h2 { font-size: 110px; background: linear-gradient(90deg, #00D1FF, #D946EF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body>
+
+<div class="slide-container title-slide" id="slide1">
+    <div class="decor-blob blob-1"></div>
+    <div class="decor-blob blob-2"></div>
+    <div class="grid-overlay"></div>
+    <div class="content-area">
+        <h1>DLP <span>ADVISOR</span></h1>
+        <p class="subtitle">COMPLETE FEATURE GUIDE</p>
+        <p style="margin-top: 40px; opacity: 0.6; letter-spacing: 2px;">HOUSING DEFECT MANAGEMENT SYSTEM</p>
+    </div>
+</div>
+
+<div class="slide-container section-title" id="slide2">
+    <div class="grid-overlay"></div>
+    <div class="content-area">
+        <h2>HOMEOWNER</h2>
+        <hr>
+        <p>Direct defect reporting and AI legal assistance</p>
+    </div>
+</div>
+
+<div class="slide-container" id="slide3">
+    <h2 class="slide-title">Reporting & Evidence</h2>
+    <div class="content-area">
+        <div class="tiled-content">
+            <div class="tile">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <h3>Smart Dashboard</h3>
+                <p>Monitor your active claims and status changes in one central view.</p>
+            </div>
+            <div class="tile">
+                <i class="fa-solid fa-file-circle-plus"></i>
+                <h3>Digital Form</h3>
+                <p>Input defect location, category, and severity details effortlessly.</p>
+            </div>
+            <div class="tile">
+                <i class="fa-solid fa-camera-retro"></i>
+                <h3>Photo Evidence</h3>
+                <p>Attach visual proof directly to your report for developer verification.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide4">
+    <h2 class="slide-title">3D Defect Visualizer</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="bullet-list">
+                <ul>
+                    <li><i class="fa-solid fa-cube"></i><strong>GLB File Support:</strong> Upload property models (Max 50MB) for virtual inspection.</li>
+                    <li><i class="fa-solid fa-rotate"></i><strong>360° Controls:</strong> Rotate, zoom, and pan to view defects from any angle.</li>
+                    <li><i class="fa-solid fa-location-crosshairs"></i><strong>Precise Pinpointing:</strong> Identify defect locations with 3D spatial accuracy.</li>
+                </ul>
+            </div>
+            <div class="image-wrapper">
+                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#1E293B; color:#00D1FF; font-size:24px;">[3D Visualizer Image Placeholder]</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container section-title" id="slide5">
+    <div class="grid-overlay"></div>
+    <div class="content-area">
+        <h2>DEVELOPER</h2>
+        <hr>
+        <p>Repair management and verification portal</p>
+    </div>
+</div>
+
+<div class="slide-container bleed-image-layout" id="slide6">
+    <div class="content-container">
+        <h2 class="slide-title">Case Management</h2>
+        <div class="bullet-list">
+            <ul>
+                <li><i class="fa-solid fa-inbox"></i>View all incoming defect claims from a master list.</li>
+                <li><i class="fa-solid fa-shield-check"></i>Verify claim validity using 3D models and photos.</li>
+                <li><i class="fa-solid fa-user-gear"></i>Allocate repair tasks based on the verified data.</li>
+            </ul>
+        </div>
+    </div>
+    <div class="image-container">
+         <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#1E293B; color:#00D1FF; font-size:24px;">[Developer Dashboard Image Placeholder]</div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide7">
+    <h2 class="slide-title">Workflow Tracking</h2>
+    <div class="content-area">
+        <div class="tiled-content">
+            <div class="tile">
+                <i class="fa-solid fa-arrows-spin"></i>
+                <h3>Status Engine</h3>
+                <p>Move cases from 'Reported' to 'In Progress' as repair work begins.</p>
+            </div>
+            <div class="tile">
+                <i class="fa-solid fa-notes-medical"></i>
+                <h3>Repair Logs</h3>
+                <p>Add technical notes or progress updates for homeowner transparency.</p>
+            </div>
+            <div class="tile">
+                <i class="fa-solid fa-circle-check"></i>
+                <h3>Final Resolution</h3>
+                <p>Mark defects as 'Resolved' only after work is 100% completed.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container section-title" id="slide8">
+    <div class="grid-overlay"></div>
+    <div class="content-area">
+        <h2>LAWYER</h2>
+        <hr>
+        <p>Legal auditing and automated documentation</p>
+    </div>
+</div>
+
+<div class="slide-container" id="slide9">
+    <h2 class="slide-title">Case Audit & Review</h2>
+    <div class="content-area">
+        <div class="two-column" style="gap:30px;">
+            <div class="tile">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <h3>Audit Trail</h3>
+                <p>Access full case history, including homeowner photos and developer logs, to verify DLP compliance.</p>
+            </div>
+            <div class="tile">
+                <i class="fa-solid fa-file-invoice"></i>
+                <h3>Report Generation</h3>
+                <p>Automatically compile all defect data into a formatted formal Job Sheet for tribunal use.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide10">
+    <h2 class="slide-title">AI Legal Assistant</h2>
+    <div class="content-area">
+        <div class="two-column" style="grid-template-columns: 400px 1fr;">
+            <div class="image-wrapper" style="border-radius: 50%; height: 400px; width: 400px;">
+                 <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#1E293B; color:#00D1FF; font-size:24px; text-align:center;">[AI Chatbot Image<br>Placeholder]</div>
+            </div>
+            <div style="padding-left: 40px;">
+                <h3 style="font-size: 32px; color: #F1F5F9; margin-bottom: 20px;">Statutory Interpretation</h3>
+                <p>The AI Chatbot provides instant references to Housing Tribunal regulations and SPA clauses. It helps lawyers identify statutory obligations quickly, reducing research time by up to 70%.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide11">
+    <h2 class="slide-title">System Rules & Safety</h2>
+    <div class="content-area">
+        <div class="bullet-list" style="max-width: 900px; margin: 0 auto;">
+            <ul>
+                <li><i class="fa-solid fa-circle-exclamation" style="color:#D946EF;"></i><strong>File Format:</strong> 3D models must be in .GLB format for viewer compatibility.</li>
+                <li><i class="fa-solid fa-weight-scale" style="color:#D946EF;"></i><strong>Size Limit:</strong> A strict 50MB upload limit is enforced to maintain server speed.</li>
+                <li><i class="fa-solid fa-bug" style="color:#D946EF;"></i><strong>Error Pages:</strong> Automated 404 and 500 pages ensure a professional user experience during downtime.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container qa-layout" id="slide12">
+    <div class="decor-blob blob-1"></div>
+    <div class="grid-overlay"></div>
+    <div class="content-area">
+        <h2>QUESTIONS?</h2>
+        <p style="font-size: 28px; color: #94A3B8; margin-top: 20px;">DLP Advisor: Centralizing Property Protection</p>
+        <div style="margin-top: 60px; font-weight: 700; color: #00D1FF; letter-spacing: 5px;">
+            FINAL YEAR PROJECT 2026
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
