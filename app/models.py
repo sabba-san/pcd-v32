@@ -19,6 +19,7 @@ class User(db.Model, UserMixin):
     email         = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     profile_picture = db.Column(db.String(500))  # Path or URL to profile picture
+    google_id     = db.Column(db.String(255), unique=True, nullable=True)  # Google SSO sub claim
 
     # ── Developer / Housing-Developer fields ──────────────────────────────────
     company_name         = db.Column(db.String(150))

@@ -3,7 +3,7 @@ import os
 from flask import Flask, redirect, url_for
 from sqlalchemy import text
 from dotenv import load_dotenv
-from .extensions import db, login_manager
+from .extensions import db, login_manager, oauth
 from .module1.routes import module1
 from .module2.routes import module2
 from .module3.routes import module3
@@ -61,6 +61,17 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
 
+    # ── Google OAuth 2.0 (Authlib) ────────────────────────────────────────────
+    oauth.init_app(app)
+    oauth.register(
+        name='google',
+        client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+        client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+        # OpenID Connect discovery; Authlib auto-fetches token/userinfo endpoints
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        client_kwargs={'scope': 'openid email profile'},
+    )
+
     # ── Production Static File Handling ───────────────────────────────────────
     # If whitenoise is installed, it will serve static files efficiently via Gunicorn
     try:
@@ -98,6 +109,7 @@ def create_app():
             "ALTER TABLE defects ADD COLUMN IF NOT EXISTS legal_remarks TEXT",
             "ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER REFERENCES users(id)",
             "ALTER TABLE scans ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE",
         ]:
             try:
                 db.session.execute(text(stmt))

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, session
 from flask_login import login_user, logout_user, login_required, current_user
-from ..extensions import db
+from ..extensions import db, oauth
 from ..models import User, Defect, Scan
 
 # Import module3 functions for data synchronization
@@ -45,6 +45,62 @@ def logout():
     logout_user()
     session.clear()
     return redirect(url_for('auth.login'))
+
+
+# ── Google OAuth 2.0 Routes ───────────────────────────────────────────────
+
+@auth.route('/google/login')
+def google_login():
+    """Initiate Google OAuth 2.0 Authorization Code flow.
+
+    Authlib automatically generates a cryptographically random `state`
+    parameter and stores it in the session to prevent CSRF attacks.
+    """
+    redirect_uri = url_for('auth.google_callback', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@auth.route('/google/callback')
+def google_callback():
+    """Handle the Google OAuth 2.0 callback.
+
+    Authlib validates the `state` parameter automatically.
+    The user is looked up by google_id (stable) first, then by email as a
+    first-time SSO fallback. Unknown emails receive an error — no new
+    accounts are created via this flow.
+    """
+    try:
+        token = oauth.google.authorize_access_token()
+    except Exception:
+        # OAuth flow cancelled, state mismatch, or network error
+        flash('Google sign-in was cancelled or failed. Please try again.', 'error')
+        return redirect(url_for('auth.login'))
+
+    user_info = token.get('userinfo')
+    if not user_info:
+        flash('Could not retrieve your Google profile. Please try again.', 'error')
+        return redirect(url_for('auth.login'))
+
+    google_sub   = user_info.get('sub')               # stable, opaque Google user ID
+    google_email = user_info.get('email', '').strip().lower()
+
+    # 1. Primary lookup: by google_id (survives email changes)
+    user = User.query.filter_by(google_id=google_sub).first()
+
+    # 2. First-time SSO fallback: link an existing email+password account
+    if not user and google_email:
+        user = User.query.filter_by(email=google_email).first()
+        if user:
+            # Persist google_id so subsequent logins skip the email lookup
+            user.google_id = google_sub
+            db.session.commit()
+
+    if not user:
+        flash('Account not found in the system. Please contact Admin.', 'error')
+        return redirect(url_for('auth.login'))
+
+    login_user(user)
+    return _redirect_by_role(user.user_type)
 
 
 # ── Role Selection ────────────────────────────────────────────────────────────
