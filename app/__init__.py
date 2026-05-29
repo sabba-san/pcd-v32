@@ -1,6 +1,6 @@
 # __init__.py
 import os
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, render_template
 from sqlalchemy import text
 from dotenv import load_dotenv
 from .extensions import db, login_manager, oauth
