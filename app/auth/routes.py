@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, session
+import re
 from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import db, oauth
 from ..models import User, Defect, Scan
@@ -126,6 +127,18 @@ def reg_homeowner():
             flash('An account with this email already exists.', 'error')
             return redirect(url_for('auth.reg_homeowner'))
 
+        # ── Backend security validation (defense-in-depth) ──────────────────────
+        _SPECIAL = re.compile(r'[!@#$%^&*()_+\-=\[\]{};\'"\\|,.<>/?]')
+        if len(password) < 8 or not _SPECIAL.search(password):
+            flash('Password must be at least 8 characters and contain at least one special character (!@#$%^&*...).', 'error')
+            return redirect(url_for('auth.reg_homeowner'))
+
+        phone = request.form.get('phone', '').strip()
+        if phone and not re.fullmatch(r'[0-9]+', phone):
+            flash('Phone number must contain digits only.', 'error')
+            return redirect(url_for('auth.reg_homeowner'))
+        # ───────────────────────────────────────────────────────────────────────
+
         # Support "other_property" when user selects 'Other' in the dropdown
         housing_project = request.form.get('housing_project', '').strip()
         if housing_project.lower() == 'other':
@@ -166,6 +179,13 @@ def reg_lawyer():
             flash('An account with this email already exists.', 'error')
             return redirect(url_for('auth.reg_lawyer'))
 
+        # ── Backend security validation ─────────────────────────────────────────
+        _SPECIAL = re.compile(r'[!@#$%^&*()_+\-=\[\]{};\'"\\|,.<>/?]')
+        if len(password) < 8 or not _SPECIAL.search(password):
+            flash('Password must be at least 8 characters and contain at least one special character (!@#$%^&*...).', 'error')
+            return redirect(url_for('auth.reg_lawyer'))
+        # ───────────────────────────────────────────────────────────────────────
+
         user = User(
             user_type      = 'lawyer',
             full_name      = request.form.get('full_name', '').strip()[:150],
@@ -196,6 +216,18 @@ def reg_housedeveloper():
         if User.query.filter_by(email=email).first():
             flash('An account with this email already exists.', 'error')
             return redirect(url_for('auth.reg_housedeveloper'))
+
+        # ── Backend security validation ─────────────────────────────────────────
+        _SPECIAL = re.compile(r'[!@#$%^&*()_+\-=\[\]{};\'"\\|,.<>/?]')
+        if len(password) < 8 or not _SPECIAL.search(password):
+            flash('Password must be at least 8 characters and contain at least one special character (!@#$%^&*...).', 'error')
+            return redirect(url_for('auth.reg_housedeveloper'))
+
+        phone = request.form.get('phone', '').strip()
+        if phone and not re.fullmatch(r'[0-9]+', phone):
+            flash('Phone number must contain digits only.', 'error')
+            return redirect(url_for('auth.reg_housedeveloper'))
+        # ───────────────────────────────────────────────────────────────────────
 
         company_name = request.form.get('company_name', '').strip()
 

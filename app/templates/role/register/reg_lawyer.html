@@ -194,16 +194,27 @@
                         <div class="relative">
                             <input
                                 class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all outline-none text-on-surface placeholder:text-outline"
-                                id="password" name="password" placeholder="••••••••" type="password">
+                                id="password" name="password" placeholder="••••••••" type="password"
+                                minlength="8"
+                                pattern="^(?=.*[!@#$%^&amp;*()_+\-=\[\]{};':&quot;\\|,.<>\/?]).{8,}$"
+                                oninput="checkPasswordStrength(this.value)"
+                                required>
                             <button
                                 class="absolute right-5 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors"
                                 type="button" id="toggle-password">
                                 <span class="material-symbols-outlined" data-icon="visibility">visibility</span>
                             </button>
                         </div>
-                        <p class="text-[10px] font-bold text-outline px-4 tracking-widest uppercase">MINIMUM 8
-                            CHARACTERS
-                            WITH ONE SPECIAL CHARACTER</p>
+                        <!-- Strength indicator bar -->
+                        <div class="px-4 space-y-1.5 mt-1">
+                            <div class="flex gap-1.5">
+                                <div id="bar1" class="h-1 flex-1 rounded-full bg-slate-200 transition-colors duration-300"></div>
+                                <div id="bar2" class="h-1 flex-1 rounded-full bg-slate-200 transition-colors duration-300"></div>
+                                <div id="bar3" class="h-1 flex-1 rounded-full bg-slate-200 transition-colors duration-300"></div>
+                            </div>
+                            <p id="pw-hint" class="text-[10px] font-bold text-outline tracking-widest uppercase">MIN 8 CHARS WITH ONE SPECIAL CHARACTER (!@#$%^&amp;*...)</p>
+                        </div>
+                        <p id="pw-error" class="hidden text-[11px] text-red-500 font-semibold px-4">Password must be at least 8 characters and include one special character.</p>
                     </div>
                     <!-- Submit Button -->
                     <div class="pt-4">
@@ -251,12 +262,64 @@
     </footer>
 
     <script>
+        // ── Toggle password visibility ─────────────────────────────────────────
         document.getElementById('toggle-password').addEventListener('click', function () {
             const input = document.getElementById('password');
             const icon = this.querySelector('.material-symbols-outlined');
             const isPassword = input.type === 'password';
             input.type = isPassword ? 'text' : 'password';
             icon.textContent = isPassword ? 'visibility_off' : 'visibility';
+        });
+
+        // ── Real-time password strength indicator ──────────────────────────────
+        const SPECIAL_CHARS = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
+        function checkPasswordStrength(val) {
+            const hasLen     = val.length >= 8;
+            const hasSpecial = SPECIAL_CHARS.test(val);
+            const bar1 = document.getElementById('bar1');
+            const bar2 = document.getElementById('bar2');
+            const bar3 = document.getElementById('bar3');
+            const hint = document.getElementById('pw-hint');
+
+            [bar1, bar2, bar3].forEach(b => b.className = 'h-1 flex-1 rounded-full bg-slate-200 transition-colors duration-300');
+
+            if (val.length === 0) {
+                hint.textContent = 'MIN 8 CHARS WITH ONE SPECIAL CHARACTER (!@#$%^&*...)';
+                hint.className = 'text-[10px] font-bold text-outline tracking-widest uppercase';
+                return;
+            }
+            if (!hasLen && !hasSpecial) {
+                bar1.classList.replace('bg-slate-200', 'bg-red-400');
+                hint.textContent = 'Too weak — needs length & a special character';
+                hint.className = 'text-[10px] font-bold text-red-500 tracking-widest uppercase';
+            } else if (hasLen && !hasSpecial) {
+                bar1.classList.replace('bg-slate-200', 'bg-amber-400');
+                bar2.classList.replace('bg-slate-200', 'bg-amber-400');
+                hint.textContent = 'Almost — add one special character (!@#$%...)';
+                hint.className = 'text-[10px] font-bold text-amber-500 tracking-widest uppercase';
+            } else if (!hasLen && hasSpecial) {
+                bar1.classList.replace('bg-slate-200', 'bg-amber-400');
+                hint.textContent = 'Needs at least 8 characters total';
+                hint.className = 'text-[10px] font-bold text-amber-500 tracking-widest uppercase';
+            } else {
+                [bar1, bar2, bar3].forEach(b => b.classList.replace('bg-slate-200', 'bg-green-500'));
+                hint.textContent = '✓ Password meets requirements';
+                hint.className = 'text-[10px] font-bold text-green-600 tracking-widest uppercase';
+            }
+        }
+
+        // ── Client-side submit guard (password only — no phone field on lawyer form) ──
+        document.querySelector('form').addEventListener('submit', function (e) {
+            const pw = document.getElementById('password').value;
+            const pwError = document.getElementById('pw-error');
+            if (pw.length < 8 || !SPECIAL_CHARS.test(pw)) {
+                pwError.classList.remove('hidden');
+                document.getElementById('password').classList.add('ring-2', 'ring-red-400');
+                e.preventDefault();
+            } else {
+                pwError.classList.add('hidden');
+                document.getElementById('password').classList.remove('ring-2', 'ring-red-400');
+            }
         });
     </script>
 
