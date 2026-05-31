@@ -141,6 +141,12 @@
                     Sign in with Google
                 </a>
 
+                <!-- Google SSO Info Note -->
+                <div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-slate-600 text-center">
+                    <span class="font-semibold text-blue-800">Note:</span> Signing in with Google will automatically register you as a <strong>Homeowner</strong>.
+                    Developers and Lawyers must <a href="{{ url_for('auth.register') }}" class="text-blue-600 hover:underline font-medium">register manually</a>.
+                </div>
+
                 <!-- Footer Link -->
                 <div class="mt-6 text-center">
                     <p class="text-slate-500 text-sm">

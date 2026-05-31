@@ -103,16 +103,27 @@ def google_callback():
             flash('Could not retrieve your Google email. Please try again.', 'error')
             return redirect(url_for('auth.login'))
 
+        import os
+        import traceback
+        
         user = User(
             user_type  = 'homeowner',
             full_name  = google_name or google_email.split('@')[0],
             email      = google_email[:150],
             google_id  = google_sub,
         )
-        # No password set — this is a Google SSO-only account
-        db.session.add(user)
-        db.session.commit()
-        flash(f'Welcome, {user.full_name}! Your account has been created automatically via Google.', 'success')
+        # Set a random password to satisfy the nullable=False constraint on password_hash
+        user.set_password(os.urandom(24).hex())
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+            flash(f'Welcome, {user.full_name}! Your account has been created automatically via Google.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            # In a real production app, we would log the exact error using a logger
+            flash('Failed to create account due to a database error. Please contact support or try again.', 'error')
+            return redirect(url_for('auth.login'))
 
     login_user(user)
     return _redirect_by_role(user.user_type)
