@@ -112,7 +112,7 @@
                 <p class="text-sm font-bold text-on-surface">{{ current_user.company_name or current_user.full_name }}</p>
                 <p class="text-[10px] font-medium text-on-surface-variant tracking-widest uppercase">Developer</p>
             </div>
-            <a href="{{ url_for('module3.profile') }}" class="flex items-center gap-2 group cursor-pointer hover:bg-slate-200/50 p-1.5 rounded-xl transition-colors">
+            <div class="flex items-center gap-2">
                 <div class="w-10 h-10 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold">
                     {% if current_user.profile_picture %}
                     <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
@@ -120,8 +120,30 @@
                     {{ (current_user.company_name or current_user.full_name)[0].upper() }}
                     {% endif %}
                 </div>
-                <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">settings</span>
-            </a>
+                <!-- Gear dropdown -->
+                <div class="relative" id="gear-menu-wrapper">
+                    <button id="gear-btn" aria-expanded="false" aria-haspopup="true"
+                        class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-lg hover:bg-slate-200/50">
+                        <span class="material-symbols-outlined">settings</span>
+                    </button>
+                    <div id="gear-dropdown"
+                         class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-1 z-50 text-sm">
+                        <a href="{{ url_for('module3.profile') }}"
+                           class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 font-semibold">
+                            <span class="material-symbols-outlined text-base">person</span>Account Profile
+                        </a>
+                        <a href="{{ url_for('module3.settings') }}"
+                           class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 font-semibold">
+                            <span class="material-symbols-outlined text-base">tune</span>Settings &amp; Preferences
+                        </a>
+                        <div class="border-t border-slate-100 my-1"></div>
+                        <a href="{{ url_for('auth.logout') }}"
+                           class="flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 font-semibold">
+                            <span class="material-symbols-outlined text-base">logout</span>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
     <div class="flex min-h-screen">
@@ -392,6 +414,21 @@
         </script>
       {% endif %}
     {% endwith %}
+<!-- Gear dropdown toggle -->
+<script>
+(function () {
+    var btn  = document.getElementById('gear-btn');
+    var menu = document.getElementById('gear-dropdown');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = menu.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', !open);
+    });
+    document.addEventListener('click', function () { menu.classList.add('hidden'); btn.setAttribute('aria-expanded', 'false'); });
+    menu.addEventListener('click', function (e) { e.stopPropagation(); });
+})();
+</script>
 
 </body>
 

@@ -3,6 +3,7 @@ import os
 from flask import Flask, redirect, url_for, render_template
 from sqlalchemy import text
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
 from .extensions import db, login_manager, oauth
 from .module1.routes import module1
 from .module2.routes import module2
@@ -18,6 +19,11 @@ load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 def create_app():
     app = Flask(__name__, static_folder='static', template_folder='templates')
+
+    # ── Reverse-Proxy Fix (DigitalOcean / any cloud load-balancer) ───────────
+    # Tells Flask to trust X-Forwarded-Proto / X-Forwarded-For so that
+    # url_for(_external=True) generates https:// URLs — required by Google OAuth.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # ── Core config ───────────────────────────────────────────────────────────
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')

@@ -84,6 +84,7 @@ def google_callback():
 
     google_sub   = user_info.get('sub')               # stable, opaque Google user ID
     google_email = user_info.get('email', '').strip().lower()
+    google_name  = user_info.get('name', '').strip()
 
     # 1. Primary lookup: by google_id (survives email changes)
     user = User.query.filter_by(google_id=google_sub).first()
@@ -96,9 +97,22 @@ def google_callback():
             user.google_id = google_sub
             db.session.commit()
 
+    # 3. Auto-register: create a new homeowner account for brand-new Google users
     if not user:
-        flash('Account not found in the system. Please contact Admin.', 'error')
-        return redirect(url_for('auth.login'))
+        if not google_email:
+            flash('Could not retrieve your Google email. Please try again.', 'error')
+            return redirect(url_for('auth.login'))
+
+        user = User(
+            user_type  = 'homeowner',
+            full_name  = google_name or google_email.split('@')[0],
+            email      = google_email[:150],
+            google_id  = google_sub,
+        )
+        # No password set — this is a Google SSO-only account
+        db.session.add(user)
+        db.session.commit()
+        flash(f'Welcome, {user.full_name}! Your account has been created automatically via Google.', 'success')
 
     login_user(user)
     return _redirect_by_role(user.user_type)

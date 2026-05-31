@@ -107,194 +107,241 @@
     </style>
 </head>
 
-<body class="text-on-surface">
-    <!-- TopNavBar -->
-    <header
-        class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-8 py-3 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md">
-        <div class="flex items-center gap-8">
-            <span class="text-xl font-black tracking-tight text-slate-900 dark:text-white">DLP Advisor</span>
-            <nav class="hidden md:flex items-center gap-6">
-                <a class="text-blue-700 dark:text-blue-400 font-bold border-b-2 border-blue-700 dark:border-blue-400 pb-1"
-                    href="#">Dashboard</a>
-                <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-                    href="{{ url_for('module3.dashboard') }}">Reports</a>
-            </nav>
+<body class="font-body text-on-surface" style="background-color:#f7f9fb;">
+
+<!-- ── Top Nav ─────────────────────────────────────────────── -->
+<header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <div class="flex justify-between items-center w-full px-4 md:px-6 py-3">
+        <!-- Left: hamburger (mobile) + logo -->
+        <div class="flex items-center gap-3">
+            <button id="sidebar-toggle"
+                class="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+                aria-label="Toggle sidebar" aria-expanded="false">
+                <span class="material-symbols-outlined" id="sidebar-hamburger-icon">menu</span>
+            </button>
+            <div class="bg-primary p-1.5 rounded-lg">
+                <span class="material-symbols-outlined text-white text-xl">gavel</span>
+            </div>
+            <span class="text-xl font-black tracking-tight text-slate-900 font-headline">DLP Advisor</span>
         </div>
-        <div class="flex items-center gap-4">
-            <a href="{{ url_for('module3.profile') }}"
-                class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all cursor-pointer group">
-                <div class="flex flex-col items-end">
-                    <span class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">{{ current_user.law_firm_name or current_user.full_name }}</span>
-                    <span class="text-[10px] uppercase tracking-wider font-bold text-primary px-1.5 py-0.5 bg-primary/10 rounded">Lawyer</span>
-                </div>
-                <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm bg-primary flex items-center justify-center text-white font-bold">
-                    {% if current_user.profile_picture %}
-                    <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
-                    {% else %}
-                    {{ (current_user.law_firm_name or current_user.full_name)[0].upper() }}
-                    {% endif %}
-                </div>
-            </a>
-            <div class="flex items-center gap-1 border-l pl-4 border-slate-200 ml-2">
-                <button class="p-2 text-slate-500 hover:bg-slate-200/50 rounded-lg transition-colors">
-                    <span class="material-symbols-outlined">notifications</span>
+        <!-- Right: user + gear dropdown -->
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                {% if current_user.profile_picture %}
+                <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
+                {% else %}
+                {{ (current_user.law_firm_name or current_user.full_name)[0].upper() }}
+                {% endif %}
+            </div>
+            <p class="hidden sm:block text-sm font-semibold text-slate-900">{{ current_user.law_firm_name or current_user.full_name }}</p>
+            <!-- Gear dropdown -->
+            <div class="relative" id="gear-menu-wrapper">
+                <button id="gear-btn" aria-expanded="false" aria-haspopup="true"
+                    class="text-slate-400 hover:text-primary transition-colors p-1 rounded-lg hover:bg-slate-100">
+                    <span class="material-symbols-outlined text-xl">settings</span>
                 </button>
-                <a href="{{ url_for('core_features.guide') }}" class="p-2 text-slate-500 hover:bg-blue-50 hover:text-primary rounded-lg transition-colors" title="Help & Guide">
-                    <span class="material-symbols-outlined">help</span>
-                </a>
-                <a class="p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors" href="{{ url_for('auth.logout') }}" title="Logout">
-                    <span class="material-symbols-outlined">logout</span>
-                </a>
+                <div id="gear-dropdown"
+                     class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-1 z-50 text-sm">
+                    <a href="{{ url_for('module3.profile') }}"
+                       class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 font-semibold">
+                        <span class="material-symbols-outlined text-base">person</span>Account Profile
+                    </a>
+                    <a href="{{ url_for('module3.settings') }}"
+                       class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 font-semibold">
+                        <span class="material-symbols-outlined text-base">tune</span>Settings &amp; Preferences
+                    </a>
+                    <div class="border-t border-slate-100 my-1"></div>
+                    <a href="{{ url_for('auth.logout') }}"
+                       class="flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 font-semibold">
+                        <span class="material-symbols-outlined text-base">logout</span>Logout
+                    </a>
+                </div>
             </div>
         </div>
-    </header>
-    <main class="pt-24 pb-12 px-8 max-w-7xl mx-auto">
+    </div>
+</header>
+
+<!-- Sidebar overlay (mobile tap-to-close) -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/40 z-30 hidden md:hidden"></div>
+
+<div class="flex min-h-screen">
+    <!-- ── Sidebar ─────────────────────────────────────────── -->
+    <aside id="main-sidebar"
+        class="h-[calc(100vh-4rem)] w-64 fixed left-0 top-16 flex flex-col bg-slate-50 p-4 border-r border-slate-200/60 z-40
+               transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+
+        <!-- User info -->
+        <div class="flex items-center gap-3 p-4 mb-2">
+            <div class="w-10 h-10 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold flex-shrink-0">
+                {% if current_user.profile_picture %}
+                <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
+                {% else %}
+                {{ (current_user.law_firm_name or current_user.full_name)[0].upper() }}
+                {% endif %}
+            </div>
+            <div class="overflow-hidden">
+                <h3 class="font-headline text-sm font-bold text-slate-900 leading-tight truncate">{{ current_user.law_firm_name or current_user.full_name }}</h3>
+                <p class="text-xs text-slate-500">Legal Counsel</p>
+            </div>
+        </div>
+
+        <!-- Main nav -->
+        <nav class="space-y-1 flex-1">
+            <a href="#"
+               class="flex items-center gap-3 bg-white text-blue-700 rounded-xl px-4 py-3 shadow-sm text-sm font-bold">
+                <span class="material-symbols-outlined">dashboard</span><span>Overview</span>
+            </a>
+            <a href="{{ url_for('module2.legal_evidence_review') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">folder_managed</span><span>Evidence Review</span>
+            </a>
+            <a href="{{ url_for('core_features.chatbot_ui') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">gavel</span><span>Legal AI</span>
+            </a>
+            <a href="{{ url_for('module3.dashboard') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">description</span><span>Reporting Dashboard</span>
+            </a>
+            <a href="{{ url_for('core_features.guide') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">help_center</span><span>Help &amp; Guide</span>
+            </a>
+        </nav>
+
+        <!-- Logout pinned at bottom left (mt-auto pushes it down) -->
+        <div class="mt-auto pt-4 space-y-1 border-t border-slate-200">
+            <a href="{{ url_for('auth.logout') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-red-50 hover:text-red-600 rounded-xl text-sm font-semibold transition-colors">
+                <span class="material-symbols-outlined">logout</span><span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ── Main Content ────────────────────────────────────── -->
+    <main class="flex-1 md:ml-64 p-4 md:p-8 lg:p-12 pb-24 md:pb-12">
+
         <!-- Dashboard Header -->
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
             <div class="flex-1">
                 <span class="text-xs font-bold tracking-[0.2em] text-primary uppercase mb-2 block">LEGAL CONSOLE</span>
-                <h1 class="text-3xl md:text-4xl font-extrabold text-on-surface mb-2 tracking-tight">
-                    Welcome, <span class="text-teal-600 dark:text-teal-400">{{ current_user.full_name }}</span>
+                <h1 class="text-3xl md:text-4xl font-headline font-extrabold text-on-surface mb-2 tracking-tight">
+                    Welcome, <span class="text-teal-600">{{ current_user.full_name }}</span>
                 </h1>
                 <p class="text-on-surface-variant font-medium">Here is your case overview for today.</p>
             </div>
-            <div class="flex items-stretch gap-4">
-                <!-- Metrics -->
-                <div
-                    class="bg-surface-container-lowest p-4 rounded-xl border-l-4 border-primary shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] min-w-[140px]">
+            <div class="flex flex-wrap items-stretch gap-3 md:gap-4 w-full md:w-auto">
+                <div class="bg-white p-4 rounded-xl border-l-4 border-primary shadow-sm flex-1 min-w-[110px]">
                     <span class="text-xs font-bold text-on-surface-variant block mb-1">Total Defects</span>
                     <span class="text-2xl font-black text-on-surface">0</span>
                 </div>
-                <div
-                    class="bg-surface-container-lowest p-4 rounded-xl border-l-4 border-error shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] min-w-[140px]">
+                <div class="bg-white p-4 rounded-xl border-l-4 border-red-500 shadow-sm flex-1 min-w-[110px]">
                     <span class="text-xs font-bold text-on-surface-variant block mb-1">Action Required</span>
                     <span class="text-2xl font-black text-on-surface">--</span>
                 </div>
                 <a href="{{ url_for('module3.dashboard') }}"
-                    class="bg-gradient-to-b from-primary to-primary-container text-white px-6 py-4 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary/20 self-center">
+                    class="bg-gradient-to-b from-primary to-primary-container text-white px-5 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary/20 self-center w-full sm:w-auto justify-center">
                     <span class="material-symbols-outlined text-sm">analytics</span>
                     Reporting Dashboard
                 </a>
             </div>
         </div>
+
         <!-- Action Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <!-- Evidence Review -->
-            <div
-                class="group relative bg-surface-container-lowest p-6 rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] overflow-hidden transition-all hover:-translate-y-1">
-                <span
-                    class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">folder_managed</span>
+            <div class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
+                <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">folder_managed</span>
                 <div class="relative z-10 flex flex-col h-full">
-                    <h3 class="font-bold text-lg text-on-surface mb-2">Evidence Review</h3>
-                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Validate photographic and document
-                        evidence submitted by homeowners.</p>
+                    <h3 class="font-headline font-bold text-lg text-on-surface mb-2">Evidence Review</h3>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Validate photographic and document evidence submitted by homeowners.</p>
                     <a href="{{ url_for('module2.legal_evidence_review') }}"
-                        class="mt-auto border-2 border-primary text-primary font-bold py-2 px-4 rounded-lg text-sm hover:bg-primary hover:text-white transition-all w-fit inline-block">
+                        class="mt-auto border-2 border-primary text-primary font-bold py-2 px-4 rounded-xl text-sm hover:bg-primary hover:text-white transition-all w-fit inline-block">
                         Launch Review
                     </a>
                 </div>
             </div>
-
             <!-- Clause Retrieval -->
-            <div
-                class="group relative bg-surface-container-lowest p-6 rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] overflow-hidden transition-all hover:-translate-y-1">
-                <span
-                    class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">gavel</span>
+            <div class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
+                <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">gavel</span>
                 <div class="relative z-10 flex flex-col h-full">
-                    <h3 class="font-bold text-lg text-on-surface mb-2">Clause Retrieval</h3>
-                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Automated matching of defect types
-                        to relevant SPA legal clauses.</p>
+                    <h3 class="font-headline font-bold text-lg text-on-surface mb-2">Clause Retrieval</h3>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Automated matching of defect types to relevant SPA legal clauses.</p>
                     <a href="{{ url_for('core_features.chatbot_ui') }}"
-                        class="mt-auto border-2 border-primary text-primary font-bold py-2 px-4 rounded-lg text-sm hover:bg-primary hover:text-white transition-all w-fit">ask
-                        DLP Chatbot</a>
+                        class="mt-auto border-2 border-primary text-primary font-bold py-2 px-4 rounded-xl text-sm hover:bg-primary hover:text-white transition-all w-fit">
+                        Ask DLP Chatbot
+                    </a>
                 </div>
             </div>
             <!-- Lock Evidence -->
-            <div
-                class="group relative bg-surface-container-lowest p-6 rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] overflow-hidden transition-all hover:-translate-y-1">
-                <span
-                    class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">lock</span>
+            <div class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
+                <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">lock</span>
                 <div class="relative z-10 flex flex-col h-full">
-                    <h3 class="font-bold text-lg text-on-surface mb-2">Lock Evidence</h3>
-                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Seal current case records to prevent
-                        further modifications during litigation.</p>
-                    <button
-                        class="mt-auto border-2 border-slate-200 text-slate-400 font-bold py-2 px-4 rounded-lg text-sm cursor-not-allowed w-fit"
-                        disabled="">
+                    <h3 class="font-headline font-bold text-lg text-on-surface mb-2">Lock Evidence</h3>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Seal current case records to prevent further modifications during litigation.</p>
+                    <button class="mt-auto border-2 border-slate-200 text-slate-400 font-bold py-2 px-4 rounded-xl text-sm cursor-not-allowed w-fit" disabled>
                         Locked
                     </button>
                 </div>
             </div>
             <!-- Lidar Scans -->
-            <div
-                class="group relative bg-surface-container-lowest p-6 rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.04)] overflow-hidden transition-all hover:-translate-y-1">
-                <span
-                    class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-teal-50 transition-colors pointer-events-none">deployed_code</span>
+            <div class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
+                <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-teal-50 transition-colors pointer-events-none">deployed_code</span>
                 <div class="relative z-10 flex flex-col h-full">
-                    <h3 class="font-bold text-lg text-on-surface mb-2">Lidar Scans</h3>
-                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">View 3D defect visualization and
-                        scan projects.</p>
+                    <h3 class="font-headline font-bold text-lg text-on-surface mb-2">Lidar Scans</h3>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">View 3D defect visualization and scan projects.</p>
                     <a href="{{ url_for('module2.list_projects') }}"
-                        class="mt-auto border-2 border-teal-600 text-teal-600 font-bold py-2 px-4 rounded-lg text-sm hover:bg-teal-600 hover:text-white transition-all w-fit">View
-                        Scans</a>
+                        class="mt-auto border-2 border-teal-600 text-teal-600 font-bold py-2 px-4 rounded-xl text-sm hover:bg-teal-600 hover:text-white transition-all w-fit">
+                        View Scans
+                    </a>
                 </div>
             </div>
         </div>
+
         <!-- Pending Cases Queue -->
-        <div class="bg-surface-container-low rounded-2xl p-8 mb-8 overflow-hidden">
-            <div class="flex items-center justify-between mb-8">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-primary p-2 bg-white rounded-lg shadow-sm">list_alt</span>
-                    <h2 class="text-xl font-bold text-on-surface">Pending Cases Queue</h2>
-                </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden mb-12">
+            <div class="flex flex-wrap items-center justify-between px-6 py-5 bg-slate-50/50 gap-4">
+                <h2 class="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">list_alt</span>Pending Cases Queue
+                </h2>
                 <div class="relative">
-                    <select
-                        class="appearance-none bg-surface-container-lowest border-none px-6 py-2.5 pr-10 rounded-xl text-sm font-semibold text-on-surface-variant shadow-sm focus:ring-2 focus:ring-primary/20">
+                    <select class="appearance-none bg-white border border-slate-300 px-4 py-2 pr-9 rounded-xl text-sm font-semibold text-on-surface-variant focus:ring-2 focus:ring-primary/30 outline-none">
                         <option>Filter by Priority</option>
                         <option>Urgent</option>
                         <option>Scheduled</option>
                         <option>Low Priority</option>
                     </select>
-                    <span
-                        class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-lg">expand_more</span>
+                    <span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-lg">expand_more</span>
                 </div>
             </div>
-            <div class="bg-surface-container-lowest rounded-xl shadow-[0_24px_40px_-15px_rgba(0,0,0,0.02)] overflow-hidden">
-                <table class="w-full text-left">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left min-w-[640px]">
                     <thead>
-                        <tr class="bg-surface-container-highest/30">
-                            <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
-                                Reference</th>
-                            <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
-                                Client Name</th>
-                            <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
-                                Defect Status</th>
-                            <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
-                                Assigned Date</th>
-                            <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
-                                Action</th>
+                        <tr class="bg-slate-50/80">
+                            <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Reference</th>
+                            <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Client Name</th>
+                            <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Defect Status</th>
+                            <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Assigned Date</th>
+                            <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if pending_cases %}
                         {% for case in pending_cases %}
-                        <tr class="border-b border-slate-100 hover:bg-surface-container-low transition-colors duration-100">
-                            <!-- Reference -->
-                            <td class="px-8 py-4">
+                        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors duration-100">
+                            <td class="px-6 py-4">
                                 <span class="text-sm font-mono font-bold text-on-surface">#DFT-{{ case.id }}</span>
                                 {% if case.is_verified %}
                                 <span class="ml-2 text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">VERIFIED</span>
                                 {% endif %}
                             </td>
-                            <!-- Client Name -->
-                            <td class="px-8 py-4">
+                            <td class="px-6 py-4">
                                 <span class="text-sm font-semibold text-on-surface">{{ case.client_name }}</span>
                                 {% if case.scan_name %}
                                 <p class="text-xs text-on-surface-variant">{{ case.scan_name }}</p>
                                 {% endif %}
                             </td>
-                            <!-- Defect Status -->
-                            <td class="px-8 py-4">
+                            <td class="px-6 py-4">
                                 {% set s = case.status %}
                                 {% if s == 'Fixed' %}
                                 <span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
@@ -311,10 +358,8 @@
                                 {% endif %}
                                 <p class="text-[10px] text-on-surface-variant mt-1">{{ case.severity }}</p>
                             </td>
-                            <!-- Assigned Date -->
-                            <td class="px-8 py-4 text-sm text-on-surface-variant">{{ case.assigned_date }}</td>
-                            <!-- Action -->
-                            <td class="px-8 py-4">
+                            <td class="px-6 py-4 text-sm text-on-surface-variant">{{ case.assigned_date }}</td>
+                            <td class="px-6 py-4">
                                 <a href="{{ url_for('module2.legal_evidence_review') }}"
                                    class="inline-flex items-center gap-1 text-xs font-bold text-primary border border-primary/30 px-3 py-1.5 rounded-lg hover:bg-primary hover:text-white transition-all">
                                     <span class="material-symbols-outlined text-[14px]">folder_managed</span>
@@ -326,7 +371,7 @@
                         {% else %}
                         <tr>
                             <td colspan="5">
-                                <div class="py-32 flex flex-col items-center justify-center opacity-40">
+                                <div class="py-24 flex flex-col items-center justify-center opacity-40">
                                     <span class="material-symbols-outlined text-7xl mb-4 font-extralight">inbox_customize</span>
                                     <p class="text-xl font-medium tracking-tight">No active cases found in the database</p>
                                     <p class="text-sm mt-2">New cases will appear here as they are filed by users.</p>
@@ -338,55 +383,116 @@
                 </table>
             </div>
         </div>
-        <footer
-            class="mt-20 border-t border-slate-200 pt-8 text-on-surface-variant text-sm font-medium">
-            <p>© 2024 DLP Advisor. Legal Document Processing & Defect Tracking Platform.</p>
-        </footer>
-    </main>
-    <!-- SideNavBar (Mobile Trigger/Hidden) -->
-    <aside
-        class="hidden lg:flex flex-col fixed left-0 top-0 h-full border-r border-transparent w-64 translate-x-[-100%] transition-transform">
-        <!-- Structural placeholder as per Shared Components but suppressed on this specific view for minimalism -->
-    </aside>
 
-    <!-- TOAST NOTIFICATIONS -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3">
-          {% for category, message in messages %}
-            {% set bg_color = 'bg-blue-600' %}
-            {% set text_color = 'text-white' %}
-            {% if category == 'success' %}
-              {% set bg_color = 'bg-green-600' %}
-            {% elif category == 'error' or category == 'danger' %}
-              {% set bg_color = 'bg-red-600' %}
-            {% elif category == 'warning' %}
-              {% set bg_color = 'bg-yellow-500' %}
-              {% set text_color = 'text-gray-900' %}
-            {% endif %}
-            <div class="toast-message flex items-center p-4 w-full max-w-xs rounded-lg shadow-lg opacity-100 transition-opacity duration-500 ease-in-out {{ bg_color }} {{ text_color }}" role="alert">
-              <div class="text-sm font-medium">{{ message }}</div>
-              <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-transparent hover:opacity-75 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 inline-flex h-8 w-8" onclick="this.parentElement.remove();" aria-label="Close">
-                <span class="sr-only">Close</span>
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-              </button>
-            </div>
-          {% endfor %}
+        <footer class="border-t border-slate-200 pt-6 text-on-surface-variant text-sm font-medium">
+            <p>&copy; 2024 DLP Advisor. Legal Document Processing &amp; Defect Tracking Platform.</p>
+        </footer>
+
+    </main>
+</div>
+
+<!-- ── Mobile Bottom Nav ──────────────────────────────────── -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md flex justify-around items-center py-3 px-4 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] border-t border-slate-100 z-50">
+    <a class="flex flex-col items-center gap-1 text-primary" href="#">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-[10px] font-bold">Overview</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="{{ url_for('module2.legal_evidence_review') }}">
+        <span class="material-symbols-outlined">folder_managed</span>
+        <span class="text-[10px] font-bold">Evidence</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="{{ url_for('module3.dashboard') }}">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-[10px] font-bold">Reports</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="{{ url_for('module3.profile') }}">
+        <span class="material-symbols-outlined">person</span>
+        <span class="text-[10px] font-bold">Profile</span>
+    </a>
+</nav>
+
+<!-- TOAST NOTIFICATIONS -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3">
+      {% for category, message in messages %}
+        {% set bg_color = 'bg-blue-600' %}
+        {% set text_color = 'text-white' %}
+        {% if category == 'success' %}
+          {% set bg_color = 'bg-green-600' %}
+        {% elif category == 'error' or category == 'danger' %}
+          {% set bg_color = 'bg-red-600' %}
+        {% elif category == 'warning' %}
+          {% set bg_color = 'bg-yellow-500' %}
+          {% set text_color = 'text-gray-900' %}
+        {% endif %}
+        <div class="toast-message flex items-center p-4 w-full max-w-xs rounded-lg shadow-lg opacity-100 transition-opacity duration-500 ease-in-out {{ bg_color }} {{ text_color }}" role="alert">
+          <div class="text-sm font-medium">{{ message }}</div>
+          <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-transparent hover:opacity-75 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 inline-flex h-8 w-8" onclick="this.parentElement.remove();" aria-label="Close">
+            <span class="sr-only">Close</span>
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+          </button>
         </div>
-        <script>
-          document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-              var toasts = document.querySelectorAll('.toast-message');
-              toasts.forEach(function(toast) {
-                toast.classList.remove('opacity-100');
-                toast.classList.add('opacity-0');
-                setTimeout(function() { toast.remove(); }, 500);
-              });
-            }, 4000);
+      {% endfor %}
+    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          var toasts = document.querySelectorAll('.toast-message');
+          toasts.forEach(function(toast) {
+            toast.classList.remove('opacity-100');
+            toast.classList.add('opacity-0');
+            setTimeout(function() { toast.remove(); }, 500);
           });
-        </script>
-      {% endif %}
-    {% endwith %}
+        }, 4000);
+      });
+    </script>
+  {% endif %}
+{% endwith %}
+
+<!-- Sidebar hamburger toggle (mobile) -->
+<script>
+(function () {
+    var toggle  = document.getElementById('sidebar-toggle');
+    var sidebar = document.getElementById('main-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    var icon    = document.getElementById('sidebar-hamburger-icon');
+    if (!toggle || !sidebar) return;
+    function openSidebar() {
+        sidebar.classList.remove('-translate-x-full');
+        if (overlay) overlay.classList.remove('hidden');
+        icon.textContent = 'close';
+        toggle.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+        sidebar.classList.add('-translate-x-full');
+        if (overlay) overlay.classList.add('hidden');
+        icon.textContent = 'menu';
+        toggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+    }
+    toggle.addEventListener('click', function () {
+        sidebar.classList.contains('-translate-x-full') ? openSidebar() : closeSidebar();
+    });
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+})();
+</script>
+<!-- Gear dropdown toggle -->
+<script>
+(function () {
+    var btn  = document.getElementById('gear-btn');
+    var menu = document.getElementById('gear-dropdown');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = menu.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', !open);
+    });
+    document.addEventListener('click', function () { menu.classList.add('hidden'); btn.setAttribute('aria-expanded', 'false'); });
+    menu.addEventListener('click', function (e) { e.stopPropagation(); });
+})();
+</script>
 
 </body>
 
