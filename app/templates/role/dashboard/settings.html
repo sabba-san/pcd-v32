@@ -304,25 +304,35 @@
       {% endif %}
     {% endwith %}
 
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        async function initMap() {
             const options = {
-                componentRestrictions: { country: "my" },
-                fields: ["formatted_address", "name"],
-                strictBounds: false,
+                componentRestrictions: { country: "my" }
             };
 
-            const housingProjectInput = document.getElementById('housing_project');
-            if (housingProjectInput) {
-                const housingAutocomplete = new google.maps.places.Autocomplete(housingProjectInput, options);
+            function setupAutocomplete(inputId) {
+                const input = document.getElementById(inputId);
+                if (!input) return;
+
+                const autocomplete = new google.maps.places.PlaceAutocompleteElement(options);
+                
+                // Copy some basic styling classes if possible, though shadow DOM restricts some
+                autocomplete.classList.add('w-full');
+                
+                // Insert web component and hide original input (keep it for form submission)
+                input.parentNode.insertBefore(autocomplete, input);
+                input.style.display = 'none';
+
+                autocomplete.addEventListener('gmp-placeselect', async ({ place }) => {
+                    await place.fetchFields({ fields: ['displayName', 'formattedAddress'] });
+                    input.value = place.formattedAddress || place.displayName;
+                });
             }
 
-            const correspondenceAddressInput = document.getElementById('correspondence_address');
-            if (correspondenceAddressInput) {
-                const addressAutocomplete = new google.maps.places.Autocomplete(correspondenceAddressInput, options);
-            }
-        });
+            setupAutocomplete('housing_project');
+            setupAutocomplete('correspondence_address');
+        }
     </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&loading=async&callback=initMap" async defer></script>
 </body>
 </html>

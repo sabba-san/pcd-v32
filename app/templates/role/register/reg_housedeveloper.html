@@ -334,13 +334,30 @@
         </script>
       {% endif %}
     {% endwith %}
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var mapsOptions = { componentRestrictions: { country: 'my' }, fields: ['formatted_address', 'name'] };
-            new google.maps.places.Autocomplete(document.getElementById('address'), mapsOptions);
-        });
+        async function initMap() {
+            var options = { componentRestrictions: { country: 'my' } };
+            
+            function setupAutocomplete(inputId) {
+                var input = document.getElementById(inputId);
+                if (!input) return;
+
+                const autocomplete = new google.maps.places.PlaceAutocompleteElement(options);
+                autocomplete.classList.add('w-full');
+                
+                input.parentNode.insertBefore(autocomplete, input);
+                input.style.display = 'none';
+
+                autocomplete.addEventListener('gmp-placeselect', async ({ place }) => {
+                    await place.fetchFields({ fields: ['displayName', 'formattedAddress'] });
+                    input.value = place.formattedAddress || place.displayName;
+                });
+            }
+
+            setupAutocomplete('address');
+        }
     </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&loading=async&callback=initMap" async defer></script>
 
 </body>
 </html>
