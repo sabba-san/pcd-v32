@@ -160,7 +160,7 @@
                     {% endif %}
                     <div class="space-y-1.5">
                         <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Correspondence Address</label>
-                        <textarea id="correspondence_address" name="correspondence_address" rows="3" class="m3-input resize-y" placeholder="Your full mailing address">{{ user.correspondence_address or '' }}</textarea>
+                        <input type="text" id="correspondence_address" name="correspondence_address" value="{{ user.correspondence_address or '' }}" class="m3-input" placeholder="Your full mailing address">
                         <p class="text-[10px] text-slate-400 px-1 mt-1">Used as your homeowner address in tribunal reports.</p>
                     </div>
                 </div>
