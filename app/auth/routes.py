@@ -187,7 +187,8 @@ def reg_homeowner():
         flash('Account created successfully! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('role/register/reg_homeowner.html')
+    import os
+    return render_template('role/register/reg_homeowner.html', google_maps_api_key=os.environ.get('GOOGLE_MAPS_API_KEY', ''))
 
 
 # ── Lawyer Registration ───────────────────────────────────────────────────────
@@ -225,7 +226,8 @@ def reg_lawyer():
         flash('Account created successfully! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('role/register/reg_lawyer.html')
+    import os
+    return render_template('role/register/reg_lawyer.html', google_maps_api_key=os.environ.get('GOOGLE_MAPS_API_KEY', ''))
 
 
 # ── Housing Developer Registration ───────────────────────────────────────────
@@ -275,7 +277,8 @@ def reg_housedeveloper():
         flash('Account created successfully! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('role/register/reg_housedeveloper.html')
+    import os
+    return render_template('role/register/reg_housedeveloper.html', google_maps_api_key=os.environ.get('GOOGLE_MAPS_API_KEY', ''))
 
 
 # ── Dashboards ────────────────────────────────────────────────────────────────

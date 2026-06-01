@@ -103,24 +103,9 @@
                     <!-- Row 2: Housing Project & Unit -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Select Housing Project</label>
-                            <div class="relative">
-                                <select class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] bg-none focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface appearance-none"
-                                    id="housing_project" name="housing_project" onchange="handleProjectChange(this)" required>
-                                    <option value="" disabled selected>Choose a property...</option>
-                                    <option value="Skyline Residences - Phase 1">Skyline Residences - Phase 1</option>
-                                    <option value="The Orchard Commons">The Orchard Commons</option>
-                                    <option value="Emerald Heights Tower B">Emerald Heights Tower B</option>
-                                    <option value="Oakwood Gardens Phase 4">Oakwood Gardens Phase 4</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
-                            </div>
-                            <!-- Conditional Other Property Input -->
-                            <div id="other-property-wrapper" class="hidden mt-2">
-                                <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
-                                    id="other_property" name="other_property" placeholder="Type your property name..." type="text">
-                            </div>
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Housing Project / Taman</label>
+                            <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="housing_project" name="housing_project" placeholder="Search your Taman / Project..." type="text" required autocomplete="off">
                         </div>
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">House Unit No.</label>
@@ -152,8 +137,8 @@
                     <!-- Row 4: Address -->
                     <div class="space-y-2">
                         <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Correspondence Address</label>
-                        <textarea class="w-full px-6 py-4 rounded-2xl border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline resize-none"
-                            id="address" name="address" placeholder="Full mailing address..." rows="3" required></textarea>
+                        <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
+                            id="address" name="address" placeholder="Full mailing address..." type="text" required autocomplete="off">
                     </div>
 
                     <!-- Row 5: Password -->
@@ -231,18 +216,7 @@
         });
 
         // ── Dropdown: housing project ──────────────────────────────────────────
-        function handleProjectChange(select) {
-            const wrapper = document.getElementById('other-property-wrapper');
-            const otherInput = document.getElementById('other_property');
-            if (select.value === 'other') {
-                wrapper.classList.remove('hidden');
-                otherInput.required = true;
-            } else {
-                wrapper.classList.add('hidden');
-                otherInput.required = false;
-                otherInput.value = '';
-            }
-        }
+        // (Replaced by Google Maps Autocomplete — no longer needed)
 
         // ── Real-time password strength indicator ──────────────────────────────
         const SPECIAL_CHARS = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
@@ -354,6 +328,14 @@
         </script>
       {% endif %}
     {% endwith %}
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var mapsOptions = { componentRestrictions: { country: 'my' }, fields: ['formatted_address', 'name'] };
+            new google.maps.places.Autocomplete(document.getElementById('housing_project'), mapsOptions);
+            new google.maps.places.Autocomplete(document.getElementById('address'), mapsOptions);
+        });
+    </script>
 
 </body>
 </html>

@@ -361,6 +361,13 @@
         </script>
       {% endif %}
     {% endwith %}
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var mapsOptions = { componentRestrictions: { country: 'my' }, fields: ['formatted_address', 'name'] };
+            new google.maps.places.Autocomplete(document.getElementById('firm_name'), mapsOptions);
+        });
+    </script>
 
 </body>
 
