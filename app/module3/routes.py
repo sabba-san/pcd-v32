@@ -1824,9 +1824,21 @@ def dashboard():
     role = (_raw_role.capitalize() if _raw_role else "Legal")
     if role == "Lawyer": role = "Legal"
     
+    # Check if homeowner has completed mandatory profile details
+    # Exempt profile and settings pages to prevent redirect loops
+    from flask import request
+    if role == "Homeowner":
+        exempt_endpoints = ['module3.profile', 'module3.settings', 'module3.update_profile', 'module3.change_password']
+        if not request.endpoint or request.endpoint not in exempt_endpoints:
+            from ..models import User
+            user = User.query.get(current_user.id)
+            if not user.housing_project or not user.unit or not user.correspondence_address:
+                flash('Please complete your property details to continue', 'warning')
+                return redirect(url_for('module3.profile'))
+    
     auto_close_completed_cases(trigger_role=role)
     backfill_missing_deadlines()
-
+    
     if role == "Admin":
         defects = get_defects_for_role("Developer")
         stats = calculate_stats(defects)
@@ -3393,7 +3405,9 @@ def profile():
 @module3.route('/settings')
 @login_required
 def settings():
-    return render_template('role/dashboard/settings.html', user=current_user)
+    import os
+    google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY', '')
+    return render_template('role/dashboard/settings.html', user=current_user, google_maps_api_key=google_maps_api_key)
 
 @module3.route('/update_profile', methods=['POST'])
 @login_required
@@ -3453,6 +3467,16 @@ def update_profile():
     new_address = request.form.get('correspondence_address', '').strip()
     if new_address:
         current_user.correspondence_address = new_address
+
+    # 5. Update Housing Project and Unit (For Homeowners)
+    if current_user.user_type == 'homeowner':
+        new_project = request.form.get('housing_project', '').strip()
+        if new_project:
+            current_user.housing_project = new_project
+        
+        new_unit = request.form.get('unit', '').strip()
+        if new_unit:
+            current_user.unit = new_unit
 
     db.session.commit()
     return redirect(url_for('module3.profile'))

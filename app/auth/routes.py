@@ -286,6 +286,16 @@ def homeowner_dashboard():
     """Homeowner dashboard: show the current user's reported defects in Recent Activity."""
     if current_user.user_type != 'homeowner':
         abort(403)
+    
+    # Check if homeowner has completed mandatory profile details
+    # Exempt profile and settings pages to prevent redirect loops
+    from flask import request
+    exempt_endpoints = ['module3.profile', 'module3.settings', 'module3.update_profile', 'module3.change_password']
+    if not request.endpoint or request.endpoint not in exempt_endpoints:
+        if not current_user.housing_project or not current_user.unit or not current_user.correspondence_address:
+            flash('Please complete your property details to continue', 'warning')
+            return redirect(url_for('module3.profile'))
+    
     recent_defects = (
         Defect.query
         .filter_by(user_id=current_user.id)

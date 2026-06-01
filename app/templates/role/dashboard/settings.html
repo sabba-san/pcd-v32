@@ -148,9 +148,19 @@
                         <input type="tel" name="phone_number" value="{{ user.phone_number or '' }}" class="m3-input" placeholder="e.g. 0123456789">
                         <p class="text-[10px] text-slate-400 px-1 mt-1">Required for claim report generation.</p>
                     </div>
+                    {% if user.user_type == 'homeowner' %}
+                    <div class="space-y-1.5">
+                        <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Housing Project</label>
+                        <input type="text" id="housing_project" name="housing_project" value="{{ user.housing_project or '' }}" class="m3-input" placeholder="Search your Taman/Project...">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Unit No.</label>
+                        <input type="text" id="unit" name="unit" value="{{ user.unit or '' }}" class="m3-input" placeholder="e.g. A-12-3">
+                    </div>
+                    {% endif %}
                     <div class="space-y-1.5">
                         <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Correspondence Address</label>
-                        <textarea name="correspondence_address" rows="3" class="m3-input resize-y" placeholder="Your full mailing address">{{ user.correspondence_address or '' }}</textarea>
+                        <textarea id="correspondence_address" name="correspondence_address" rows="3" class="m3-input resize-y" placeholder="Your full mailing address">{{ user.correspondence_address or '' }}</textarea>
                         <p class="text-[10px] text-slate-400 px-1 mt-1">Used as your homeowner address in tribunal reports.</p>
                     </div>
                 </div>
@@ -260,5 +270,25 @@
       {% endif %}
     {% endwith %}
 
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const options = {
+                componentRestrictions: { country: "my" },
+                fields: ["formatted_address", "name"],
+                strictBounds: false,
+            };
+
+            const housingProjectInput = document.getElementById('housing_project');
+            if (housingProjectInput) {
+                const housingAutocomplete = new google.maps.places.Autocomplete(housingProjectInput, options);
+            }
+
+            const correspondenceAddressInput = document.getElementById('correspondence_address');
+            if (correspondenceAddressInput) {
+                const addressAutocomplete = new google.maps.places.Autocomplete(correspondenceAddressInput, options);
+            }
+        });
+    </script>
 </body>
 </html>
