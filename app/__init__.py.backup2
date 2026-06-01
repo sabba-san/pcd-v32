@@ -108,57 +108,57 @@ def create_app():
     with app.app_context():
         from . import models  # noqa: F401 — ensures models are registered before create_all
         db.create_all()
-        # ── Safe migrations for new columns (idempotent) ──────────────────────
-        for stmt in [
-            "ALTER TABLE defects ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE",
-            "ALTER TABLE defects ADD COLUMN IF NOT EXISTS verified_by_id INTEGER REFERENCES users(id)",
-            "ALTER TABLE defects ADD COLUMN IF NOT EXISTS legal_remarks TEXT",
-            "ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER REFERENCES users(id)",
-            "ALTER TABLE scans ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)",
-            "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE",
-        ]:
-            try:
-                db.session.execute(text(stmt))
-            except Exception:
-                db.session.rollback()
-        db.session.commit()
+     # ── Safe migrations for new columns (idempotent) ──────────────────────
+     for stmt in [
+         "ALTER TABLE defects ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE",
+         "ALTER TABLE defects ADD COLUMN IF NOT EXISTS verified_by_id INTEGER REFERENCES users(id)",
+         "ALTER TABLE defects ADD COLUMN IF NOT EXISTS legal_remarks TEXT",
+         "ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER REFERENCES users(id)",
+         "ALTER TABLE scans ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)",
+         "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE",
+     ]:
+         try:
+             db.session.execute(text(stmt))
+         except Exception:
+             db.session.rollback()
+     db.session.commit()
 
-    @app.cli.command("init-db")
-    def init_db_command():
-        """Initialize the database safely (tables and seed data)."""
-        import click
-        from .module3.routes import _ensure_module3_tables, _ensure_login_accounts_seeded
-        from .module3.report_data import _ensure_report_metadata_tables
-        
-        click.echo("Creating SQLAlchemy tables...")
-        from . import models  # noqa: F401
-        db.create_all()
+     @app.cli.command("init-db")
+     def init_db_command():
+         """Initialize the database safely (tables and seed data)."""
+         import click
+         from .module3.routes import _ensure_module3_tables, _ensure_login_accounts_seeded
+         from .module3.report_data import _ensure_report_metadata_tables
          
-        click.echo("Ensuring Module 3 supplemental tables...")
-        _ensure_module3_tables()
-         
-        click.echo("Ensuring report metadata tables...")
-        _ensure_report_metadata_tables()
-         
-        click.echo("Seeding login accounts...")
-        _ensure_login_accounts_seeded()
-         
-        click.echo("Synchronizing database sequences...")
-        db.session.execute(text("SELECT setval(pg_get_serial_sequence('users', 'id'), coalesce(max(id), 1), max(id) IS NOT null) FROM users;"))
-        db.session.commit()
-         
-        click.echo("Database initialization complete.")
+         click.echo("Creating SQLAlchemy tables...")
+         from . import models  # noqa: F401
+         db.create_all()
+          
+         click.echo("Ensuring Module 3 supplemental tables...")
+         _ensure_module3_tables()
+          
+         click.echo("Ensuring report metadata tables...")
+         _ensure_report_metadata_tables()
+          
+         click.echo("Seeding login accounts...")
+         _ensure_login_accounts_seeded()
+          
+         click.echo("Synchronizing database sequences...")
+         db.session.execute(text("SELECT setval(pg_get_serial_sequence('users', 'id'), coalesce(max(id), 1), max(id) IS NOT null) FROM users;"))
+         db.session.commit()
+          
+         click.echo("Database initialization complete.")
 
-    @app.route('/')
-    def index():
-        return redirect(url_for('auth.login'))
+     @app.route('/')
+     def index():
+         return redirect(url_for('auth.login'))
 
-    # Context processor to inject Google Maps API key into templates
-    @app.context_processor
-    def inject_google_maps_key():
-        return dict(google_maps_api_key=os.environ.get('GOOGLE_MAPS_API_KEY', ''))
+     # Context processor to inject Google Maps API key into templates
+     @app.context_processor
+     def inject_google_maps_key():
+         return dict(google_maps_api_key=os.environ.get('GOOGLE_MAPS_API_KEY', ''))
 
-    return app
+     return app
 
 
 # <--- Add this line at the very bottom!

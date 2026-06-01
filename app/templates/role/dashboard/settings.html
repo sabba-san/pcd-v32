@@ -143,11 +143,45 @@
                         <input type="text" value="{{ user.full_name }}" disabled class="m3-input bg-slate-50 opacity-60 cursor-not-allowed">
                         <p class="text-[10px] text-slate-400 px-1 mt-1">Full name is locked for verification purposes.</p>
                     </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Phone Number</label>
-                        <input type="tel" name="phone_number" value="{{ user.phone_number or '' }}" class="m3-input" placeholder="e.g. 0123456789">
-                        <p class="text-[10px] text-slate-400 px-1 mt-1">Required for claim report generation.</p>
-                    </div>
+                 <div class="space-y-1.5">
+                     <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Phone Number</label>
+                     <input type="tel" name="phone_number" value="{{ user.phone_number or '' }}" class="m3-input" placeholder="e.g. 0123456789">
+                     <p class="text-[10px] text-slate-400 px-1 mt-1">Required for claim report generation.</p>
+                 </div>
+                 {% if user.user_type == 'homeowner' %}
+                 <div class="space-y-1.5">
+                     <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Housing Project</label>
+                     <input type="text" id="housing_project" name="housing_project" value="{{ user.housing_project or '' }}" class="m3-input" placeholder="Search your Taman/Project...">
+                     <p class="text-[10px] text-slate-400 px-1 mt-1">Used for property identification in reports.</p>
+                 </div>
+                 <div class="space-y-1.5">
+                     <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Unit No.</label>
+                     <input type="text" id="unit" name="unit" value="{{ user.unit or '' }}" class="m3-input" placeholder="e.g. A-12-3">
+                     <p class="text-[10px] text-slate-400 px-1 mt-1">Your unit number within the housing project.</p>
+                 </div>
+                 {% endif %}
+                 <div class="space-y-1.5">
+                     <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Correspondence Address</label>
+                     <input type="text" id="correspondence_address" name="correspondence_address" value="{{ user.correspondence_address or '' }}" class="m3-input" placeholder="Your full mailing address">
+                     <p class="text-[10px] text-slate-400 px-1 mt-1">Used as your homeowner address in tribunal reports.</p>
+                 </div>
+                 {% if user.user_type == 'homeowner' %}
+                 <div class="space-y-1.5">
+                     <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Housing Project</label>
+                     <input type="text" id="housing_project" name="housing_project" value="{{ user.housing_project or '' }}" class="m3-input" placeholder="Search your Taman/Project...">
+                     <p class="text-[10px] text-slate-400 px-1 mt-1">Used for property identification in reports.</p>
+                 </div>
+                 <div class="space-y-1.5">
+                     <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Unit No.</label>
+                     <input type="text" id="unit" name="unit" value="{{ user.unit or '' }}" class="m3-input" placeholder="e.g. A-12-3">
+                     <p class="text-[10px] text-slate-400 px-1 mt-1">Your unit number within the housing project.</p>
+                 </div>
+                 {% endif %}
+                 <div class="space-y-1.5">
+                     <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Correspondence Address</label>
+                     <input type="text" id="correspondence_address" name="correspondence_address" value="{{ user.correspondence_address or '' }}" class="m3-input" placeholder="Your full mailing address">
+                     <p class="text-[10px] text-slate-400 px-1 mt-1">Used as your homeowner address in tribunal reports.</p>
+                 </div>
                     {% if user.user_type == 'homeowner' %}
                     <div class="space-y-1.5">
                         <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Housing Project</label>
