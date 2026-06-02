@@ -8,6 +8,12 @@ def guide():
     """Renders the role-based user guide."""
     return render_template('help_guide.html')
 
+@bp.route('/get-started')
+@login_required
+def get_started():
+    """Renders the Get Started & FAQ page."""
+    return render_template('get_started_faq.html')
+
 @bp.route('/chatbot')
 @login_required
 def chatbot_ui():

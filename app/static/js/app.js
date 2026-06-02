@@ -52,7 +52,6 @@ class DLPChatbotApp {
 
         // General UI
         this.clearDataBtn = document.getElementById('clearAllData');
-        this.toggleThemeBtn = document.getElementById('toggleTheme');
         this.notification = document.getElementById('notification');
 
         // AI Image Scanner Area
@@ -115,7 +114,6 @@ class DLPChatbotApp {
 
         // Settings
         if (this.clearDataBtn) this.clearDataBtn.addEventListener('click', () => this.clearAllData());
-        if (this.toggleThemeBtn) this.toggleThemeBtn.addEventListener('click', () => this.toggleTheme());
 
         // --- AI Image Scanner Events ---
         if (this.uploadArea) {
@@ -177,9 +175,6 @@ class DLPChatbotApp {
     // 1. CONVERSATION MANAGEMENT
     // ==========================================================
     async loadSavedData() {
-        if (localStorage.getItem('theme') === 'light') {
-            document.body.classList.add('light-mode');
-        }
 
         let loadedFromBackend = false;
         try {
@@ -953,11 +948,6 @@ class DLPChatbotApp {
         }
     }
 
-    toggleTheme() {
-        document.body.classList.toggle('light-mode');
-        const isDark = !document.body.classList.contains('light-mode');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    }
 
     clearAllData() {
         if(confirm("Delete all chat history?")) {

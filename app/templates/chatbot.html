@@ -210,6 +210,26 @@
                 text-shadow: none !important;
             }
         }
+        @media (max-width: 640px) {
+            .guidelines-paper { padding: 20px !important; }
+            .assessment-form { max-width: 100% !important; padding: 0 12px; }
+            .form-group input, .form-group textarea { font-size: 16px !important; }
+            #defectItemsContainer .defect-row,
+            #noticeDefectsContainer .defect-notice-row { flex-direction: column !important; gap: 8px !important; }
+            form[style*="grid-template-columns: 1fr 1fr"],
+            div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+            .welcome-cards { flex-direction: column !important; align-items: center; }
+            .welcome-greeting { font-size: clamp(1.3rem, 6vw, 2rem) !important; }
+            .welcome-greeting .subtitle { font-size: clamp(1rem, 4vw, 1.5rem) !important; }
+            .legal-grid { grid-template-columns: 1fr !important; }
+            .sidebar { width: 260px !important; }
+            .chat-input { font-size: 15px !important; }
+            .chat-messages { padding-bottom: 20px; }
+            #noticeLetterOutputArea { padding: 20px !important; }
+            .content-header { padding: 30px 16px 20px !important; }
+            .content-header h2 { font-size: 22px !important; }
+            #noticeLetterOutputArea div[style*="display: flex"] { flex-direction: column !important; align-items: center !important; }
+        }
     </style>
 </head>
 <body>
@@ -256,7 +276,6 @@
                     </a>
                 {% endif %}
                 <button id="clearAllData" class="btn-secondary">Clear All Data</button>
-                <button id="toggleTheme" class="btn-secondary">🌙 Theme</button>
             </div>
         </aside>
 
@@ -264,7 +283,7 @@
         <main class="main-content print:w-full print:max-w-none print:m-0 print:p-0 print:shadow-none print:border-none print:bg-white">
             
             <!-- 1. CHAT TAB -->
-            <section id="chat" class="tab-content active">
+            <section id="chat" class="tab-content active" style="padding-bottom: 100px;">
                 <div class="chat-container">
                     <div id="welcomeScreen" class="welcome-screen">
                         <div class="welcome-orb"></div>

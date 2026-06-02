@@ -3,9 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporting Dashboard | Developer</title>
+    <title>DLP Advisor | Reporting Dashboard</title>
     <meta name="description" content="Review status, update defect cases, and generate tribunal compliance reports.">
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script id="tailwind-config">
@@ -43,17 +45,24 @@
 </head>
 <body class="font-body text-on-surface">
 
-<!-- Top Nav -->
+<!-- ── Top Nav ─────────────────────────────────────────────── -->
 <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
-    <div class="flex justify-between items-center w-full px-6 py-3">
-        <div class="flex items-center gap-4">
+    <div class="flex justify-between items-center w-full px-4 md:px-6 py-3">
+        <!-- Left: hamburger (mobile) + logo -->
+        <div class="flex items-center gap-3">
+            <button id="sidebar-toggle"
+                class="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+                aria-label="Toggle sidebar" aria-expanded="false">
+                <span class="material-symbols-outlined" id="sidebar-hamburger-icon">menu</span>
+            </button>
             <div class="bg-primary p-1.5 rounded-lg">
                 <span class="material-symbols-outlined text-white text-xl">grid_view</span>
             </div>
             <span class="text-xl font-black tracking-tight text-slate-900 font-headline">DLP Advisor</span>
         </div>
+        <!-- Right: user + gear dropdown -->
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold text-sm">
+            <div class="w-8 h-8 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                 {% if user_info.profile_picture %}
                 <img src="{{ url_for('static', filename=user_info.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
                 {% else %}
@@ -61,29 +70,58 @@
                 {% endif %}
             </div>
             <p class="hidden sm:block text-sm font-semibold text-slate-900">{{ user_info.company_name or user_info.name }}</p>
-            <a href="{{ url_for('module3.profile') }}" class="text-slate-400 hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-xl">settings</span>
-            </a>
+            <!-- Gear dropdown -->
+            <div class="relative" id="gear-menu-wrapper">
+                <button id="gear-btn" aria-expanded="false" aria-haspopup="true"
+                    class="text-slate-400 hover:text-primary transition-colors p-1 rounded-lg hover:bg-slate-100">
+                    <span class="material-symbols-outlined text-xl">settings</span>
+                </button>
+                <div id="gear-dropdown"
+                     class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-1 z-50 text-sm">
+                    <a href="{{ url_for('module3.profile') }}"
+                       class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 font-semibold">
+                        <span class="material-symbols-outlined text-base">person</span>Account Profile
+                    </a>
+                    <a href="{{ url_for('module3.settings') }}"
+                       class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 font-semibold">
+                        <span class="material-symbols-outlined text-base">tune</span>Settings &amp; Preferences
+                    </a>
+                    <div class="border-t border-slate-100 my-1"></div>
+                    <a href="{{ url_for('auth.logout') }}"
+                       class="flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 font-semibold">
+                        <span class="material-symbols-outlined text-base">logout</span>Logout
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </header>
 
+<!-- Sidebar overlay (mobile tap-to-close) -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/40 z-30 hidden md:hidden"></div>
+
 <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="h-screen w-64 fixed left-0 top-16 hidden md:flex flex-col bg-slate-50 p-4 space-y-2 border-r border-slate-200/60">
+    <!-- ── Sidebar ─────────────────────────────────────────── -->
+    <aside id="main-sidebar"
+        class="h-[calc(100vh-4rem)] w-64 fixed left-0 top-16 flex flex-col bg-slate-50 p-4 border-r border-slate-200/60 z-40
+               transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+
+        <!-- User info -->
         <div class="flex items-center gap-3 p-4 mb-2">
-            <div class="w-10 h-10 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold">
+            <div class="w-10 h-10 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold flex-shrink-0">
                 {% if user_info.profile_picture %}
                 <img src="{{ url_for('static', filename=user_info.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
                 {% else %}
                 {{ (user_info.company_name or user_info.name)[0].upper() }}
                 {% endif %}
             </div>
-            <div>
-                <h3 class="font-headline text-sm font-bold text-slate-900 leading-tight">{{ user_info.company_name or user_info.name }}</h3>
+            <div class="overflow-hidden">
+                <h3 class="font-headline text-sm font-bold text-slate-900 leading-tight truncate">{{ user_info.company_name or user_info.name }}</h3>
                 <p class="text-xs text-slate-500">Developer</p>
             </div>
         </div>
+
+        <!-- Main nav -->
         <nav class="space-y-1 flex-1">
             <a href="{{ url_for('auth.developer_dashboard') }}"
                class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
@@ -98,16 +136,26 @@
                 <span class="material-symbols-outlined">description</span><span>Reporting Dashboard</span>
             </a>
         </nav>
-        <div class="pt-4 space-y-1 border-t border-slate-200">
-            <a href="{{ url_for('auth.logout') }}"
+
+        <!-- Bottom section -->
+        <div class="mt-auto pt-4 space-y-1 border-t border-slate-200">
+            <a href="{{ url_for('core_features.get_started') }}"
                class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">rocket_launch</span><span>Get Started</span>
+            </a>
+            <a href="{{ url_for('core_features.guide') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">help_center</span><span>Help &amp; Guide</span>
+            </a>
+            <a href="{{ url_for('auth.logout') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-red-50 hover:text-red-600 rounded-xl text-sm font-semibold transition-colors">
                 <span class="material-symbols-outlined">logout</span><span>Logout</span>
             </a>
         </div>
     </aside>
 
-    <!-- Main content -->
-    <main class="flex-1 md:ml-64 p-8 md:p-12">
+    <!-- ── Main Content ────────────────────────────────────── -->
+    <main class="flex-1 md:ml-64 p-4 md:p-8 lg:p-12 pb-24 md:pb-12">
 
         <div class="mb-10">
             <h1 class="text-4xl font-headline font-extrabold text-on-surface tracking-tight">Contractor Rectification Job Sheet</h1>
@@ -224,6 +272,26 @@
         </div>
     </main>
 </div>
+
+<!-- ── Mobile Bottom Nav ──────────────────────────────────── -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md flex justify-around items-center py-3 px-4 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] border-t border-slate-100 z-50">
+    <a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="{{ url_for('auth.developer_dashboard') }}">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-[10px] font-bold">Overview</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="{{ url_for('module2.list_projects') }}">
+        <span class="material-symbols-outlined">architecture</span>
+        <span class="text-[10px] font-bold">Scans</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-primary" href="{{ url_for('module3.dashboard') }}">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-[10px] font-bold">Reports</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="{{ url_for('module3.profile') }}">
+        <span class="material-symbols-outlined">person</span>
+        <span class="text-[10px] font-bold">Profile</span>
+    </a>
+</nav>
 
 <!-- Status update modal -->
 <div id="m3-update-modal" class="m3-modal-overlay">
@@ -342,6 +410,50 @@ window.buildRow = function(d, statusClass) {
         </script>
       {% endif %}
     {% endwith %}
+
+<!-- Sidebar hamburger toggle (mobile) -->
+<script>
+(function () {
+    var toggle  = document.getElementById('sidebar-toggle');
+    var sidebar = document.getElementById('main-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    var icon    = document.getElementById('sidebar-hamburger-icon');
+    if (!toggle || !sidebar) return;
+    function openSidebar() {
+        sidebar.classList.remove('-translate-x-full');
+        if (overlay) overlay.classList.remove('hidden');
+        icon.textContent = 'close';
+        toggle.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+        sidebar.classList.add('-translate-x-full');
+        if (overlay) overlay.classList.add('hidden');
+        icon.textContent = 'menu';
+        toggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+    }
+    toggle.addEventListener('click', function () {
+        sidebar.classList.contains('-translate-x-full') ? openSidebar() : closeSidebar();
+    });
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+})();
+</script>
+<!-- Gear dropdown toggle -->
+<script>
+(function () {
+    var btn  = document.getElementById('gear-btn');
+    var menu = document.getElementById('gear-dropdown');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = menu.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', !open);
+    });
+    document.addEventListener('click', function () { menu.classList.add('hidden'); btn.setAttribute('aria-expanded', 'false'); });
+    menu.addEventListener('click', function (e) { e.stopPropagation(); });
+})();
+</script>
 
 </body>
 </html>
