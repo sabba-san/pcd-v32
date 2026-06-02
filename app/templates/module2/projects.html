@@ -3,78 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
           colors: {
-            "secondary-dim": "#44546a",
-            "surface-container-highest": "#d9e4ea",
-            "surface-dim": "#cfdce3",
-            "on-surface": "#2a3439",
-            "error-container": "#fe8983",
-            "primary-fixed": "#dbe1ff",
-            "primary-dim": "#0048c1",
-            "surface-container-low": "#f0f4f7",
-            "tertiary-fixed-dim": "#cecfef",
-            "inverse-on-surface": "#9a9d9f",
-            "on-error-container": "#752121",
-            "primary-fixed-dim": "#c7d3ff",
-            "tertiary-container": "#ddddfe",
-            "on-secondary-container": "#435368",
-            "primary-container": "#dbe1ff",
-            "surface-tint": "#0053db",
-            "on-secondary-fixed-variant": "#4d5d73",
-            "on-tertiary-container": "#4c4e69",
-            "background": "#f7f9fb",
-            "surface-variant": "#d9e4ea",
-            "outline": "#717c82",
-            "surface-container-lowest": "#ffffff",
-            "error": "#9f403d",
-            "primary": "#0053db",
-            "surface-bright": "#f7f9fb",
-            "on-secondary-fixed": "#314055",
-            "tertiary": "#5b5d78",
-            "secondary-fixed": "#d3e4fe",
-            "on-primary-container": "#0048bf",
-            "on-primary": "#f8f7ff",
-            "inverse-primary": "#618bff",
-            "on-tertiary": "#fbf8ff",
-            "on-error": "#fff7f6",
-            "on-secondary": "#f7f9ff",
-            "secondary-container": "#d3e4fe",
-            "surface-container-high": "#e1e9ee",
-            "surface-container": "#e8eff3",
-            "outline-variant": "#a9b4b9",
-            "on-primary-fixed": "#003798",
-            "inverse-surface": "#0b0f10",
-            "error-dim": "#4e0309",
-            "on-surface-variant": "#566166",
-            "on-tertiary-fixed": "#3a3c55",
-            "on-primary-fixed-variant": "#0050d4",
-            "tertiary-fixed": "#ddddfe",
-            "surface": "#f7f9fb",
-            "secondary-fixed-dim": "#c5d6f0",
-            "tertiary-dim": "#4f516c",
-            "secondary": "#506076",
-            "on-background": "#2a3439",
-            "on-tertiary-fixed-variant": "#565873"
+            primary: "#004ac6", "primary-container": "#2563eb", "on-primary": "#ffffff",
+            surface: "#f7f9fb", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6",
+            "surface-container": "#eceef0", "surface-container-highest": "#e0e3e5",
+            "on-surface": "#191c1e", "on-surface-variant": "#434655", "outline-variant": "#c3c6d7",
           },
-          borderRadius: {
-            "DEFAULT": "0.25rem",
-            "lg": "0.5rem",
-            "xl": "0.75rem",
-            "full": "9999px"
-          },
-          fontFamily: {
-            "headline": ["Manrope"],
-            "body": ["Inter"],
-            "label": ["Inter"]
-          }
+          fontFamily: { headline: ["Manrope", "sans-serif"], body: ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.5rem", lg: "1rem", xl: "1.25rem", full: "9999px" },
         },
       },
     }
@@ -83,204 +29,368 @@
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
-    body { font-family: 'Inter', sans-serif; }
+    body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
     h1, h2, h3 { font-family: 'Manrope', sans-serif; }
     .ghost-border { outline: 1px solid rgba(169, 180, 185, 0.15); }
   </style>
 </head>
 
-<body class="bg-background text-on-surface">
+<body class="font-body text-on-surface">
 
-  {% set dashboard_url = url_for('auth.homeowner_dashboard') %}
-  {% if current_user.user_type == 'developer' %}
-    {% set dashboard_url = url_for('auth.developer_dashboard') %}
-  {% elif current_user.user_type == 'lawyer' %}
-    {% set dashboard_url = url_for('auth.lawyer_dashboard') %}
-  {% endif %}
-
-  <!-- SideNavBar Anchor -->
-  <aside class="fixed left-0 top-0 h-full flex flex-col p-4 gap-2 bg-slate-100 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 w-64 z-50">
-    <div class="flex items-center gap-3 mb-8 px-2">
-      <div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
-        <span class="material-symbols-outlined">folder_managed</span>
-      </div>
-      <div>
-        <div class="font-manrope font-bold text-slate-900 dark:text-slate-50 text-base leading-tight">DLP ADVISOR</div>
-        <div class="text-[10px] text-on-surface-variant tracking-wider uppercase">Defect Management</div>
-      </div>
-    </div>
-    
-    <nav class="flex-1 flex flex-col gap-1">
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 hover:translate-x-1" href="{{ dashboard_url }}">
-        <span class="material-symbols-outlined">dashboard</span>
-        <span class="font-inter text-sm">Dashboard</span>
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 font-bold rounded-lg shadow-sm transition-all duration-200" href="{{ url_for('module2.list_projects') }}">
-        <span class="material-symbols-outlined">folder_open</span>
-        <span class="font-inter text-sm">Projects</span>
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 hover:translate-x-1" href="{{ url_for('module2.list_projects') }}">
-        <span class="material-symbols-outlined">view_in_ar</span>
-        <span class="font-inter text-sm">3D Visualizer</span>
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 hover:translate-x-1" href="{{ url_for('module2.upload_scan') }}">
-        <span class="material-symbols-outlined">upload_file</span>
-        <span class="font-inter text-sm">Upload glb model</span>
-      </a>
-    </nav>
-    
-    <div class="mt-auto flex flex-col gap-1 pt-4 border-t border-slate-200 dark:border-slate-800">
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200" href="#">
-        <span class="material-symbols-outlined">help</span>
-        <span class="font-inter text-sm">Help</span>
-      </a>
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200" href="{{ url_for('auth.logout') }}">
-        <span class="material-symbols-outlined">logout</span>
-        <span class="font-inter text-sm">Sign Out</span>
-      </a>
-    </div>
-  </aside>
-
-  <!-- Main Content Canvas -->
-  <main class="ml-64 min-h-screen p-8 lg:p-12">
-    <!-- Header Section -->
-    <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-      <div>
-        <h1 class="text-4xl font-extrabold tracking-tight text-on-surface mb-2">Projects</h1>
-        <p class="text-on-surface-variant max-w-md">Manage and monitor defect scans across your active infrastructure portfolio.</p>
-      </div>
-      <a href="{{ url_for('module2.upload_scan') }}" class="bg-gradient-to-r from-primary to-primary-dim text-on-primary px-6 py-3 rounded-lg font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
-        <span class="material-symbols-outlined">add_circle</span>
-        New Project
-      </a>
-    </header>
-
-    <!-- Toolbar: Search & Filters -->
-    <section class="flex flex-wrap items-center gap-4 mb-10">
-      <div class="flex-1 min-w-[300px] relative group">
-        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
-        <input class="w-full pl-12 pr-4 py-3 rounded-xl bg-surface-container-low border-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all text-sm" placeholder="Search projects by name, ID or address..." type="text">
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="flex items-center gap-2 bg-surface-container-low px-4 py-3 rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-          <span class="material-symbols-outlined text-on-surface-variant text-xl">calendar_today</span>
-          <span class="text-sm font-medium">Last 30 Days</span>
-          <span class="material-symbols-outlined text-outline text-lg">expand_more</span>
-        </div>
-        <div class="flex items-center gap-2 bg-surface-container-low px-4 py-3 rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-          <span class="material-symbols-outlined text-on-surface-variant text-xl">sort</span>
-          <span class="text-sm font-medium">Sort by Date</span>
-          <span class="material-symbols-outlined text-outline text-lg">expand_more</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Projects Grid -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-      {% if projects %}
-        {% for project in projects %}
-          {% set accent_color = 'bg-slate-300' %}
-          {% set status_text = 'Completed' %}
-          {% set status_class = 'bg-surface-container-low text-on-surface-variant' %}
-
-          {% if project.defect_count > 100 %}
-            {% set accent_color = 'bg-error' %}
-            {% set status_text = 'Urgent' %}
-            {% set status_class = 'bg-error/10 text-error' %}
-          {% elif project.defect_count > 0 %}
-            {% set accent_color = 'bg-primary' %}
-            {% set status_text = 'Active' %}
-            {% set status_class = 'bg-secondary-container text-on-secondary-container' %}
-          {% endif %}
-
-          <a href="{{ url_for('module2.visualize_scan', scan_id=project.id) }}" class="group bg-surface-container-lowest p-6 rounded-xl ghost-border hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 relative overflow-hidden block">
-            <div class="absolute left-0 top-0 bottom-0 w-1 {{ accent_color }}"></div>
-            
-            <div class="flex justify-between items-start mb-6">
-              <div class="flex flex-col">
-                <span class="text-[10px] font-bold text-primary tracking-widest uppercase mb-1">ID: PRJ-{{ project.id }}</span>
-                <h3 class="text-xl font-bold text-on-surface group-hover:text-primary transition-colors">{{ project.name }}</h3>
-              </div>
-              <span class="{{ status_class }} px-3 py-1 rounded-full text-xs font-bold">{{ status_text }}</span>
+<!-- ── Top Nav ─────────────────────────────────────────────── -->
+<header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <div class="flex justify-between items-center w-full px-4 md:px-6 py-3">
+        <!-- Left: hamburger (mobile) + logo -->
+        <div class="flex items-center gap-3">
+            <button id="sidebar-toggle"
+                class="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+                aria-label="Toggle sidebar" aria-expanded="false">
+                <span class="material-symbols-outlined" id="sidebar-hamburger-icon">menu</span>
+            </button>
+            <div class="bg-primary p-1.5 rounded-lg">
+                <span class="material-symbols-outlined text-white text-xl">folder_managed</span>
             </div>
-
-            <div class="space-y-4 mb-6">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center">
-                  <span class="material-symbols-outlined text-on-surface-variant text-lg">location_on</span>
-                </div>
-                <div class="text-sm text-on-surface">
-                  {% if project.metadata.address %}
-                    {{ project.metadata.address }}
-                  {% elif project.metadata.unit_no %}
-                    Unit: {{ project.metadata.unit_no }}
-                  {% else %}
-                    Location not specified
-                  {% endif %}
-                </div>
-              </div>
-
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center">
-                  <span class="material-symbols-outlined text-on-surface-variant text-lg">event</span>
-                </div>
-                <div class="text-sm text-on-surface">
-                  Last Scanned: 
-                  {% if project.metadata.scan_date %}
-                    {{ project.metadata.scan_date }}
-                  {% else %}
-                    {{ project.created_at.strftime('%Y-%m-%d') if project.created_at else 'Unknown' }}
-                  {% endif %}
-                </div>
-              </div>
+            <span class="text-xl font-black tracking-tight text-slate-900 font-headline">DLP Advisor</span>
+        </div>
+        <!-- Right: user + gear dropdown -->
+        <div class="flex items-center gap-3">
+            <div class="hidden sm:flex sm:flex-col sm:items-end">
+                <p class="text-sm font-semibold text-slate-900 leading-tight">
+                    {% if current_user.user_type == 'developer' %}
+                        {{ current_user.company_name or current_user.full_name }}
+                    {% elif current_user.user_type == 'lawyer' %}
+                        {{ current_user.law_firm_name or current_user.full_name }}
+                    {% else %}
+                        {{ current_user.full_name }}
+                    {% endif %}
+                </p>
+                <span class="text-xs text-slate-500">{{ current_user.user_type | title }}</span>
             </div>
-
-            <div class="flex items-center justify-between pt-6 border-t border-surface-container-low">
-              <div class="flex flex-col">
-                <span class="text-xs text-on-surface-variant font-medium">Total Defects</span>
-                <span class="text-2xl font-extrabold {% if project.defect_count > 0 %}text-error{% else %}text-on-surface{% endif %}">
-                  {{ project.defect_count }}
-                </span>
-              </div>
-
-              {% if project.defect_count == 0 %}
-                <div class="text-green-600 flex items-center gap-1 font-bold text-sm">
-                  <span class="material-symbols-outlined">verified</span> Resolved
-                </div>
-              {% else %}
-                <button class="text-primary font-bold text-sm flex items-center gap-1 hover:gap-2 transition-all">
-                  View Details <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            <div class="w-8 h-8 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                {% if current_user.profile_picture %}
+                <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
+                {% else %}
+                {{ (current_user.company_name or current_user.full_name)[0].upper() }}
+                {% endif %}
+            </div>
+            <!-- Gear dropdown -->
+            <div class="relative" id="gear-menu-wrapper">
+                <button id="gear-btn" aria-expanded="false" aria-haspopup="true"
+                    class="text-slate-400 hover:text-primary transition-colors p-1 rounded-lg hover:bg-slate-100">
+                    <span class="material-symbols-outlined text-xl">settings</span>
                 </button>
-              {% endif %}
+                <div id="gear-dropdown"
+                     class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-1 z-50 text-sm">
+                    <a href="{{ url_for('module3.profile') }}"
+                       class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 font-semibold">
+                        <span class="material-symbols-outlined text-base">person</span>Account Profile
+                    </a>
+                    <a href="{{ url_for('module3.settings') }}"
+                       class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 font-semibold">
+                        <span class="material-symbols-outlined text-base">tune</span>Settings &amp; Preferences
+                    </a>
+                    <div class="border-t border-slate-100 my-1"></div>
+                    <a href="{{ url_for('auth.logout') }}"
+                       class="flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 font-semibold">
+                        <span class="material-symbols-outlined text-base">logout</span>Logout
+                    </a>
+                </div>
             </div>
-          </a>
-        {% endfor %}
-      {% else %}
-        <div class="col-span-full bg-surface-container-lowest p-12 rounded-xl ghost-border text-center flex flex-col items-center justify-center">
-          <span class="material-symbols-outlined text-6xl text-outline-variant mb-4">deployed_code</span>
-          <h3 class="text-2xl font-bold text-on-surface mb-2">No Projects Uploaded Yet</h3>
-          <p class="text-on-surface-variant max-w-md mb-6">You don't have any defect scans assigned. Upload your first GLB model and PDF report to get started.</p>
-          <a href="{{ url_for('module2.upload_scan') }}" class="bg-primary text-on-primary px-6 py-3 rounded-lg font-bold">
-            Upload First Scan
-          </a>
         </div>
-      {% endif %}
     </div>
+</header>
 
-    <!-- Pagination Footer -->
-    <footer class="mt-12 flex items-center justify-between">
-      <p class="text-sm text-on-surface-variant font-medium">Showing {{ projects|length }} projects</p>
-      <div class="flex gap-2">
-        <button class="p-2 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-colors">
-          <span class="material-symbols-outlined">chevron_left</span>
-        </button>
-        <button class="px-4 py-2 rounded-lg bg-primary text-on-primary font-bold text-sm">1</button>
-        <button class="p-2 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-colors">
-          <span class="material-symbols-outlined">chevron_right</span>
-        </button>
-      </div>
-    </footer>
-  </main>
+<!-- Sidebar overlay (mobile tap-to-close) -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/40 z-30 hidden md:hidden"></div>
+
+<div class="flex min-h-screen">
+    <!-- ── Sidebar ─────────────────────────────────────────── -->
+    <aside id="main-sidebar"
+        class="h-[calc(100vh-4rem)] w-64 fixed left-0 top-16 flex flex-col bg-slate-50 p-4 border-r border-slate-200/60 z-40
+               transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+
+        <!-- User info -->
+        <div class="flex items-center gap-3 p-4 mb-2">
+            <div class="w-10 h-10 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold flex-shrink-0">
+                {% if current_user.profile_picture %}
+                <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
+                {% else %}
+                {{ (current_user.company_name or current_user.full_name)[0].upper() }}
+                {% endif %}
+            </div>
+            <div class="overflow-hidden">
+                <h3 class="font-headline text-sm font-bold text-slate-900 leading-tight truncate">
+                    {% if current_user.user_type == 'developer' %}
+                        {{ current_user.company_name or current_user.full_name }}
+                    {% elif current_user.user_type == 'lawyer' %}
+                        {{ current_user.law_firm_name or current_user.full_name }}
+                    {% else %}
+                        {{ current_user.full_name }}
+                    {% endif %}
+                </h3>
+                <p class="text-xs text-slate-500">
+                    {% if current_user.user_type == 'lawyer' %}
+                        Legal Counsel
+                    {% else %}
+                        {{ current_user.user_type | title }}
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        {% set is_homeowner = current_user.user_type == 'homeowner' %}
+        {% set is_developer = current_user.user_type == 'developer' %}
+        {% set is_lawyer = current_user.user_type == 'lawyer' %}
+
+        <!-- Main nav -->
+        <nav class="space-y-1 flex-1">
+            {% if is_homeowner %}
+            <a href="{{ url_for('auth.homeowner_dashboard') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">dashboard</span><span>Overview</span>
+            </a>
+            <a href="{{ url_for('module2.list_projects') }}"
+               class="flex items-center gap-3 bg-white text-blue-700 rounded-xl px-4 py-3 shadow-sm text-sm font-bold">
+                <span class="material-symbols-outlined">folder_open</span><span>Lidar Scans</span>
+            </a>
+            <a href="{{ url_for('core_features.chatbot_ui') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">gavel</span><span>Premium AI Chatbot</span>
+            </a>
+            <a href="{{ url_for('module3.dashboard') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">description</span><span>Reporting Dashboard</span>
+            </a>
+
+            {% elif is_developer %}
+            <a href="{{ url_for('auth.developer_dashboard') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">dashboard</span><span>Overview</span>
+            </a>
+            <a href="{{ url_for('module2.list_projects') }}"
+               class="flex items-center gap-3 bg-white text-blue-700 rounded-xl px-4 py-3 shadow-sm text-sm font-bold">
+                <span class="material-symbols-outlined">folder_open</span><span>Lidar Scans</span>
+            </a>
+            <a href="{{ url_for('module2.list_projects') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">fact_check</span><span>Inspections</span>
+            </a>
+            <a href="{{ url_for('module3.dashboard') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">analytics</span><span>Reports</span>
+            </a>
+            <a href="{{ url_for('module3.dashboard') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">task_alt</span><span>Job Sheets</span>
+            </a>
+            <a href="{{ url_for('module2.upload_scan') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">upload_file</span><span>Upload glb model</span>
+            </a>
+
+            {% elif is_lawyer %}
+            <a href="{{ url_for('auth.lawyer_dashboard') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">dashboard</span><span>Overview</span>
+            </a>
+            <a href="{{ url_for('module2.legal_evidence_review') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">folder_managed</span><span>Evidence Review</span>
+            </a>
+            <a href="{{ url_for('module2.list_projects') }}"
+               class="flex items-center gap-3 bg-white text-blue-700 rounded-xl px-4 py-3 shadow-sm text-sm font-bold">
+                <span class="material-symbols-outlined">folder_open</span><span>Lidar Scans</span>
+            </a>
+            <a href="{{ url_for('core_features.chatbot_ui') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">gavel</span><span>Premium AI Chatbot</span>
+            </a>
+            <a href="{{ url_for('module3.dashboard') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">description</span><span>Reporting Dashboard</span>
+            </a>
+            {% endif %}
+        </nav>
+
+        <!-- Bottom section -->
+        <div class="mt-auto pt-4 space-y-1 border-t border-slate-200">
+            <a href="{{ url_for('core_features.get_started') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">rocket_launch</span><span>Get Started</span>
+            </a>
+            <a href="{{ url_for('core_features.guide') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">help_center</span><span>Help &amp; Guide</span>
+            </a>
+            <a href="{{ url_for('auth.logout') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-red-50 hover:text-red-600 rounded-xl text-sm font-semibold transition-colors">
+                <span class="material-symbols-outlined">logout</span><span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ── Main Content ────────────────────────────────────── -->
+    <main class="flex-1 md:ml-64 p-4 md:p-8 lg:p-12 pb-24 md:pb-12">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+                <h1 class="text-4xl font-headline font-extrabold tracking-tight text-on-surface mb-2">Projects</h1>
+                <p class="text-on-surface-variant max-w-md">Manage and monitor defect scans across your active infrastructure portfolio.</p>
+            </div>
+            <a href="{{ url_for('module2.upload_scan') }}" class="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-primary-container transition-colors">
+                <span class="material-symbols-outlined text-lg">add_circle</span>
+                New Project
+            </a>
+        </div>
+
+        <!-- Toolbar: Search & Filters -->
+        <section class="flex flex-wrap items-center gap-4 mb-10">
+            <div class="flex-1 min-w-[300px] relative group">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+                <input class="w-full pl-12 pr-4 py-3 rounded-xl bg-surface-container-low border-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all text-sm" placeholder="Search projects by name, ID or address..." type="text">
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 bg-surface-container-low px-4 py-3 rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined text-on-surface-variant text-xl">calendar_today</span>
+                    <span class="text-sm font-medium">Last 30 Days</span>
+                    <span class="material-symbols-outlined text-outline text-lg">expand_more</span>
+                </div>
+                <div class="flex items-center gap-2 bg-surface-container-low px-4 py-3 rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined text-on-surface-variant text-xl">sort</span>
+                    <span class="text-sm font-medium">Sort by Date</span>
+                    <span class="material-symbols-outlined text-outline text-lg">expand_more</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Grid -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+            {% if projects %}
+                {% for project in projects %}
+                    {% set accent_color = 'bg-slate-300' %}
+                    {% set status_text = 'Completed' %}
+                    {% set status_class = 'bg-surface-container-low text-on-surface-variant' %}
+
+                    {% if project.defect_count > 100 %}
+                        {% set accent_color = 'bg-error' %}
+                        {% set status_text = 'Urgent' %}
+                        {% set status_class = 'bg-error/10 text-error' %}
+                    {% elif project.defect_count > 0 %}
+                        {% set accent_color = 'bg-primary' %}
+                        {% set status_text = 'Active' %}
+                        {% set status_class = 'bg-secondary-container text-on-secondary-container' %}
+                    {% endif %}
+
+                    <a href="{{ url_for('module2.visualize_scan', scan_id=project.id) }}" class="group bg-surface-container-lowest p-6 rounded-xl ghost-border hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 relative overflow-hidden block">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 {{ accent_color }}"></div>
+
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-primary tracking-widest uppercase mb-1">ID: PRJ-{{ project.id }}</span>
+                                <h3 class="text-xl font-bold text-on-surface group-hover:text-primary transition-colors">{{ project.name }}</h3>
+                            </div>
+                            <span class="{{ status_class }} px-3 py-1 rounded-full text-xs font-bold">{{ status_text }}</span>
+                        </div>
+
+                        <div class="space-y-4 mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-on-surface-variant text-lg">location_on</span>
+                                </div>
+                                <div class="text-sm text-on-surface">
+                                    {% if project.metadata.address %}
+                                        {{ project.metadata.address }}
+                                    {% elif project.metadata.unit_no %}
+                                        Unit: {{ project.metadata.unit_no }}
+                                    {% else %}
+                                        Location not specified
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-on-surface-variant text-lg">event</span>
+                                </div>
+                                <div class="text-sm text-on-surface">
+                                    Last Scanned:
+                                    {% if project.metadata.scan_date %}
+                                        {{ project.metadata.scan_date }}
+                                    {% else %}
+                                        {{ project.created_at.strftime('%Y-%m-%d') if project.created_at else 'Unknown' }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-6 border-t border-surface-container-low">
+                            <div class="flex flex-col">
+                                <span class="text-xs text-on-surface-variant font-medium">Total Defects</span>
+                                <span class="text-2xl font-extrabold {% if project.defect_count > 0 %}text-error{% else %}text-on-surface{% endif %}">
+                                    {{ project.defect_count }}
+                                </span>
+                            </div>
+
+                            {% if project.defect_count == 0 %}
+                                <div class="text-green-600 flex items-center gap-1 font-bold text-sm">
+                                    <span class="material-symbols-outlined">verified</span> Resolved
+                                </div>
+                            {% else %}
+                                <button class="text-primary font-bold text-sm flex items-center gap-1 hover:gap-2 transition-all">
+                                    View Details <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-full bg-surface-container-lowest p-12 rounded-xl ghost-border text-center flex flex-col items-center justify-center">
+                    <span class="material-symbols-outlined text-6xl text-outline-variant mb-4">deployed_code</span>
+                    <h3 class="text-2xl font-bold text-on-surface mb-2">No Projects Uploaded Yet</h3>
+                    <p class="text-on-surface-variant max-w-md mb-6">You don't have any defect scans assigned. Upload your first GLB model and PDF report to get started.</p>
+                    <a href="{{ url_for('module2.upload_scan') }}" class="bg-primary text-on-primary px-6 py-3 rounded-lg font-bold">
+                        Upload First Scan
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination Footer -->
+        <footer class="mt-12 flex items-center justify-between">
+            <p class="text-sm text-on-surface-variant font-medium">Showing {{ projects|length }} projects</p>
+            <div class="flex gap-2">
+                <button class="p-2 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button class="px-4 py-2 rounded-lg bg-primary text-on-primary font-bold text-sm">1</button>
+                <button class="p-2 rounded-lg bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+        </footer>
+    </main>
+</div>
+
+<!-- ── Mobile Bottom Nav ──────────────────────────────────── -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md flex justify-around items-center py-3 px-4 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] border-t border-slate-100 z-50">
+    <a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors"
+       href="{% if is_homeowner %}{{ url_for('auth.homeowner_dashboard') }}{% elif is_developer %}{{ url_for('auth.developer_dashboard') }}{% elif is_lawyer %}{{ url_for('auth.lawyer_dashboard') }}{% endif %}">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-[10px] font-bold">Overview</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-primary" href="{{ url_for('module2.list_projects') }}">
+        <span class="material-symbols-outlined">folder_open</span>
+        <span class="text-[10px] font-bold">Scans</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="{{ url_for('module3.dashboard') }}">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-[10px] font-bold">Reports</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="{{ url_for('module3.profile') }}">
+        <span class="material-symbols-outlined">person</span>
+        <span class="text-[10px] font-bold">Profile</span>
+    </a>
+</nav>
 
     <!-- TOAST NOTIFICATIONS -->
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -320,6 +430,50 @@
         </script>
       {% endif %}
     {% endwith %}
+
+<!-- Sidebar hamburger toggle (mobile) -->
+<script>
+(function () {
+    var toggle  = document.getElementById('sidebar-toggle');
+    var sidebar = document.getElementById('main-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    var icon    = document.getElementById('sidebar-hamburger-icon');
+    if (!toggle || !sidebar) return;
+    function openSidebar() {
+        sidebar.classList.remove('-translate-x-full');
+        if (overlay) overlay.classList.remove('hidden');
+        icon.textContent = 'close';
+        toggle.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+        sidebar.classList.add('-translate-x-full');
+        if (overlay) overlay.classList.add('hidden');
+        icon.textContent = 'menu';
+        toggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+    }
+    toggle.addEventListener('click', function () {
+        sidebar.classList.contains('-translate-x-full') ? openSidebar() : closeSidebar();
+    });
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+})();
+</script>
+<!-- Gear dropdown toggle -->
+<script>
+(function () {
+    var btn  = document.getElementById('gear-btn');
+    var menu = document.getElementById('gear-dropdown');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = menu.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', !open);
+    });
+    document.addEventListener('click', function () { menu.classList.add('hidden'); btn.setAttribute('aria-expanded', 'false'); });
+    menu.addEventListener('click', function (e) { e.stopPropagation(); });
+})();
+</script>
 
 </body>
 </html>

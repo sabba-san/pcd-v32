@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>DLP Advisor | Get Started & FAQ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,100..700,0,0&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#004ac6",
+                        "on-primary": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "on-surface": "#191c1e",
+                        "surface-container": "#eceef0",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#434655",
+                        "background": "#f7f9fb",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        details summary::-webkit-details-marker { display: none; }
+        details[open] .accordion-arrow { transform: rotate(180deg); }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+
+    <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30">
+        <div class="flex items-center gap-8">
+            <a href="{{ url_for('auth.login') }}" class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-2xl">shield</span>
+                <span class="text-xl font-black tracking-tight">DLP Advisor</span>
+            </a>
+            <nav class="hidden md:flex items-center gap-6">
+                <a class="text-primary font-bold border-b-2 border-primary pb-1" href="#">Get Started & FAQ</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('auth.' + current_user.user_type + '_dashboard') }}"
+                class="text-sm font-semibold text-slate-500 hover:text-primary transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">arrow_back</span>
+                Back to Dashboard
+            </a>
+        </div>
+    </header>
+
+    <main class="pt-28 pb-16 px-6 max-w-4xl mx-auto">
+
+        <!-- Hero -->
+        <div class="text-center mb-14">
+            <span class="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full text-xs font-bold tracking-widest text-primary uppercase mb-4">
+                <span class="material-symbols-outlined text-sm">rocket_launch</span>
+                Onboarding
+            </span>
+            <h1 class="text-4xl md:text-5xl font-black tracking-tight mb-3">Get Started & FAQ</h1>
+            <p class="text-lg text-on-surface-variant max-w-xl mx-auto">Everything you need to start using DLP Advisor effectively. Welcome, <strong>{{ current_user.full_name }}</strong>.</p>
+        </div>
+
+        <!-- Step-by-step Guide -->
+        <section class="mb-16">
+            <div class="flex items-center gap-3 mb-8">
+                <span class="material-symbols-outlined text-primary text-2xl">route</span>
+                <h2 class="text-2xl font-black tracking-tight">How to Use DLP Advisor</h2>
+            </div>
+            <p class="text-on-surface-variant mb-8">Follow these steps to get the most out of the platform.</p>
+
+            <div class="relative">
+                <div class="absolute left-4 top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary to-blue-300 hidden md:block -ml-[1px]"></div>
+                <ol class="space-y-6">
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">1</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Create Your Account & Log In</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">Register as a Homeowner, Developer, or Lawyer. Once logged in, you'll land on your personalized role-based dashboard.</p>
+                            <a href="{{ url_for('auth.login') }}" class="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline hover:bg-primary/10 px-2 py-1 -ml-2 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-sm">login</span>
+                                Go to Login
+                            </a>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">2</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Upload a 3D Scan & Pin Defects</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">Create a project in <strong>Lidar Scans</strong>, upload your 3D model, and use the visualizer to mark defect locations, types, and severity levels directly on the model.</p>
+                            <a href="{{ url_for('module2.list_projects') }}" class="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline hover:bg-primary/10 px-2 py-1 -ml-2 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-sm">upload_file</span>
+                                Go to Lidar Scans
+                            </a>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-primary/30">3</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/40 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Assign a Lawyer & Submit Evidence</h3>
+                            <p class="text-sm text-on-surface-variant mb-4">Go to the <strong>Reporting Dashboard</strong>, select a lawyer from the list, fill in your claim details, and upload supporting evidence for each defect.</p>
+                            <a href="{{ url_for('module3.dashboard') }}" class="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline hover:bg-primary/10 px-2 py-1 -ml-2 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-sm">bar_chart</span>
+                                Reporting Dashboard
+                            </a>
+                        </div>
+                    </li>
+                    <li class="relative flex gap-6">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold z-10 shadow-lg shadow-green-600/30">4</div>
+                        <div class="bg-surface-container-lowest rounded-xl border border-green-200 p-6 flex-1 transition-all duration-300 hover:shadow-md hover:border-green-400 hover:-translate-y-1">
+                            <h3 class="text-lg font-bold mb-2">Generate Reports & Export PDF</h3>
+                            <p class="text-sm text-on-surface-variant">Your lawyer reviews the evidence, the AI generates a tribunal-ready report, and you can export it as a PDF for filing.</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- FAQ Accordion -->
+        <section>
+            <div class="flex items-center gap-3 mb-8">
+                <span class="material-symbols-outlined text-primary text-2xl">help</span>
+                <h2 class="text-2xl font-black tracking-tight">Frequently Asked Questions</h2>
+            </div>
+
+            <div class="space-y-3">
+                <details class="group bg-surface-container-lowest rounded-xl border border-outline-variant/30 overflow-hidden transition-all duration-200">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-primary/5 transition-colors">
+                        <span class="font-bold text-on-surface">What is DLP Advisor?</span>
+                        <span class="accordion-arrow material-symbols-outlined text-on-surface-variant transition-transform duration-200">expand_more</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-sm text-on-surface-variant leading-relaxed border-t border-outline-variant/20 pt-4">
+                        DLP Advisor is a platform that helps homeowners, developers, and lawyers manage defect liability period (DLP) claims. It provides 3D scan visualization, AI-powered defect analysis, evidence management, and automated tribunal report generation.
+                    </div>
+                </details>
+
+                <details class="group bg-surface-container-lowest rounded-xl border border-outline-variant/30 overflow-hidden transition-all duration-200">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-primary/5 transition-colors">
+                        <span class="font-bold text-on-surface">How do I report a defect?</span>
+                        <span class="accordion-arrow material-symbols-outlined text-on-surface-variant transition-transform duration-200">expand_more</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-sm text-on-surface-variant leading-relaxed border-t border-outline-variant/20 pt-4">
+                        Navigate to <strong>Lidar Scans</strong>, select your project, and open the 3D visualizer. Click directly on the 3D model to pin a defect, then fill in the defect type, severity, and description. You can also upload photos as evidence.
+                    </div>
+                </details>
+
+                <details class="group bg-surface-container-lowest rounded-xl border border-outline-variant/30 overflow-hidden transition-all duration-200">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-primary/5 transition-colors">
+                        <span class="font-bold text-on-surface">How does the AI report generation work?</span>
+                        <span class="accordion-arrow material-symbols-outlined text-on-surface-variant transition-transform duration-200">expand_more</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-sm text-on-surface-variant leading-relaxed border-t border-outline-variant/20 pt-4">
+                        The AI analyzes all uploaded evidence, defect descriptions, and historical data to produce a comprehensive tribunal-ready report. Lawyers can review, verify, and override risk assessments before finalizing. The report can be exported as a PDF.
+                    </div>
+                </details>
+
+                <details class="group bg-surface-container-lowest rounded-xl border border-outline-variant/30 overflow-hidden transition-all duration-200">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-primary/5 transition-colors">
+                        <span class="font-bold text-on-surface">Can I use DLP Advisor on my phone?</span>
+                        <span class="accordion-arrow material-symbols-outlined text-on-surface-variant transition-transform duration-200">expand_more</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-sm text-on-surface-variant leading-relaxed border-t border-outline-variant/20 pt-4">
+                        Yes. The platform is fully responsive and works on mobile devices. The 3D visualizer is optimized for touch input, allowing you to pin defects directly from your phone or tablet.
+                    </div>
+                </details>
+
+                <details class="group bg-surface-container-lowest rounded-xl border border-outline-variant/30 overflow-hidden transition-all duration-200">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-primary/5 transition-colors">
+                        <span class="font-bold text-on-surface">What file formats are supported for 3D scans?</span>
+                        <span class="accordion-arrow material-symbols-outlined text-on-surface-variant transition-transform duration-200">expand_more</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-sm text-on-surface-variant leading-relaxed border-t border-outline-variant/20 pt-4">
+                        The platform supports <strong>GLB</strong> (GL Transmission Binary) files for 3D models. You can upload your scans in this format via the Lidar Scans page. PDF reports are also supported for documentation.
+                    </div>
+                </details>
+
+                <details class="group bg-surface-container-lowest rounded-xl border border-outline-variant/30 overflow-hidden transition-all duration-200">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-primary/5 transition-colors">
+                        <span class="font-bold text-on-surface">How do I assign a lawyer to my case?</span>
+                        <span class="accordion-arrow material-symbols-outlined text-on-surface-variant transition-transform duration-200">expand_more</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-sm text-on-surface-variant leading-relaxed border-t border-outline-variant/20 pt-4">
+                        From the <strong>Reporting Dashboard</strong>, select a registered lawyer from the dropdown list during the claim setup process. You must fill in all required claim details before the lawyer can begin reviewing your case.
+                    </div>
+                </details>
+
+                <details class="group bg-surface-container-lowest rounded-xl border border-outline-variant/30 overflow-hidden transition-all duration-200">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-primary/5 transition-colors">
+                        <span class="font-bold text-on-surface">What roles are available on the platform?</span>
+                        <span class="accordion-arrow material-symbols-outlined text-on-surface-variant transition-transform duration-200">expand_more</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-sm text-on-surface-variant leading-relaxed border-t border-outline-variant/20 pt-4">
+                        There are three main roles: <strong>Homeowner</strong> (report defects and manage projects), <strong>Developer</strong> (review and rectify reported defects), and <strong>Lawyer</strong> (review evidence, generate legal reports). Each role has a tailored dashboard.
+                    </div>
+                </details>
+
+                <details class="group bg-surface-container-lowest rounded-xl border border-outline-variant/30 overflow-hidden transition-all duration-200">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer list-none hover:bg-primary/5 transition-colors">
+                        <span class="font-bold text-on-surface">Is my data secure?</span>
+                        <span class="accordion-arrow material-symbols-outlined text-on-surface-variant transition-transform duration-200">expand_more</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-sm text-on-surface-variant leading-relaxed border-t border-outline-variant/20 pt-4">
+                        Yes. All data is encrypted in transit and at rest. User authentication is handled securely, and case information is only accessible to the involved parties. We follow industry best practices for data protection.
+                    </div>
+                </details>
+            </div>
+        </section>
+
+    </main>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3">
+          {% for category, message in messages %}
+            {% set bg_color = 'bg-blue-600' %}
+            {% set text_color = 'text-white' %}
+            {% if category == 'success' %}
+              {% set bg_color = 'bg-green-600' %}
+            {% elif category == 'error' or category == 'danger' %}
+              {% set bg_color = 'bg-red-600' %}
+            {% elif category == 'warning' %}
+              {% set bg_color = 'bg-yellow-500' %}
+              {% set text_color = 'text-gray-900' %}
+            {% endif %}
+            <div class="toast-message flex items-center p-4 w-full max-w-xs rounded-lg shadow-lg opacity-100 transition-opacity duration-500 ease-in-out {{ bg_color }} {{ text_color }}" role="alert">
+              <div class="text-sm font-medium">{{ message }}</div>
+              <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-transparent hover:opacity-75 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 inline-flex h-8 w-8" onclick="this.parentElement.remove();" aria-label="Close">
+                <span class="sr-only">Close</span>
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+              </button>
+            </div>
+          {% endfor %}
+        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+              var toasts = document.querySelectorAll('.toast-message');
+              toasts.forEach(function(toast) {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+                setTimeout(function() { toast.remove(); }, 500);
+              });
+            }, 4000);
+          });
+        </script>
+      {% endif %}
+    {% endwith %}
+
+</body>
+</html>

@@ -197,11 +197,15 @@
             </a>
             <a href="{{ url_for('core_features.chatbot_ui') }}"
                class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
-                <span class="material-symbols-outlined">gavel</span><span>Legal AI</span>
+                <span class="material-symbols-outlined">gavel</span><span>Premium</span>
             </a>
             <a href="{{ url_for('module3.dashboard') }}"
                class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
                 <span class="material-symbols-outlined">description</span><span>Reporting Dashboard</span>
+            </a>
+            <a href="{{ url_for('core_features.get_started') }}"
+               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+                <span class="material-symbols-outlined">rocket_launch</span><span>Get Started</span>
             </a>
             <a href="{{ url_for('core_features.guide') }}"
                class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
@@ -231,11 +235,11 @@
                 <p class="text-on-surface-variant font-medium">Here is your case overview for today.</p>
             </div>
             <div class="flex flex-wrap items-stretch gap-3 md:gap-4 w-full md:w-auto">
-                <div class="bg-white p-4 rounded-xl border-l-4 border-primary shadow-sm flex-1 min-w-[110px]">
+                <div class="bg-white p-4 rounded-xl border-l-4 border-primary shadow-sm flex-1 min-w-0 sm:min-w-[110px]">
                     <span class="text-xs font-bold text-on-surface-variant block mb-1">Total Defects</span>
                     <span class="text-2xl font-black text-on-surface">0</span>
                 </div>
-                <div class="bg-white p-4 rounded-xl border-l-4 border-red-500 shadow-sm flex-1 min-w-[110px]">
+                <div class="bg-white p-4 rounded-xl border-l-4 border-red-500 shadow-sm flex-1 min-w-0 sm:min-w-[110px]">
                     <span class="text-xs font-bold text-on-surface-variant block mb-1">Action Required</span>
                     <span class="text-2xl font-black text-on-surface">--</span>
                 </div>
@@ -248,9 +252,9 @@
         </div>
 
         <!-- Action Cards Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
             <!-- Evidence Review -->
-            <div class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
+            <div class="group relative bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
                 <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">folder_managed</span>
                 <div class="relative z-10 flex flex-col h-full">
                     <h3 class="font-headline font-bold text-lg text-on-surface mb-2">Evidence Review</h3>
@@ -262,7 +266,7 @@
                 </div>
             </div>
             <!-- Clause Retrieval -->
-            <div class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
+            <div class="group relative bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
                 <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">gavel</span>
                 <div class="relative z-10 flex flex-col h-full">
                     <h3 class="font-headline font-bold text-lg text-on-surface mb-2">Clause Retrieval</h3>
@@ -274,7 +278,7 @@
                 </div>
             </div>
             <!-- Lock Evidence -->
-            <div class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
+            <div class="group relative bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
                 <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">lock</span>
                 <div class="relative z-10 flex flex-col h-full">
                     <h3 class="font-headline font-bold text-lg text-on-surface mb-2">Lock Evidence</h3>
@@ -285,7 +289,7 @@
                 </div>
             </div>
             <!-- Lidar Scans -->
-            <div class="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
+            <div class="group relative bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md">
                 <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-slate-100 group-hover:text-teal-50 transition-colors pointer-events-none">deployed_code</span>
                 <div class="relative z-10 flex flex-col h-full">
                     <h3 class="font-headline font-bold text-lg text-on-surface mb-2">Lidar Scans</h3>
@@ -300,7 +304,7 @@
 
         <!-- Pending Cases Queue -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden mb-12">
-            <div class="flex flex-wrap items-center justify-between px-6 py-5 bg-slate-50/50 gap-4">
+            <div class="flex flex-wrap items-center justify-between px-4 md:px-6 py-4 md:py-5 bg-slate-50/50 gap-4">
                 <h2 class="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary">list_alt</span>Pending Cases Queue
                 </h2>
@@ -318,30 +322,30 @@
                 <table class="w-full text-left min-w-[640px]">
                     <thead>
                         <tr class="bg-slate-50/80">
-                            <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Reference</th>
-                            <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Client Name</th>
-                            <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Defect Status</th>
-                            <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Assigned Date</th>
-                            <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Action</th>
+                            <th class="px-3 md:px-6 py-3 md:py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Reference</th>
+                            <th class="px-3 md:px-6 py-3 md:py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Client Name</th>
+                            <th class="px-3 md:px-6 py-3 md:py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Defect Status</th>
+                            <th class="px-3 md:px-6 py-3 md:py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Assigned Date</th>
+                            <th class="px-3 md:px-6 py-3 md:py-4 text-[10px] uppercase tracking-widest font-black text-on-surface-variant">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if pending_cases %}
                         {% for case in pending_cases %}
                         <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors duration-100">
-                            <td class="px-6 py-4">
+                            <td class="px-3 md:px-6 py-3 md:py-4">
                                 <span class="text-sm font-mono font-bold text-on-surface">#DFT-{{ case.id }}</span>
                                 {% if case.is_verified %}
                                 <span class="ml-2 text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">VERIFIED</span>
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-3 md:px-6 py-3 md:py-4">
                                 <span class="text-sm font-semibold text-on-surface">{{ case.client_name }}</span>
                                 {% if case.scan_name %}
                                 <p class="text-xs text-on-surface-variant">{{ case.scan_name }}</p>
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-3 md:px-6 py-3 md:py-4">
                                 {% set s = case.status %}
                                 {% if s == 'Fixed' %}
                                 <span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
@@ -358,8 +362,8 @@
                                 {% endif %}
                                 <p class="text-[10px] text-on-surface-variant mt-1">{{ case.severity }}</p>
                             </td>
-                            <td class="px-6 py-4 text-sm text-on-surface-variant">{{ case.assigned_date }}</td>
-                            <td class="px-6 py-4">
+                            <td class="px-3 md:px-6 py-3 md:py-4 text-sm text-on-surface-variant">{{ case.assigned_date }}</td>
+                            <td class="px-3 md:px-6 py-3 md:py-4">
                                 <a href="{{ url_for('module2.legal_evidence_review') }}"
                                    class="inline-flex items-center gap-1 text-xs font-bold text-primary border border-primary/30 px-3 py-1.5 rounded-lg hover:bg-primary hover:text-white transition-all">
                                     <span class="material-symbols-outlined text-[14px]">folder_managed</span>
@@ -414,7 +418,7 @@
 <!-- TOAST NOTIFICATIONS -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3">
+    <div id="toast-container" class="fixed top-5 right-2 md:right-5 z-50 flex flex-col gap-3 max-w-[90vw] md:max-w-xs">
       {% for category, message in messages %}
         {% set bg_color = 'bg-blue-600' %}
         {% set text_color = 'text-white' %}
