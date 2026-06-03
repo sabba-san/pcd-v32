@@ -40,6 +40,10 @@ class User(db.Model, UserMixin):
     correspondence_address = db.Column(db.Text)
     unit                   = db.Column(db.String(100))
 
+    # ── Assignment links (homeowner → developer / lawyer) ─────────────────────
+    assigned_developer_id  = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    assigned_lawyer_id     = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
     # ── Compliance role alias (used by Nabilah module seed logic) ─────────────
     role                   = db.Column(db.String(50))
 
@@ -93,6 +97,8 @@ class Scan(db.Model):
     model_path = db.Column(db.String(500))  # Path to 3D model file
     created_at = db.Column(db.DateTime, default=db.func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Linking scan to user
+    developer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Assigned developer
+    lawyer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Assigned lawyer
 
     defects = db.relationship('Defect', backref='scan', lazy=True)
 
@@ -110,7 +116,8 @@ class Defect(db.Model):
     priority = db.Column(db.String(20), default='Medium')  # Urgent, High, Medium, Low
     description = db.Column(db.Text)  # Auto-populated from mesh label (non-editable)
     status = db.Column(db.String(50), default='Reported')  # Reported, Under Review, Fixed
-    image_path = db.Column(db.String(500))  # Path to snapshot image
+    image_path = db.Column(db.String(500))  # Path to snapshot image (legacy)
+    image_data = db.Column(db.Text)  # Base64-encoded defect image (ephemeral-storage proof)
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=db.func.now())
     completed_date = db.Column(db.Date)
@@ -213,6 +220,7 @@ class Evidence(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     defect_id = db.Column(db.Integer, db.ForeignKey('defects.id', ondelete='CASCADE'), nullable=False)
     file_path = db.Column(db.String(255), nullable=False) # User requested
+    image_data = db.Column(db.Text)  # Base64-encoded evidence image
     file_type = db.Column(db.String(50))                  # User requested
     filename = db.Column(db.String(255))                 # Legacy compatibility
     uploaded_at = db.Column(db.DateTime, default=db.func.now()) # Legacy compatibility

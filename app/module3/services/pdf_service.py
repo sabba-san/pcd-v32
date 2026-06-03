@@ -60,6 +60,18 @@ def _resolve_evidence_image_path(evidence_dir, defect_id, evidence_filename=None
     return None
 
 
+def _get_evidence_image_bytesio(defect_id):
+    """Retrieve evidence image from database as BytesIO (Base64 fallback)."""
+    try:
+        from app.models import Evidence
+        evidence = Evidence.query.filter_by(defect_id=defect_id).first()
+        if evidence and evidence.image_data:
+            return BytesIO(base64.b64decode(evidence.image_data))
+    except Exception:
+        pass
+    return None
+
+
 # ---- PDF Drawing Helpers ----
 
 def draw_justified_line(pdf, text, x, y, max_width, font_name, font_size):
@@ -779,8 +791,16 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
             try:
                 pdf.drawImage(ImageReader(image_path), LABEL_X, y - 110, width=200, height=110)
             except Exception:
-                pdf.setFont("Helvetica-Oblique", 8)
-                pdf.drawString(LABEL_X, y - 10, f"Error: Evidence image not found.")
+                img_bytes = _get_evidence_image_bytesio(defect.get("id"))
+                if img_bytes:
+                    try:
+                        pdf.drawImage(ImageReader(img_bytes), LABEL_X, y - 110, width=200, height=110)
+                    except Exception:
+                        pdf.setFont("Helvetica-Oblique", 8)
+                        pdf.drawString(LABEL_X, y - 10, f"Error: Evidence image not found.")
+                else:
+                    pdf.setFont("Helvetica-Oblique", 8)
+                    pdf.drawString(LABEL_X, y - 10, f"Error: Evidence image not found.")
             
             y -= 125
 
@@ -973,13 +993,19 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
                             if os.path.exists(static_candidate):
                                 appendix_image_path = static_candidate
                     
+                    img_to_draw = None
                     if appendix_image_path and os.path.exists(appendix_image_path):
+                        img_to_draw = appendix_image_path
+                    else:
+                        img_to_draw = _get_evidence_image_bytesio(current_appendix_item.get("id"))
+
+                    if img_to_draw:
                         if y < 170:
                             draw_footer(pdf, width, labels)
                             pdf.showPage()
                             y = height - 50
                         try:
-                            pdf.drawImage(ImageReader(appendix_image_path), 70, y - 95, width=180, height=95)
+                            pdf.drawImage(ImageReader(img_to_draw), 70, y - 95, width=180, height=95)
                             y -= 110
                         except Exception:
                             pdf.setFont("Helvetica-Oblique", 8)

@@ -116,6 +116,12 @@ def create_app():
             "ALTER TABLE defects ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER REFERENCES users(id)",
             "ALTER TABLE scans ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE",
+            "ALTER TABLE defects ADD COLUMN IF NOT EXISTS image_data TEXT",
+            "ALTER TABLE evidence ADD COLUMN IF NOT EXISTS image_data TEXT",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_developer_id INTEGER REFERENCES users(id)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER REFERENCES users(id)",
+            "ALTER TABLE scans ADD COLUMN IF NOT EXISTS developer_id INTEGER REFERENCES users(id)",
+            "ALTER TABLE scans ADD COLUMN IF NOT EXISTS lawyer_id INTEGER REFERENCES users(id)",
         ]:
             try:
                 db.session.execute(text(stmt))

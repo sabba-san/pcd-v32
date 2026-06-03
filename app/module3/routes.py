@@ -1478,7 +1478,7 @@ def load_evidence():
     try:
         cur.execute(
             """
-            SELECT DISTINCT ON (defect_id) defect_id, filename, uploaded_at, file_path
+            SELECT DISTINCT ON (defect_id) defect_id, filename, uploaded_at, file_path, image_data
             FROM evidence
             ORDER BY defect_id, uploaded_at DESC
             """
@@ -1488,8 +1488,9 @@ def load_evidence():
                 "filename": filename,
                 "uploaded_at": str(uploaded_at),
                 "file_path": file_path,
+                "image_data": image_data,
             }
-            for defect_id, filename, uploaded_at, file_path in cur.fetchall()
+            for defect_id, filename, uploaded_at, file_path, image_data in cur.fetchall()
         }
     finally:
         cur.close()
@@ -1502,12 +1503,13 @@ def save_evidence(data):
         for defect_id, item in data.items():
             cur.execute("DELETE FROM evidence WHERE defect_id = %s", (int(defect_id),))
             cur.execute(
-                "INSERT INTO evidence (defect_id, filename, uploaded_at, file_path) VALUES (%s, %s, %s, %s)",
+                "INSERT INTO evidence (defect_id, filename, uploaded_at, file_path, image_data) VALUES (%s, %s, %s, %s, %s)",
                 (
                     int(defect_id),
                     item.get("filename"),
                     item.get("uploaded_at", _now_app_timezone().strftime("%Y-%m-%d %H:%M:%S")),
                     item.get("file_path", item.get("filename")),
+                    item.get("image_data"),
                 ),
             )
         conn.commit()
@@ -2196,6 +2198,12 @@ def save_homeowner_claim_details():
             (assigned_lawyer_id, user_id)
         )
 
+        # ── Persist developer/lawyer assignment on the User record ────────────
+        cur.execute(
+            "UPDATE users SET assigned_developer_id = %s, assigned_lawyer_id = %s WHERE id = %s",
+            (selected_dev_id, assigned_lawyer_id, user_id)
+        )
+
         conn.commit()
         return jsonify({"success": True, "message": "Claim details saved."})
     finally:
@@ -2260,13 +2268,10 @@ def upload_evidence():
         ext = file.filename.rsplit('.', 1)[1].lower()
 
         filename = f"{uuid.uuid4().hex}.{ext}"
-        filepath = os.path.realpath(os.path.join(evidence_dir, filename))
 
-        # Path Traversal Protection
-        if not filepath.startswith(evidence_dir):
-            return jsonify({"error": "Invalid file path."}), 400
-
-        file.save(filepath)
+        # Read file and encode to Base64 for database storage
+        file_content = file.read()
+        image_data = base64.b64encode(file_content).decode('utf-8')
 
         # Save evidence metadata with timestamp
         now_local = _now_app_timezone()
@@ -2277,7 +2282,8 @@ def upload_evidence():
         evidence_img[defect_id] = {
             "filename": filename,
             "uploaded_at": uploaded_at,
-            "file_path": filename
+            "file_path": filename,
+            "image_data": image_data,
         }
         save_evidence(evidence_img)
 
@@ -2317,15 +2323,20 @@ def evidence_exists(defect_id):
     """
     Check if evidence image exists for a defect.
     """
-    from app.models import Defect
+    from app.models import Defect, Evidence
     from app.utils.auth_helper import authorize_defect_access
     defect = Defect.query.get(defect_id)
     if not defect:
         return jsonify({"exists": False, "defect_id": defect_id})
     authorize_defect_access(defect)
 
-    evidence_dir = os.path.join(current_app.root_path, "evidence")
+    # 1. Check database for image_data
+    evidence = Evidence.query.filter_by(defect_id=defect_id).first()
+    if evidence and evidence.image_data:
+        return jsonify({"exists": True, "defect_id": defect_id})
 
+    # 2. Fallback: check file on disk
+    evidence_dir = os.path.join(current_app.root_path, "evidence")
     for ext in ALLOWED_EXTENSIONS:
         filename = f"defect_{defect_id}.{ext}"
         filepath = os.path.join(evidence_dir, filename)
@@ -2351,7 +2362,7 @@ def serve_evidence_image(filename):
     Serve an evidence image file stored in app/evidence/ (outside static/).
     Only authenticated users can access these files.
     """
-    from flask import send_from_directory, abort
+    from flask import send_from_directory, abort, Response
     
     # Find defect associated with this evidence file
     from app.models import Evidence
@@ -2368,7 +2379,15 @@ def serve_evidence_image(filename):
     # Reuse existing authorization helper (it aborts internally on failure)
     from app.utils.auth_helper import authorize_defect_access
     authorize_defect_access(defect)
+
+    # 1. Serve from database (Base64) — preferred for new uploads
+    if evidence.image_data:
+        return Response(
+            base64.b64decode(evidence.image_data),
+            mimetype='image/png'
+        )
     
+    # 2. Fallback to file on disk
     evidence_dir = os.path.join(current_app.root_path, "evidence")
     return send_from_directory(evidence_dir, filename)
 

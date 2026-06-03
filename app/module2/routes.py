@@ -1,4 +1,5 @@
 # module2/routes.py
+import base64
 import glob
 import json
 import os
@@ -8,7 +9,7 @@ import re
 from typing import List, Optional, Set, Tuple
 
 from flask import (Blueprint, abort, current_app, flash, jsonify, redirect,
-                   render_template, request, send_from_directory, url_for)
+                   render_template, request, Response, send_from_directory, url_for)
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
@@ -161,8 +162,13 @@ def dlp_info():
 @module2.route('/projects', methods=['GET'])
 @login_required
 def list_projects():
-    """List all scans/projects in the database"""
-    scans = Scan.query.filter_by(user_id=current_user.id).order_by(Scan.created_at.desc()).all()
+    """List all scans/projects, filtered by the logged-in user's role."""
+    if current_user.user_type == 'developer':
+        scans = Scan.query.filter_by(developer_id=current_user.id).order_by(Scan.created_at.desc()).all()
+    elif current_user.user_type == 'lawyer':
+        scans = Scan.query.filter_by(lawyer_id=current_user.id).order_by(Scan.created_at.desc()).all()
+    else:  # homeowner
+        scans = Scan.query.filter_by(user_id=current_user.id).order_by(Scan.created_at.desc()).all()
     
     projects = []
     for scan in scans:
@@ -184,7 +190,11 @@ def list_projects():
 @login_required
 def visualize_scan(scan_id):
     scan = Scan.query.get_or_404(scan_id)
-    if scan.user_id != current_user.id:
+    if current_user.user_type == 'homeowner' and scan.user_id != current_user.id:
+        abort(403)
+    elif current_user.user_type == 'developer' and scan.developer_id != current_user.id:
+        abort(403)
+    elif current_user.user_type == 'lawyer' and scan.lawyer_id != current_user.id:
         abort(403)
     defects = Defect.query.filter_by(scan_id=scan_id).all()
     # get_glb_url handles both Spaces URLs (production) and local serve route (dev)
@@ -203,7 +213,11 @@ def visualize_scan(scan_id):
 @login_required
 def get_scan_defects(scan_id):
     scan = Scan.query.get_or_404(scan_id)
-    if scan.user_id != current_user.id:
+    if current_user.user_type == 'homeowner' and scan.user_id != current_user.id:
+        abort(403)
+    elif current_user.user_type == 'developer' and scan.developer_id != current_user.id:
+        abort(403)
+    elif current_user.user_type == 'lawyer' and scan.lawyer_id != current_user.id:
         abort(403)
     defects = Defect.query.filter_by(scan_id=scan_id).all()
     
@@ -347,6 +361,7 @@ def report_defect(scan_id):
 
     # ── Optional photographic evidence upload ────────────────────────────────
     image_path = None
+    image_data = None
     evidence_file = request.files.get('evidence_image')
     if evidence_file and evidence_file.filename:
         _, ext = os.path.splitext(evidence_file.filename.lower())
@@ -376,17 +391,12 @@ def report_defect(scan_id):
                 return jsonify({'error': 'Invalid PDF content.'}), 400
 
         unique_name = f"{uuid.uuid4().hex}{ext}"
-        # Save to unified evidence directory (app/evidence)
-        evidence_dir = os.path.realpath(os.path.join(current_app.root_path, "evidence"))
-        os.makedirs(evidence_dir, exist_ok=True)
-        save_path = os.path.realpath(os.path.join(evidence_dir, unique_name))
-        
-        # Path Traversal Protection
-        if not save_path.startswith(evidence_dir):
-            return jsonify({'error': 'Invalid file path.'}), 400
-            
-        evidence_file.save(save_path)
-        # Store simple filename as image_path for consistency with module3
+
+        # Read file and encode to Base64 for database storage
+        file_content = evidence_file.read()
+        image_data = base64.b64encode(file_content).decode('utf-8')
+
+        # Store filename reference for backward compatibility
         image_path = unique_name
 
     # ── Persist defect record ────────────────────────────────────────────────
@@ -404,6 +414,7 @@ def report_defect(scan_id):
         status='Reported',
         notes=notes,
         image_path=image_path,
+        image_data=image_data,
         reported_date=reported_at,
         deadline=deadline,
     )
@@ -411,11 +422,12 @@ def report_defect(scan_id):
     db.session.flush() # Ensure defect.id is populated for the Evidence record
     
     # ── Update evidence table for PDF generator ──────────────────────────────
-    if image_path:
+    if image_data:
         new_evidence = Evidence(
             defect_id=defect.id,
             filename=image_path,
             file_path=image_path,
+            image_data=image_data,
             file_type=ext.lstrip('.'),
             uploaded_at=reported_at
         )
@@ -445,7 +457,11 @@ def report_defect(scan_id):
 @login_required
 def serve_model(scan_id):
     scan = Scan.query.get_or_404(scan_id)
-    if scan.user_id != current_user.id:
+    if current_user.user_type == 'homeowner' and scan.user_id != current_user.id:
+        abort(403)
+    elif current_user.user_type == 'developer' and scan.developer_id != current_user.id:
+        abort(403)
+    elif current_user.user_type == 'lawyer' and scan.lawyer_id != current_user.id:
         abort(403)
     if not scan.model_path:
         abort(404)
@@ -459,15 +475,23 @@ def serve_model(scan_id):
 def serve_defect_image(defect_id):
     defect = Defect.query.get_or_404(defect_id)
     authorize_defect_access(defect)
+
+    # 1. Serve from database (Base64) — preferred for new uploads
+    if defect.image_data:
+        return Response(
+            base64.b64decode(defect.image_data),
+            mimetype='image/png'
+        )
+
     if not defect.image_path:
         abort(404)
-    
-    # 1. Try unified evidence directory first
+
+    # 2. Try unified evidence directory first
     evidence_dir = os.path.join(current_app.root_path, "evidence")
     if os.path.exists(os.path.join(evidence_dir, defect.image_path)):
         return send_from_directory(evidence_dir, defect.image_path)
         
-    # 2. Fallback to legacy upload_data directory
+    # 3. Fallback to legacy upload_data directory
     upload_dir = os.path.join(current_app.instance_path, 'uploads', 'upload_data')
     return send_from_directory(upload_dir, defect.image_path)
 
@@ -569,7 +593,11 @@ def api_legal_verify_defect(defect_id):
 @login_required
 def view_project(scan_id):
     scan = Scan.query.get_or_404(scan_id)
-    if scan.user_id != current_user.id:
+    if current_user.user_type == 'homeowner' and scan.user_id != current_user.id:
+        abort(403)
+    elif current_user.user_type == 'developer' and scan.developer_id != current_user.id:
+        abort(403)
+    elif current_user.user_type == 'lawyer' and scan.lawyer_id != current_user.id:
         abort(403)
     defects = Defect.query.filter_by(scan_id=scan_id).all()
     model_url = url_for('module2.serve_model', scan_id=scan_id) if scan.model_path else None
@@ -655,9 +683,15 @@ def upload_scan():
         # Upload GLB to DO Spaces (production) or keep local path (development)
         stored_model_path = upload_glb(glb_path, glb_name)
 
-        # Create Scan record
+        # Create Scan record with role assignments
         scan_label = project_name or f'Scan {timestamp}'
-        scan = Scan(name=scan_label, model_path=stored_model_path, user_id=current_user.id)
+        scan = Scan(
+            name=scan_label,
+            model_path=stored_model_path,
+            user_id=current_user.id,
+            developer_id=current_user.assigned_developer_id,
+            lawyer_id=current_user.assigned_lawyer_id,
+        )
         db.session.add(scan)
         db.session.flush()  # get scan.id before commit
 
