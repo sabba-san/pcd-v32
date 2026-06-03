@@ -268,7 +268,8 @@ class DLPChatbotApp {
 
         this.conversations.forEach(chat => {
             const row = document.createElement('div');
-            row.className = `history-item-row ${chat.id === this.activeChatId ? 'active' : ''}`;
+            const isActive = chat.id === this.activeChatId;
+            row.className = `history-item-row flex items-center justify-between px-4 py-2.5 cursor-pointer border-l-4 transition ${isActive ? 'active bg-blue-50 border-blue-600' : 'border-transparent hover:bg-blue-50'}`;
             
             row.addEventListener('click', (e) => {
                 if (e.target.closest('.history-actions') || e.target.tagName === 'INPUT') return;
@@ -277,7 +278,7 @@ class DLPChatbotApp {
             });
 
             const titleSpan = document.createElement('span');
-            titleSpan.className = 'history-title-text';
+            titleSpan.className = 'history-title-text text-sm flex-1 truncate text-gray-600';
             titleSpan.textContent = chat.title || 'New Chat';
             titleSpan.addEventListener('dblclick', () => this.enableRenaming(chat.id, titleSpan));
 
@@ -285,7 +286,7 @@ class DLPChatbotApp {
             actionsDiv.className = 'history-actions';
 
             const editBtn = document.createElement('button');
-            editBtn.className = 'btn-icon-action';
+            editBtn.className = 'btn-icon-action bg-transparent border-none text-gray-400 cursor-pointer text-sm p-1 rounded hover:bg-blue-50 hover:text-blue-600 transition';
             editBtn.innerHTML = '✏️';
             editBtn.title = "Rename Chat";
             editBtn.addEventListener('click', (e) => {
@@ -294,7 +295,7 @@ class DLPChatbotApp {
             });
 
             const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn-icon-action btn-delete';
+            deleteBtn.className = 'btn-icon-action btn-delete bg-transparent border-none text-gray-400 cursor-pointer text-sm p-1 rounded hover:bg-blue-50 hover:text-blue-600 transition';
             deleteBtn.innerHTML = '🗑️';
             deleteBtn.title = "Delete Chat";
             deleteBtn.addEventListener('click', (e) => {
@@ -454,23 +455,24 @@ class DLPChatbotApp {
 
     createMessageStructure(text, sender) {
         const messageDiv = document.createElement('div');
-        messageDiv.className = `chat-message ${sender}`;
+        const isUser = sender === 'user';
+        messageDiv.className = `chat-message ${sender} flex gap-3 mb-3 ${isUser ? 'justify-end' : 'justify-start'}`;
 
         if (sender === 'bot') {
             const avatar = document.createElement('div');
-            avatar.className = 'chat-avatar';
+            avatar.className = 'chat-avatar w-9 h-9 rounded-lg bg-blue-50 border border-gray-200 flex items-center justify-center text-lg flex-shrink-0 text-blue-600';
             avatar.innerHTML = '🤖';
             messageDiv.appendChild(avatar);
         }
 
         const bubble = document.createElement('div');
-        bubble.className = 'message-bubble';
+        bubble.className = `message-bubble max-w-[75%] px-5 py-3.5 text-sm leading-relaxed break-words ${isUser ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm shadow-md' : 'bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-tl-sm shadow-sm'}`;
         bubble.textContent = text;
         messageDiv.appendChild(bubble);
 
         if (sender === 'bot') {
             const readBtn = document.createElement('button');
-            readBtn.className = 'btn-read-aloud';
+            readBtn.className = 'btn-read-aloud bg-transparent border-none cursor-pointer text-xl px-2 opacity-50 hover:opacity-100 hover:scale-110 transition-all flex items-center text-gray-400 hover:text-blue-600';
             readBtn.innerHTML = '🔊';
             readBtn.title = "Read Aloud";
             
@@ -489,10 +491,10 @@ class DLPChatbotApp {
     showTypingIndicator() {
         const div = document.createElement('div');
         div.id = 'typingIndicator';
-        div.className = 'chat-message bot';
+        div.className = 'chat-message bot flex gap-3 mb-3 justify-start';
         div.innerHTML = `
-            <div class="chat-avatar">🤖</div>
-            <div class="typing-indicator">
+            <div class="chat-avatar w-9 h-9 rounded-lg bg-blue-50 border border-gray-200 flex items-center justify-center text-lg flex-shrink-0 text-blue-600">🤖</div>
+            <div class="typing-indicator bg-white border border-gray-200 rounded-2xl rounded-tl-sm shadow-sm px-5 py-4 flex items-center gap-1.5">
                 <div class="dot"></div>
                 <div class="dot"></div>
                 <div class="dot"></div>
@@ -522,15 +524,12 @@ class DLPChatbotApp {
     addDefectRow() {
         const container = document.getElementById('defectItemsContainer');
         const row = document.createElement('div');
-        row.className = 'form-group defect-row';
-        row.style.display = 'flex';
-        row.style.gap = '15px';
-        row.style.marginTop = '15px';
+        row.className = 'form-group defect-row flex gap-4 mt-4';
         
         row.innerHTML = `
-            <input type="text" class="defect-desc" placeholder="Defect Description" style="flex: 2;" required>
-            <input type="number" class="defect-cost" placeholder="Est. Cost (RM)" style="flex: 1;" min="0" required>
-            <button type="button" class="btn-secondary remove-defect-btn" style="padding: 0 15px; color: #ef4444; border-color: #ef4444;">X</button>
+            <input type="text" class="defect-desc flex-[2] px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Defect Description" required>
+            <input type="number" class="defect-cost flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Est. Cost (RM)" min="0" required>
+            <button type="button" class="btn-secondary remove-defect-btn px-3 text-red-500 border-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-500 text-xs font-bold">X</button>
         `;
         
         // Add functionality to remove this specific row
@@ -562,13 +561,13 @@ class DLPChatbotApp {
         let dlpAdvice = "";
         
         if (daysRemaining < 0) {
-            dlpStatus = `<span style="color: #ef4444;">EXPIRED</span>`;
+            dlpStatus = `<span class="text-red-500 font-semibold">EXPIRED</span>`;
             dlpAdvice = "Your official DLP has ended. You may need to rely on hidden defect laws (Latent Defects) or cover costs yourself.";
         } else if (daysRemaining <= 30) {
-            dlpStatus = `<span style="color: #f59e0b;">EXPIRING SOON (${daysRemaining} Days Left)</span>`;
+            dlpStatus = `<span class="text-amber-500 font-semibold">EXPIRING SOON (${daysRemaining} Days Left)</span>`;
             dlpAdvice = "Submit all remaining defect reports officially immediately before the deadline!";
         } else {
-            dlpStatus = `<span style="color: var(--neon-green);">VALID (${daysRemaining} Days Left)</span>`;
+            dlpStatus = `<span class="text-blue-600 font-semibold">VALID (${daysRemaining} Days Left)</span>`;
             dlpAdvice = "You are safely within the DLP. Keep documenting and submitting defects as they arise.";
         }
 
@@ -585,7 +584,7 @@ class DLPChatbotApp {
             if (deadlineDays < 0) {
                 deadlineHtml = `
                     <p><strong>Developer Deadline:</strong> ${deadlineDate.toLocaleDateString()}</p>
-                    <p><strong>Status:</strong> <span style="color: #ef4444;">OVERDUE</span></p>
+                    <p><strong>Status:</strong> <span class="text-red-500 font-semibold">OVERDUE</span></p>
                     <p><strong>Action:</strong> The 30 days have passed. Under Malaysian Law, you may now hire your own contractor, repair the defect, and deduct the cost from the stakeholder sum.</p>
                 `;
             } else {
@@ -618,8 +617,8 @@ class DLPChatbotApp {
         let tribunalWarning = "";
         if (totalClaim > 50000) {
             tribunalWarning = `
-                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 10px; border-radius: 8px; margin-top: 10px;">
-                    <strong style="color: #ef4444;">⚠️ TRIBUNAL LIMIT EXCEEDED</strong><br>
+                <div class="bg-red-50 border border-red-400 p-3 rounded-lg mt-2">
+                    <strong class="text-red-500">⚠️ TRIBUNAL LIMIT EXCEEDED</strong><br>
                     Your estimated claim is <strong>RM ${totalClaim.toLocaleString()}</strong>. The maximum claim allowed in the Tribunal for Homebuyer Claims (TTPR) is RM 50,000. You may need to waive the excess amount or file your case in a civil court.
                 </div>
             `;
@@ -629,9 +628,9 @@ class DLPChatbotApp {
         const reportArea = document.getElementById('assessmentReportArea');
         
         reportArea.innerHTML = `
-            <div style="text-align: center; border-bottom: 1px solid var(--border-dim); padding-bottom: 20px; margin-bottom: 20px;">
-                <h2 style="color: var(--text-primary); margin: 0;">Comprehensive DLP Report</h2>
-                <p style="color: var(--neon-green); margin-top: 5px;">Generated on ${today.toLocaleDateString()}</p>
+            <div class="text-center border-b border-gray-200 pb-5 mb-5">
+                <h2 class="text-gray-900 text-2xl font-bold m-0">Comprehensive DLP Report</h2>
+                <p class="text-blue-600 mt-1">Generated on ${today.toLocaleDateString()}</p>
             </div>
 
             <h3>📅 1. Timeline Analysis</h3>
@@ -645,17 +644,17 @@ class DLPChatbotApp {
 
             <h3>💰 3. Stakeholder Retention Funds</h3>
             <p>Based on your SPA price of RM ${purchasePrice.toLocaleString()}, the stakeholder lawyer is holding a 5% retention sum.</p>
-            <p><strong>Total Retention Sum:</strong> <span style="color: var(--neon-green); font-weight: bold; font-size: 1.1em;">RM ${retentionSum.toLocaleString()}</span></p>
+            <p><strong>Total Retention Sum:</strong> <span class="text-blue-600 font-bold text-lg">RM ${retentionSum.toLocaleString()}</span></p>
             <p>If the developer fails to repair defects within 30 days of notice, you have the legal right to claim your repair costs from this specific fund.</p>
 
             <h3>🛠️ 4. Claim Estimation</h3>
             <p>Your logged defects and estimated costs:</p>
             ${defectListHtml}
-            <p style="font-size: 1.2em; margin-top: 10px;"><strong>Total Estimated Claim:</strong> RM ${totalClaim.toLocaleString()}</p>
+            <p class="text-lg mt-2"><strong>Total Estimated Claim:</strong> RM ${totalClaim.toLocaleString()}</p>
             ${tribunalWarning}
             
-            <div style="margin-top: 30px; text-align: center;" class="print:hidden">
-                <button class="btn-secondary" onclick="window.print()" style="width: 100%;">🖨️ Print / Save as PDF</button>
+            <div class="mt-8 text-center print:hidden">
+                <button class="btn-secondary w-full" onclick="window.print()">🖨️ Print / Save as PDF</button>
             </div>
         `;
 
@@ -676,15 +675,12 @@ class DLPChatbotApp {
     addNoticeDefectRow() {
         const container = document.getElementById('noticeDefectsContainer');
         const row = document.createElement('div');
-        row.className = 'form-group defect-notice-row';
-        row.style.display = 'flex';
-        row.style.gap = '15px';
-        row.style.marginTop = '15px';
+        row.className = 'form-group defect-notice-row flex gap-4 mt-4';
         
         row.innerHTML = `
-            <input type="text" class="nl-defect-location" placeholder="Location" style="flex: 1;" required>
-            <input type="text" class="nl-defect-desc" placeholder="Issue" style="flex: 2;" required>
-            <button type="button" class="btn-secondary remove-nl-defect-btn" style="padding: 0 15px; color: #ef4444; border-color: #ef4444;">X</button>
+            <input type="text" class="nl-defect-location flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Location" required>
+            <input type="text" class="nl-defect-desc flex-[2] px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Issue" required>
+            <button type="button" class="btn-secondary remove-nl-defect-btn px-3 text-red-500 border-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-500 text-xs font-bold">X</button>
         `;
         
         row.querySelector('.remove-nl-defect-btn').addEventListener('click', function() {

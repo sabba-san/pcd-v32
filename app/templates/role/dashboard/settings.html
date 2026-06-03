@@ -165,38 +165,6 @@
                      <input type="text" id="correspondence_address" name="correspondence_address" value="{{ user.correspondence_address or '' }}" class="m3-input" placeholder="Your full mailing address">
                      <p class="text-[10px] text-slate-400 px-1 mt-1">Used as your homeowner address in tribunal reports.</p>
                  </div>
-                 {% if user.user_type == 'homeowner' %}
-                 <div class="space-y-1.5">
-                     <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Housing Project</label>
-                     <input type="text" id="housing_project" name="housing_project" value="{{ user.housing_project or '' }}" class="m3-input" placeholder="Search your Taman/Project...">
-                     <p class="text-[10px] text-slate-400 px-1 mt-1">Used for property identification in reports.</p>
-                 </div>
-                 <div class="space-y-1.5">
-                     <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Unit No.</label>
-                     <input type="text" id="unit" name="unit" value="{{ user.unit or '' }}" class="m3-input" placeholder="e.g. A-12-3">
-                     <p class="text-[10px] text-slate-400 px-1 mt-1">Your unit number within the housing project.</p>
-                 </div>
-                 {% endif %}
-                 <div class="space-y-1.5">
-                     <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Correspondence Address</label>
-                     <input type="text" id="correspondence_address" name="correspondence_address" value="{{ user.correspondence_address or '' }}" class="m3-input" placeholder="Your full mailing address">
-                     <p class="text-[10px] text-slate-400 px-1 mt-1">Used as your homeowner address in tribunal reports.</p>
-                 </div>
-                    {% if user.user_type == 'homeowner' %}
-                    <div class="space-y-1.5">
-                        <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Housing Project</label>
-                        <input type="text" id="housing_project" name="housing_project" value="{{ user.housing_project or '' }}" class="m3-input" placeholder="Search your Taman/Project...">
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Unit No.</label>
-                        <input type="text" id="unit" name="unit" value="{{ user.unit or '' }}" class="m3-input" placeholder="e.g. A-12-3">
-                    </div>
-                    {% endif %}
-                    <div class="space-y-1.5">
-                        <label class="text-[0.75rem] font-bold text-on-surface-variant px-1 uppercase tracking-wider">Correspondence Address</label>
-                        <input type="text" id="correspondence_address" name="correspondence_address" value="{{ user.correspondence_address or '' }}" class="m3-input" placeholder="Your full mailing address">
-                        <p class="text-[10px] text-slate-400 px-1 mt-1">Used as your homeowner address in tribunal reports.</p>
-                    </div>
                 </div>
 
                 <button type="submit" class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-sm shadow-lg hover:bg-primary-container transition-all active:scale-[0.98]">
@@ -306,26 +274,19 @@
 
     <script>
         async function initMap() {
-            const options = {
-                componentRestrictions: { country: "my" }
-            };
+            var options = { componentRestrictions: { country: 'my' } };
 
             function setupAutocomplete(inputId) {
-                const input = document.getElementById(inputId);
+                var input = document.getElementById(inputId);
                 if (!input) return;
 
-                const autocomplete = new google.maps.places.PlaceAutocompleteElement(options);
-                
-                // Copy some basic styling classes if possible, though shadow DOM restricts some
-                autocomplete.classList.add('w-full');
-                
-                // Insert web component and hide original input (keep it for form submission)
-                input.parentNode.insertBefore(autocomplete, input);
-                input.style.display = 'none';
+                var autocomplete = new google.maps.places.Autocomplete(input, options);
 
-                autocomplete.addEventListener('gmp-placeselect', async ({ place }) => {
-                    await place.fetchFields({ fields: ['displayName', 'formattedAddress'] });
-                    input.value = place.formattedAddress || place.displayName;
+                autocomplete.addListener('place_changed', function () {
+                    var place = autocomplete.getPlace();
+                    if (place && place.formatted_address) {
+                        input.value = place.formatted_address;
+                    }
                 });
             }
 

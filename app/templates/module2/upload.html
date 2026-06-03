@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
-<title>Upload Scan Data | LDMS</title>
+<title>Upload Scan Data | DLP ADVISOR</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
@@ -153,13 +154,17 @@ h1, h2, h3, .brand-font { font-family: 'Manrope', sans-serif; }
     </nav>
     
     <div class="mt-auto flex flex-col gap-1 pt-4 border-t border-slate-200 dark:border-slate-800">
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200" href="#">
-        <span class="material-symbols-outlined">help</span>
-        <span class="font-inter text-sm">Help</span>
+      <a href="{{ url_for('core_features.get_started') }}"
+         class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-lg text-sm font-semibold transition-all duration-200">
+        <span class="material-symbols-outlined">rocket_launch</span><span>Get Started</span>
       </a>
-      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all duration-200" href="{{ url_for('auth.logout') }}">
-        <span class="material-symbols-outlined">logout</span>
-        <span class="font-inter text-sm">Sign Out</span>
+      <a href="{{ url_for('core_features.guide') }}"
+         class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-lg text-sm font-semibold transition-all duration-200">
+        <span class="material-symbols-outlined">help_center</span><span>Help &amp; Guide</span>
+      </a>
+      <a href="{{ url_for('auth.logout') }}"
+         class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-lg text-sm font-semibold transition-all duration-200">
+        <span class="material-symbols-outlined">logout</span><span>Logout</span>
       </a>
     </div>
   </aside>

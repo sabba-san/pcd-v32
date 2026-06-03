@@ -1,215 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DLP Chatbot - Malaysian Property Law</title>
-    <!-- Cache buster set to v7 to load the new Botify theme -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=10">
-    <!-- Store user ID for user-isolated localStorage -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#2563eb",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "Segoe UI", "Tahoma", "sans-serif"],
+                    }
+                },
+            },
+        }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=11">
     <meta name="user-id" content="{{ current_user.id }}">
     <style>
-        @media print {
-            /* ===== PAGE SETUP ===== */
-            @page {
-                size: A4 portrait;
-                margin: 15mm 20mm;
-            }
-
-            /* ===== STEP 1: Hide everything ===== */
-            body * {
-                visibility: hidden;
-            }
-
-            /* ===== STEP 2: Reveal only the report container that is currently visible ===== */
-            #assessmentReportArea,
-            #assessmentReportArea * {
-                visibility: visible;
-            }
-            #noticeLetterOutputArea,
-            #noticeLetterOutputArea * {
-                visibility: visible;
-            }
-
-            /* ===== STEP 3: Position the report to fill the page ===== */
-            #assessmentReportArea {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                box-shadow: none !important;
-                border: none !important;
-                overflow: visible !important;
-            }
-            #noticeLetterOutputArea {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 20px !important;
-                box-shadow: none !important;
-                border: none !important;
-                overflow: visible !important;
-                background: white !important;
-            }
-
-            /* ===== STEP 4: Clean up body and layout ===== */
-            html, body {
-                background: white !important;
-                height: auto !important;
-                overflow: visible !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .app-container {
-                display: block !important;
-                height: auto !important;
-            }
-
-            /* ===== STEP 5: Force-hide all UI chrome ===== */
-            .sidebar,
-            .chat-input-area,
-            .chat-input,
-            #sendBtn,
-            #notification,
-            .content-header,
-            .assessment-form,
-            .scanner-container,
-            .welcome-screen,
-            #newChatBtn,
-            .sidebar-footer,
-            .sidebar-nav,
-            .sidebar-header,
-            .main-content::before,
-            .main-content::after {
-                display: none !important;
-                visibility: hidden !important;
-            }
-
-            /* ===== STEP 6: Hide print/copy/action buttons inside the report ===== */
-            /* Covers both [class*="print:hidden"] Tailwind-style and .no-print */
-            .no-print,
-            [class*="print:hidden"],
-            #assessmentReportArea button,
-            #noticeLetterOutputArea button {
-                display: none !important;
-                visibility: hidden !important;
-            }
-
-            /* ===== STEP 7: Prevent bad page-breaks ===== */
-            .avoid-page-break,
-            #assessmentReportArea h3,
-            #assessmentReportArea p,
-            #noticeLetterOutputArea p {
-                page-break-inside: avoid;
-            }
-
-            /* ===== STEP 8: Notice Letter — single-page compact fit ===== */
-            #letterContent {
-                font-size: 11pt !important;
-                line-height: 1.35 !important;
-                color: #000 !important;
-            }
-            #letterContent p {
-                margin-bottom: 8px !important;
-            }
-            #letterContent div[style*="margin-bottom: 40px"],
-            #letterContent div[style*="margin-bottom: 30px"] {
-                margin-bottom: 10px !important;
-            }
-            #letterContent table {
-                margin-bottom: 12px !important;
-            }
-            #letterContent ol,
-            #letterContent ul {
-                margin-top: 4px !important;
-                margin-bottom: 4px !important;
-                padding-left: 18px !important;
-            }
-            /* Signature block — keep together, reduce breathing room */
-            #letterContent .avoid-page-break:last-of-type {
-                page-break-inside: avoid;
-                margin-top: 10px !important;
-            }
-            #letterContent p[style*="margin-bottom: 60px"] {
-                margin-bottom: 20px !important;
-            }
-            #letterContent hr {
-                margin-top: 12px !important;
-                margin-bottom: 8px !important;
-            }
-            /* Disclaimer — smaller, less space */
-            #letterContent p[style*="font-size: 12px"] {
-                font-size: 8pt !important;
-                margin-top: 6px !important;
-            }
-
-            /* ===== STEP 9: Strip UI highlights from Notice Letter for print ===== */
-            /* .scanner-result strong applies green bg + border in the UI — remove for print */
-            #noticeLetterOutputArea strong,
-            #noticeLetterOutputArea b,
-            #letterContent strong,
-            #letterContent b {
-                background: transparent !important;
-                background-color: transparent !important;
-                border: none !important;
-                box-shadow: none !important;
-                color: #000 !important;
-                padding: 0 !important;
-                border-radius: 0 !important;
-            }
-            /* Strip the container's left accent border, glow, and tinted background */
-            #noticeLetterOutputArea {
-                background: white !important;
-                border-left: none !important;
-                border: none !important;
-                box-shadow: none !important;
-            }
-            /* Also strip any coloured neon-green CSS custom property text */
-            #letterContent * {
-                text-shadow: none !important;
-            }
-
-            /* ===== STEP 10: Strip UI highlights from DLP Report for print ===== */
-            /* Same .scanner-result strong green pill — strip from the report area */
-            #assessmentReportArea strong,
-            #assessmentReportArea b {
-                background: transparent !important;
-                background-color: transparent !important;
-                border: none !important;
-                box-shadow: none !important;
-                color: #000 !important;
-                padding: 0 !important;
-                border-radius: 0 !important;
-            }
-            /* Strip the container's left accent border, glow, and tinted background */
-            #assessmentReportArea {
-                background: white !important;
-                border-left: none !important;
-                border: none !important;
-                box-shadow: none !important;
-            }
-            /* Inline-colored spans: neon-green (retention sum, VALID status, "Generated on"),
-               amber (EXPIRING SOON), red (EXPIRED, OVERDUE, tribunal warning) — all → black */
-            #assessmentReportArea span[style*="color"],
-            #assessmentReportArea p[style*="color"] {
-                color: #000 !important;
-            }
-            /* Headings generated by the report use var(--neon-green) via .scanner-result h3 */
-            #assessmentReportArea h3 {
-                color: #000 !important;
-                border-bottom-color: #ccc !important;
-            }
-            /* Remove any text glow from the report */
-            #assessmentReportArea * {
-                text-shadow: none !important;
-            }
-        }
         @media (max-width: 640px) {
             .guidelines-paper { padding: 20px !important; }
             .assessment-form { max-width: 100% !important; padding: 0 12px; }
@@ -230,85 +43,138 @@
             .content-header h2 { font-size: 22px !important; }
             #noticeLetterOutputArea div[style*="display: flex"] { flex-direction: column !important; align-items: center !important; }
         }
+        @media print {
+            @page { size: A4 portrait; margin: 15mm 20mm; }
+            body * { visibility: hidden; }
+            #assessmentReportArea, #assessmentReportArea * { visibility: visible; }
+            #noticeLetterOutputArea, #noticeLetterOutputArea * { visibility: visible; }
+            #assessmentReportArea {
+                position: absolute !important; left: 0 !important; top: 0 !important;
+                width: 100% !important; max-width: 100% !important; margin: 0 !important;
+                padding: 0 !important; box-shadow: none !important; border: none !important; overflow: visible !important;
+            }
+            #noticeLetterOutputArea {
+                position: absolute !important; left: 0 !important; top: 0 !important;
+                width: 100% !important; max-width: 100% !important; margin: 0 !important;
+                padding: 20px !important; box-shadow: none !important; border: none !important;
+                overflow: visible !important; background: white !important;
+            }
+            html, body { background: white !important; height: auto !important; overflow: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .app-container { display: block !important; height: auto !important; }
+            .sidebar, .chat-input-area, .chat-input, #sendBtn, #notification,
+            .content-header, .assessment-form, .scanner-container, .welcome-screen,
+            #newChatBtn, .sidebar-footer, .sidebar-nav, .sidebar-header,
+            .main-content::before, .main-content::after { display: none !important; visibility: hidden !important; }
+            .no-print, [class*="print:hidden"],
+            #assessmentReportArea button, #noticeLetterOutputArea button { display: none !important; visibility: hidden !important; }
+            .avoid-page-break, #assessmentReportArea h3, #assessmentReportArea p,
+            #noticeLetterOutputArea p { page-break-inside: avoid; }
+            #letterContent { font-size: 11pt !important; line-height: 1.35 !important; color: #000 !important; }
+            #letterContent p { margin-bottom: 8px !important; }
+            #letterContent div[style*="margin-bottom: 40px"], #letterContent div[style*="margin-bottom: 30px"] { margin-bottom: 10px !important; }
+            #letterContent table { margin-bottom: 12px !important; }
+            #letterContent ol, #letterContent ul { margin-top: 4px !important; margin-bottom: 4px !important; padding-left: 18px !important; }
+            #letterContent .avoid-page-break:last-of-type { page-break-inside: avoid; margin-top: 10px !important; }
+            #letterContent p[style*="margin-bottom: 60px"] { margin-bottom: 20px !important; }
+            #letterContent hr { margin-top: 12px !important; margin-bottom: 8px !important; }
+            #letterContent p[style*="font-size: 12px"] { font-size: 8pt !important; margin-top: 6px !important; }
+            #noticeLetterOutputArea strong, #noticeLetterOutputArea b,
+            #letterContent strong, #letterContent b {
+                background: transparent !important; background-color: transparent !important;
+                border: none !important; box-shadow: none !important; color: #000 !important;
+                padding: 0 !important; border-radius: 0 !important;
+            }
+            #noticeLetterOutputArea { background: white !important; border-left: none !important; border: none !important; box-shadow: none !important; }
+            #letterContent * { text-shadow: none !important; }
+            #assessmentReportArea strong, #assessmentReportArea b {
+                background: transparent !important; background-color: transparent !important;
+                border: none !important; box-shadow: none !important; color: #000 !important;
+                padding: 0 !important; border-radius: 0 !important;
+            }
+            #assessmentReportArea { background: white !important; border-left: none !important; border: none !important; box-shadow: none !important; }
+            #assessmentReportArea span[style*="color"], #assessmentReportArea p[style*="color"] { color: #000 !important; }
+            #assessmentReportArea h3 { color: #000 !important; border-bottom-color: #ccc !important; }
+            #assessmentReportArea * { text-shadow: none !important; }
+        }
     </style>
 </head>
-<body>
+<body class="bg-gray-50">
     <div class="app-container">
-        
+
         <!-- ==================== SIDEBAR ==================== -->
-        <aside class="sidebar print:hidden">
-            <div class="sidebar-header">
-                <div class="brand-title">
-                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Superchat Logo" class="chat-logo">
-                    <h1 class="sidebar-title">DLP ADVISOR</h1>
+        <aside class="sidebar bg-white border-r border-gray-200 w-[280px] flex flex-col py-6 overflow-y-auto z-10 print:hidden">
+            <div class="sidebar-header px-5 pb-6 border-b border-gray-200">
+                <div class="brand-title flex items-center gap-3 mb-1">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Superchat Logo" class="chat-logo w-10 h-10 rounded-lg shadow-sm border border-gray-200 object-contain bg-white flex-shrink-0">
+                    <h1 class="sidebar-title text-2xl font-bold text-blue-600">DLP ADVISOR</h1>
                 </div>
-                <p class="sidebar-subtitle">Malaysian Property Law</p>
-                <button id="newChatBtn" class="btn-new-chat">+ New Chat</button>
+                <p class="sidebar-subtitle text-xs text-gray-400 tracking-wide">Malaysian Property Law</p>
+                <button id="newChatBtn" class="btn-new-chat w-full mt-5 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold uppercase tracking-wider hover:bg-blue-700 transition shadow-md">+ New Chat</button>
             </div>
-            
-            <nav class="sidebar-nav">
-                <button class="nav-tab active" data-tab="chat">💬 Current Chat</button>
-                <button class="nav-tab" data-tab="guidelines">📋 Guidelines</button>
-                <button class="nav-tab" data-tab="assessment">⚖️ Assessment</button>
-                <button class="nav-tab" data-tab="legal">⚖️ Legal Refs</button>
-                <button class="nav-tab" data-tab="noticeLetter">📝 Notice Letter</button>
-                <button class="nav-tab" data-tab="scanner">📸 AI Scanner</button>
-                <button class="nav-tab" data-tab="pdfscanner">📄 PDF Scanner</button>
+
+            <nav class="sidebar-nav flex-1 flex flex-col gap-2 px-4 py-6">
+                <button class="nav-tab active flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition" data-tab="chat">💬 Current Chat</button>
+                <button class="nav-tab flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition" data-tab="guidelines">📋 Guidelines</button>
+                <button class="nav-tab flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition" data-tab="assessment">⚖️ Assessment</button>
+                <button class="nav-tab flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition" data-tab="legal">⚖️ Legal Refs</button>
+                <button class="nav-tab flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition" data-tab="noticeLetter">📝 Notice Letter</button>
+                <button class="nav-tab flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition" data-tab="scanner">📸 AI Scanner</button>
+                <button class="nav-tab flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition" data-tab="pdfscanner">📄 PDF Scanner</button>
             </nav>
 
-            <div class="conversation-history-section">
-                <h3 class="history-label">Recent Chats</h3>
+            <div class="conversation-history-section mt-2">
+                <h3 class="history-label px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Recent Chats</h3>
                 <div id="conversationList" class="conversation-list"></div>
             </div>
 
-            <div class="sidebar-footer">
+            <div class="sidebar-footer px-4 pt-5 pb-0 border-t border-gray-200 flex flex-col gap-3 mt-auto">
                 {% if current_user.user_type == 'lawyer' %}
-                    <a href="{{ url_for('auth.lawyer_dashboard') }}" class="btn-back-dashboard">
+                    <a href="{{ url_for('auth.lawyer_dashboard') }}" class="btn-back-dashboard flex items-center gap-2 w-full px-4 py-3 bg-blue-50 text-blue-600 border border-blue-600 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-600 hover:text-white transition">
                         ← Dashboard
                     </a>
                 {% elif current_user.user_type == 'developer' %}
-                    <a href="{{ url_for('auth.developer_dashboard') }}" class="btn-back-dashboard">
+                    <a href="{{ url_for('auth.developer_dashboard') }}" class="btn-back-dashboard flex items-center gap-2 w-full px-4 py-3 bg-blue-50 text-blue-600 border border-blue-600 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-600 hover:text-white transition">
                         ← Dashboard
                     </a>
                 {% else %}
-                    <a href="{{ url_for('auth.homeowner_dashboard') }}" class="btn-back-dashboard">
+                    <a href="{{ url_for('auth.homeowner_dashboard') }}" class="btn-back-dashboard flex items-center gap-2 w-full px-4 py-3 bg-blue-50 text-blue-600 border border-blue-600 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-600 hover:text-white transition">
                         ← Dashboard
                     </a>
                 {% endif %}
-                <button id="clearAllData" class="btn-secondary">Clear All Data</button>
+                <button id="clearAllData" class="btn-secondary text-xs">Clear All Data</button>
             </div>
         </aside>
 
         <!-- ==================== MAIN CONTENT ==================== -->
-        <main class="main-content print:w-full print:max-w-none print:m-0 print:p-0 print:shadow-none print:border-none print:bg-white">
-            
+        <main class="main-content flex-1 flex flex-col bg-gray-50 relative print:w-full print:max-w-none print:m-0 print:p-0 print:shadow-none print:border-none print:bg-white">
+
             <!-- 1. CHAT TAB -->
             <section id="chat" class="tab-content active" style="padding-bottom: 100px;">
                 <div class="chat-container">
-                    <div id="welcomeScreen" class="welcome-screen">
-                        <div class="welcome-orb"></div>
-                        <h1 class="welcome-greeting">Hi there, {{ current_user.full_name }}<br><span class="subtitle">How can I help you today?</span></h1>
-                        
-                        <div class="welcome-cards">
-                            <div class="action-card" onclick="window.dlpChatbot.switchTab('guidelines')">
-                                <div class="card-icon">📋</div>
+                    <div id="welcomeScreen" class="welcome-screen flex flex-col items-center justify-center flex-1 text-center animate-[fadeInUp_0.5s_ease]">
+                        <div class="welcome-orb mb-8"></div>
+                        <h1 class="welcome-greeting text-4xl font-bold text-gray-900 mb-10 leading-tight tracking-tight">Hi there, {{ current_user.full_name }}<br><span class="subtitle text-2xl font-normal text-blue-600">How can I help you today?</span></h1>
+
+                        <div class="welcome-cards flex gap-6 justify-center max-w-2xl flex-wrap">
+                            <div class="action-card bg-white border border-gray-200 rounded-xl p-6 w-56 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-blue-500 transition-all" onclick="window.dlpChatbot.switchTab('guidelines')">
+                                <div class="card-icon text-2xl text-blue-600 mb-2">📋</div>
                                 <div class="card-text">
-                                    <h4>Guidelines</h4>
-                                    <p>Review DLP rules</p>
+                                    <h4 class="text-gray-900 text-base font-semibold m-0">Guidelines</h4>
+                                    <p class="text-gray-400 text-xs m-0">Review DLP rules</p>
                                 </div>
                             </div>
-                            <div class="action-card" onclick="window.dlpChatbot.switchTab('scanner')">
-                                <div class="card-icon">📸</div>
+                            <div class="action-card bg-white border border-gray-200 rounded-xl p-6 w-56 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-blue-500 transition-all" onclick="window.dlpChatbot.switchTab('scanner')">
+                                <div class="card-icon text-2xl text-blue-600 mb-2">📸</div>
                                 <div class="card-text">
-                                    <h4>AI Scanner</h4>
-                                    <p>Analyze defect photos</p>
+                                    <h4 class="text-gray-900 text-base font-semibold m-0">AI Scanner</h4>
+                                    <p class="text-gray-400 text-xs m-0">Analyze defect photos</p>
                                 </div>
                             </div>
-                            <div class="action-card" onclick="window.dlpChatbot.switchTab('assessment')">
-                                <div class="card-icon">⚖️</div>
+                            <div class="action-card bg-white border border-gray-200 rounded-xl p-6 w-56 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-blue-500 transition-all" onclick="window.dlpChatbot.switchTab('assessment')">
+                                <div class="card-icon text-2xl text-blue-600 mb-2">⚖️</div>
                                 <div class="card-text">
-                                    <h4>Assessment</h4>
-                                    <p>Calculate liability</p>
+                                    <h4 class="text-gray-900 text-base font-semibold m-0">Assessment</h4>
+                                    <p class="text-gray-400 text-xs m-0">Calculate liability</p>
                                 </div>
                             </div>
                         </div>
@@ -316,46 +182,46 @@
                     <div id="chatMessages" class="chat-messages"></div>
                 </div>
 
-                <div class="chat-input-area print:hidden">
-                    <textarea 
-                        id="userInput" 
-                        class="chat-input" 
+                <div class="chat-input-area px-10 py-5 flex gap-4 items-end border-t border-gray-200 bg-white print:hidden">
+                    <textarea
+                        id="userInput"
+                        class="chat-input flex-1 px-5 py-4 bg-gray-100 border border-gray-300 rounded-xl text-gray-800 text-sm resize-none min-h-[56px] max-h-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                         placeholder="Ask a question..."
                         rows="1"
                     ></textarea>
-                    <button id="sendBtn" class="btn-primary">Send</button>
+                    <button id="sendBtn" class="btn-primary px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-sm uppercase tracking-wider shadow-md hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 transition-all h-[56px]">Send</button>
                 </div>
             </section>
 
-          <!-- 2. GUIDELINES TAB -->
+            <!-- 2. GUIDELINES TAB -->
             <section id="guidelines" class="tab-content">
-                <div class="guidelines-container" style="max-width: 850px; margin: 0 auto; width: 100%;">
-                    <article class="guidelines-paper" style="padding: 40px;">
-                        
-                        <header class="guidelines-header" style="text-align: center; border-bottom: 1px solid var(--border-dim); padding-bottom: 20px; margin-bottom: 30px;">
-                            <h1 style="color: var(--text-primary); font-size: 28px; margin-bottom: 10px;">User Manual & Guidelines</h1>
-                            <p style="color: var(--neon-green); font-size: 16px;">Welcome to Superchat! Your ultimate AI assistant for navigating Malaysian Property Law and claiming your repair rights.</p>
+                <div class="guidelines-container max-w-3xl mx-auto w-full">
+                    <article class="guidelines-paper bg-white border border-gray-200 rounded-xl p-10 shadow-sm mx-auto max-w-3xl">
+
+                        <header class="guidelines-header text-center border-b border-gray-200 pb-5 mb-8">
+                            <h1 class="text-gray-900 text-3xl font-bold mb-2">User Manual & Guidelines</h1>
+                            <p class="text-blue-600 text-base">Welcome to Superchat! Your ultimate AI assistant for navigating Malaysian Property Law and claiming your repair rights.</p>
                         </header>
 
-                        <div class="guidelines-content" style="color: var(--text-secondary); line-height: 1.7; font-size: 15px;">
-                            
+                        <div class="guidelines-content text-gray-500 leading-relaxed text-sm">
+
                             <!-- WHAT IS DLP -->
-                            <div class="guide-section" style="margin-bottom: 40px;">
-                                <h3 style="color: var(--text-primary); font-size: 20px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                                    <span style="font-size: 24px;">🔑</span> What is the Defect Liability Period (DLP)?
+                            <div class="guide-section mb-10">
+                                <h3 class="text-gray-900 text-xl font-bold mb-4 flex items-center gap-2">
+                                    <span class="text-2xl">🔑</span> What is the Defect Liability Period (DLP)?
                                 </h3>
-                                <div style="background: var(--bg-input); padding: 20px; border-radius: 8px; border-left: 4px solid var(--neon-green);">
-                                    <p style="margin: 0;">The DLP is essentially your property's <strong>"warranty period"</strong>. Under the Malaysian Housing Development Act (HDA), for <strong>24 months</strong> from the date you receive your keys (Vacant Possession or VP), the developer is legally required to fix any defects, shrinkages, or faults in your new home at their own cost.</p>
+                                <div class="bg-gray-50 p-5 rounded-lg border-l-4 border-blue-600">
+                                    <p class="m-0">The DLP is essentially your property's <strong>"warranty period"</strong>. Under the Malaysian Housing Development Act (HDA), for <strong>24 months</strong> from the date you receive your keys (Vacant Possession or VP), the developer is legally required to fix any defects, shrinkages, or faults in your new home at their own cost.</p>
                                 </div>
                             </div>
 
                             <!-- QUICK START TUTORIAL -->
-                            <div class="guide-section" style="margin-bottom: 40px;">
-                                <h3 style="color: var(--text-primary); font-size: 20px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                                    <span style="font-size: 24px;">🚀</span> Quick Start Tutorial
+                            <div class="guide-section mb-10">
+                                <h3 class="text-gray-900 text-xl font-bold mb-4 flex items-center gap-2">
+                                    <span class="text-2xl">🚀</span> Quick Start Tutorial
                                 </h3>
-                                <p style="margin-bottom: 15px;">Not sure where to begin? Follow this simple 3-step workflow:</p>
-                                <ol style="margin-left: 20px; display: flex; flex-direction: column; gap: 10px;">
+                                <p class="mb-4">Not sure where to begin? Follow this simple 3-step workflow:</p>
+                                <ol class="ml-5 flex flex-col gap-2.5">
                                     <li><strong>Step 1: Discover & Document.</strong> Found a crack? Use the <strong>📸 AI Scanner</strong> to take a picture and understand how severe it is.</li>
                                     <li><strong>Step 2: Check Your Rights.</strong> Use the <strong>⚖️ Assessment</strong> tool to calculate exactly how many days of your DLP warranty are left.</li>
                                     <li><strong>Step 3: Take Action.</strong> Go to the <strong>📝 Notice Letter</strong> tool to auto-generate a legally structured complaint to email or hand to your developer.</li>
@@ -363,63 +229,57 @@
                             </div>
 
                             <!-- FEATURE GUIDE -->
-                            <div class="guide-section" style="margin-bottom: 40px;">
-                                <h3 style="color: var(--text-primary); font-size: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border-dim); padding-bottom: 10px;">
+                            <div class="guide-section mb-10">
+                                <h3 class="text-gray-900 text-xl font-bold mb-5 pb-2.5 border-b border-gray-200 flex items-center gap-2">
                                     🛠️ Feature Guide: How to use this app
                                 </h3>
-                                
-                                <!-- Feature 1 -->
-                                <div style="margin-bottom: 25px;">
-                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">💬 Current Chat</h4>
+
+                                <div class="mb-6">
+                                    <h4 class="text-blue-600 text-base font-semibold mb-1">💬 Current Chat</h4>
                                     <p><strong>When to use:</strong> You have a specific question about property law, your rights, or how the DLP process works.<br>
                                     <strong>How to use:</strong> Just type your question like you are texting a lawyer.<br>
                                     <strong>Example:</strong> <em>"My roof is leaking but the developer says it's my fault. What should I do?"</em></p>
                                 </div>
 
-                                <!-- Feature 2 -->
-                                <div style="margin-bottom: 25px;">
-                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">⚖️ Assessment Tool</h4>
+                                <div class="mb-6">
+                                    <h4 class="text-blue-600 text-base font-semibold mb-1">⚖️ Assessment Tool</h4>
                                     <p><strong>When to use:</strong> You want to calculate your exact warranty timeline and check if you are within the 30-day developer repair limit.<br>
                                     <strong>How to use:</strong> Enter your VP Date and property price to generate a full mathematical report.<br>
                                     <strong>Example:</strong> Enter your VP date as "15 Jan 2023" to see if your warranty is expiring soon!</p>
                                 </div>
 
-                                <!-- Feature 3 -->
-                                <div style="margin-bottom: 25px;">
-                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">📝 Notice Letter Generator</h4>
+                                <div class="mb-6">
+                                    <h4 class="text-blue-600 text-base font-semibold mb-1">📝 Notice Letter Generator</h4>
                                     <p><strong>When to use:</strong> You are ready to formally demand the developer to fix the defects you found.<br>
                                     <strong>How to use:</strong> Fill in your details, the developer's details, and list your defects. The app will write the formal legal letter for you.<br>
                                     <strong>Example:</strong> Generate the letter, print it, sign it, and hand it to the management office.</p>
                                 </div>
 
-                                <!-- Feature 4 -->
-                                <div style="margin-bottom: 25px;">
-                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">📸 AI Image Scanner</h4>
+                                <div class="mb-6">
+                                    <h4 class="text-blue-600 text-base font-semibold mb-1">📸 AI Image Scanner</h4>
                                     <p><strong>When to use:</strong> You see a crack or stain but don't know what to call it or if it's serious.<br>
                                     <strong>How to use:</strong> Upload a clear photo of the damage. The AI will analyze the severity and tell you if it is covered under DLP.<br>
                                     <strong>Example:</strong> Upload a photo of your hollow floor tiles.</p>
                                 </div>
 
-                                <!-- Feature 5 -->
-                                <div style="margin-bottom: 25px;">
-                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">📄 PDF Document Scanner</h4>
+                                <div class="mb-6">
+                                    <h4 class="text-blue-600 text-base font-semibold mb-1">📄 PDF Document Scanner</h4>
                                     <p><strong>When to use:</strong> You have a long legal document (like your SPA or a letter from the developer) and want a quick summary.<br>
                                     <strong>How to use:</strong> Upload the PDF. The AI will read it and highlight the red flags and important clauses.<br>
                                     <strong>Example:</strong> Upload your 100-page SPA to instantly find your specific DLP clauses.</p>
                                 </div>
-                                
-                                <!-- Feature 6 -->
-                                <div style="margin-bottom: 25px;">
-                                    <h4 style="color: var(--neon-green); font-size: 16px; margin-bottom: 5px;">📖 Legal References</h4>
+
+                                <div class="mb-6">
+                                    <h4 class="text-blue-600 text-base font-semibold mb-1">📖 Legal References</h4>
                                     <p><strong>When to use:</strong> You want to read the actual, official Malaysian laws regarding housing.<br>
                                     <strong>How to use:</strong> Click the quick links to visit official government portals for the HDA and Strata Acts.</p>
                                 </div>
                             </div>
 
                             <!-- BEST PRACTICES -->
-                            <div class="guide-section" style="margin-bottom: 40px; background: rgba(0, 255, 159, 0.05); padding: 20px; border-radius: 8px;">
-                                <h3 style="color: var(--text-primary); font-size: 18px; margin-bottom: 10px;">⭐ Best Practices & Tips</h3>
-                                <ul style="margin-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+                            <div class="guide-section mb-10 bg-blue-50/30 p-5 rounded-lg">
+                                <h3 class="text-gray-900 text-lg font-bold mb-2">⭐ Best Practices & Tips</h3>
+                                <ul class="ml-5 flex flex-col gap-2">
                                     <li><strong>Find your VP Date:</strong> Keep your "Notice of Vacant Possession" letter handy. The 24-month clock starts on the date printed on that letter!</li>
                                     <li><strong>Lighting is everything:</strong> When using the AI Image Scanner, ensure the room is brightly lit so the AI can see the cracks clearly.</li>
                                     <li><strong>Be specific:</strong> In the Notice Letter tool, write defects clearly (e.g., <em>"Master Bedroom - Water stain on the ceiling corner"</em> instead of just <em>"Ceiling broken"</em>).</li>
@@ -428,216 +288,201 @@
                             </div>
 
                             <!-- DISCLAIMER -->
-                            <div class="guide-section" style="margin-bottom: 20px; text-align: center;">
-                                <p style="font-size: 13px; color: #ef4444; border-top: 1px solid var(--border-dim); padding-top: 20px;">
+                            <div class="guide-section mb-5 text-center">
+                                <p class="text-xs text-red-500 border-t border-gray-200 pt-5">
                                     <strong>⚠️ IMPORTANT LEGAL DISCLAIMER:</strong><br>
                                     Superchat is an AI-powered educational tool designed to help you understand your rights under Malaysian Property Law. <strong>It is NOT a human lawyer.</strong> The information, calculators, and generated letters provided by this app do not constitute official legal advice. For serious disputes, tribunal claims, or complex legal matters, please consult a qualified legal professional.
                                 </p>
                             </div>
 
-                        </div> 
-                        
-                        <div class="guidelines-footer" style="text-align: center; margin-top: 30px;">
-                            <button id="backToChatBtn" class="btn-primary" onclick="window.dlpChatbot.switchTab('chat')" style="width: 200px;">Start Chatting</button>
                         </div>
-                    </article> 
+
+                        <div class="guidelines-footer text-center mt-8">
+                            <button id="backToChatBtn" class="btn-primary px-8 py-4 bg-blue-600 text-white rounded-lg font-bold uppercase tracking-wider shadow-md hover:bg-blue-700 hover:shadow-lg transition-all w-52" onclick="window.dlpChatbot.switchTab('chat')">Start Chatting</button>
+                        </div>
+                    </article>
                 </div>
             </section>
-            
-            <!-- 3. ASSESSMENT TAB (NEW CALCULATOR SUITE) -->
+
+            <!-- 3. ASSESSMENT TAB -->
             <section id="assessment" class="tab-content">
-                <div class="content-header">
-                    <h2>⚖️ Comprehensive DLP Assessment</h2>
-                    <p>Calculate your legal timelines, retention sums, and repair limits.</p>
+                <div class="content-header text-center px-5 pt-16 pb-8">
+                    <h2 class="text-gray-900 text-3xl font-bold mb-2 tracking-tight">⚖️ Comprehensive DLP Assessment</h2>
+                    <p class="text-blue-600 text-base">Calculate your legal timelines, retention sums, and repair limits.</p>
                 </div>
-                
-                <form id="dlpCalculatorForm" class="assessment-form" style="max-width: 800px;">
-                    
-                    <!-- SECTION 1: DLP Timeline -->
-                    <h3 style="color: var(--neon-green); margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">
-                        1. DLP Timeline
-                    </h3>
-                    <div class="form-group">
-                        <label for="vpDate">Vacant Possession (VP) Date:</label>
-                        <input type="date" id="vpDate" required>
+
+                <form id="dlpCalculatorForm" class="assessment-form w-full max-w-3xl bg-white border border-gray-200 rounded-xl p-10 shadow-sm mx-auto">
+
+                    <!-- SECTION 1 -->
+                    <h3 class="text-blue-600 font-bold mb-4 pb-1.5 border-b border-gray-200">1. DLP Timeline</h3>
+                    <div class="form-group mb-4">
+                        <label for="vpDate" class="block text-sm font-medium text-gray-500 mb-2">Vacant Possession (VP) Date:</label>
+                        <input type="date" id="vpDate" required class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
-                    <!-- SECTION 2: Repair Notice Deadline -->
-                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">
-                        2. Repair Notice Deadline
-                    </h3>
-                    <div class="form-group">
-                        <label for="noticeDate">Date Written Notice Sent to Developer (Leave blank if not sent yet):</label>
-                        <input type="date" id="noticeDate">
+                    <!-- SECTION 2 -->
+                    <h3 class="text-blue-600 font-bold mt-8 mb-4 pb-1.5 border-b border-gray-200">2. Repair Notice Deadline</h3>
+                    <div class="form-group mb-4">
+                        <label for="noticeDate" class="block text-sm font-medium text-gray-500 mb-2">Date Written Notice Sent to Developer (Leave blank if not sent yet):</label>
+                        <input type="date" id="noticeDate" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
-                    <!-- SECTION 3: Stakeholder Retention Sum -->
-                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">
-                        3. Stakeholder Retention Sum
-                    </h3>
-                    <div class="form-group">
-                        <label for="purchasePrice">Property Purchase Price from SPA (RM):</label>
-                        <input type="number" id="purchasePrice" min="0" placeholder="e.g., 500000" required>
+                    <!-- SECTION 3 -->
+                    <h3 class="text-blue-600 font-bold mt-8 mb-4 pb-1.5 border-b border-gray-200">3. Stakeholder Retention Sum</h3>
+                    <div class="form-group mb-4">
+                        <label for="purchasePrice" class="block text-sm font-medium text-gray-500 mb-2">Property Purchase Price from SPA (RM):</label>
+                        <input type="number" id="purchasePrice" min="0" placeholder="e.g., 500000" required class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
-                    <!-- SECTION 4: Repair Cost Estimator -->
-                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">
-                        4. Repair Cost Estimator
-                    </h3>
+                    <!-- SECTION 4 -->
+                    <h3 class="text-blue-600 font-bold mt-8 mb-4 pb-1.5 border-b border-gray-200">4. Repair Cost Estimator</h3>
                     <div id="defectItemsContainer">
-                        <!-- Dynamic defect rows will be added here -->
-                        <div class="form-group defect-row" style="display: flex; gap: 15px;">
-                            <input type="text" class="defect-desc" placeholder="Defect Description (e.g. Leaking Roof)" style="flex: 2;" required>
-                            <input type="number" class="defect-cost" placeholder="Est. Cost (RM)" style="flex: 1;" min="0" required>
+                        <div class="form-group defect-row flex gap-4">
+                            <input type="text" class="defect-desc flex-[2] px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Defect Description (e.g. Leaking Roof)" required>
+                            <input type="number" class="defect-cost flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Est. Cost (RM)" min="0" required>
                         </div>
                     </div>
-                    
-                    <button type="button" id="addDefectBtn" class="btn-secondary" style="margin-bottom: 30px; margin-top: 10px;">
-                        + Add Another Defect
-                    </button>
 
-                    <!-- SUBMIT BUTTON -->
-                    <button type="submit" class="btn-primary" style="width: 100%;">
-                        Generate Full Report
-                    </button>
+                    <button type="button" id="addDefectBtn" class="btn-secondary text-xs mt-2 mb-8">+ Add Another Defect</button>
+
+                    <button type="submit" class="btn-primary w-full px-8 py-4 bg-blue-600 text-white rounded-lg font-bold uppercase tracking-wider shadow-md hover:bg-blue-700 hover:shadow-lg transition-all">Generate Full Report</button>
 
                 </form>
 
-                <!-- The Report Container -->
-                <div id="assessmentReportArea" class="scanner-result" style="display: none; max-width: 800px; margin: 30px auto;"></div>
+                <div id="assessmentReportArea" class="scanner-result max-w-3xl mx-auto" style="display: none;"></div>
             </section>
 
             <!-- 4. LEGAL REFERENCES TAB -->
             <section id="legal" class="tab-content">
-                <div class="content-header">
-                    <h2>Legal References</h2>
-                    <p>Official sources and acts related to Malaysian Property Law</p>
+                <div class="content-header text-center px-5 pt-16 pb-8">
+                    <h2 class="text-gray-900 text-3xl font-bold mb-2 tracking-tight">Legal References</h2>
+                    <p class="text-blue-600 text-base">Official sources and acts related to Malaysian Property Law</p>
                 </div>
-                <div class="legal-grid">
-                    <a href="https://www.iproperty.com.my/guides/what-is-hda-housing-development-act-malaysia-53570" target="_blank" class="legal-card">
-                        <div class="legal-icon">🏠</div>
+                <div class="legal-grid grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto px-5">
+                    <a href="https://www.iproperty.com.my/guides/what-is-hda-housing-development-act-malaysia-53570" target="_blank" class="legal-card bg-white border border-gray-200 rounded-xl p-6 flex gap-5 hover:border-blue-500 hover:shadow-md hover:-translate-y-1 transition-all">
+                        <div class="legal-icon w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl border border-gray-200 flex-shrink-0">🏠</div>
                         <div class="legal-info">
-                            <h4>Housing Development Act (HDA) ↗</h4>
-                            <p>The primary act governing residential property development.</p>
+                            <h4 class="text-gray-900 font-semibold mb-1">Housing Development Act (HDA) ↗</h4>
+                            <p class="text-gray-400 text-sm">The primary act governing residential property development.</p>
                         </div>
                     </a>
-                    <a href="https://www.ppj.gov.my/en/second-page/akta-pengurusan-strata-2013-akta-757" target="_blank" class="legal-card">
-                        <div class="legal-icon">🏢</div>
+                    <a href="https://www.ppj.gov.my/en/second-page/akta-pengurusan-strata-2013-akta-757" target="_blank" class="legal-card bg-white border border-gray-200 rounded-xl p-6 flex gap-5 hover:border-blue-500 hover:shadow-md hover:-translate-y-1 transition-all">
+                        <div class="legal-icon w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl border border-gray-200 flex-shrink-0">🏢</div>
                         <div class="legal-info">
-                            <h4>Strata Management Act 2013 ↗</h4>
-                            <p>Governs the maintenance of buildings and common property.</p>
+                            <h4 class="text-gray-900 font-semibold mb-1">Strata Management Act 2013 ↗</h4>
+                            <p class="text-gray-400 text-sm">Governs the maintenance of buildings and common property.</p>
                         </div>
                     </a>
                 </div>
             </section>
 
+            <!-- 5. NOTICE LETTER TAB -->
             <section id="noticeLetter" class="tab-content">
-                <div class="content-header">
-                    <h2>📝 Auto-Generate Formal Notice</h2>
-                    <p>Instantly draft a legally structured defect notice to send to your developer.</p>
+                <div class="content-header text-center px-5 pt-16 pb-8">
+                    <h2 class="text-gray-900 text-3xl font-bold mb-2 tracking-tight">📝 Auto-Generate Formal Notice</h2>
+                    <p class="text-blue-600 text-base">Instantly draft a legally structured defect notice to send to your developer.</p>
                 </div>
-                
-                <form id="noticeLetterForm" class="assessment-form" style="max-width: 850px;">
-                    
-                    <h3 style="color: var(--neon-green); margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">A. Your Details (Purchaser)</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="form-group">
-                            <label>Full Name:</label>
-                            <input type="text" id="nlBuyerName" required placeholder="e.g. Ali Bin Ahmad">
+
+                <form id="noticeLetterForm" class="assessment-form w-full max-w-4xl bg-white border border-gray-200 rounded-xl p-10 shadow-sm mx-auto">
+
+                    <h3 class="text-blue-600 font-bold mb-4 pb-1.5 border-b border-gray-200">A. Your Details (Purchaser)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group mb-4">
+                            <label class="block text-sm font-medium text-gray-500 mb-2">Full Name:</label>
+                            <input type="text" id="nlBuyerName" required placeholder="e.g. Ali Bin Ahmad" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                         </div>
-                        <div class="form-group">
-                            <label>IC / Passport No:</label>
-                            <input type="text" id="nlBuyerIC" required placeholder="e.g. 900101-14-5555">
+                        <div class="form-group mb-4">
+                            <label class="block text-sm font-medium text-gray-500 mb-2">IC / Passport No:</label>
+                            <input type="text" id="nlBuyerIC" required placeholder="e.g. 900101-14-5555" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Your Mailing Address:</label>
-                        <textarea id="nlBuyerAddress" rows="2" required placeholder="Where should the developer send their reply?"></textarea>
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Your Mailing Address:</label>
+                        <textarea id="nlBuyerAddress" rows="2" required placeholder="Where should the developer send their reply?" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
                     </div>
-                    <div class="form-group">
-                        <label>Contact Number:</label>
-                        <input type="text" id="nlBuyerContact" required placeholder="e.g. 012-3456789">
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Contact Number:</label>
+                        <input type="text" id="nlBuyerContact" required placeholder="e.g. 012-3456789" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
-                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">B. Developer Details</h3>
-                    <div class="form-group">
-                        <label>Developer Company Name:</label>
-                        <input type="text" id="nlDevName" required placeholder="e.g. Mega Build Sdn Bhd">
+                    <h3 class="text-blue-600 font-bold mt-8 mb-4 pb-1.5 border-b border-gray-200">B. Developer Details</h3>
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Developer Company Name:</label>
+                        <input type="text" id="nlDevName" required placeholder="e.g. Mega Build Sdn Bhd" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
-                    <div class="form-group">
-                        <label>Developer Address:</label>
-                        <textarea id="nlDevAddress" rows="2" required placeholder="HQ or Management Office Address"></textarea>
-                    </div>
-
-                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">C. Property Details</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="form-group">
-                            <label>Project Name:</label>
-                            <input type="text" id="nlProjectName" required placeholder="e.g. Cyber Residences">
-                        </div>
-                        <div class="form-group">
-                            <label>Unit Number:</label>
-                            <input type="text" id="nlUnitNo" required placeholder="e.g. A-12-04">
-                        </div>
-                        <div class="form-group">
-                            <label>Date of Vacant Possession (VP):</label>
-                            <input type="date" id="nlVPDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label>SPA Reference / Date:</label>
-                            <input type="text" id="nlSPARef" required placeholder="e.g. Ref: SPA/2023/123">
-                        </div>
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Developer Address:</label>
+                        <textarea id="nlDevAddress" rows="2" required placeholder="HQ or Management Office Address" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
                     </div>
 
-                    <h3 style="color: var(--neon-green); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-dim); padding-bottom: 5px;">D. Schedule of Defects</h3>
-                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 10px;">List the specific defects to be included in the formal letter.</p>
-                    
+                    <h3 class="text-blue-600 font-bold mt-8 mb-4 pb-1.5 border-b border-gray-200">C. Property Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group mb-4">
+                            <label class="block text-sm font-medium text-gray-500 mb-2">Project Name:</label>
+                            <input type="text" id="nlProjectName" required placeholder="e.g. Cyber Residences" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="block text-sm font-medium text-gray-500 mb-2">Unit Number:</label>
+                            <input type="text" id="nlUnitNo" required placeholder="e.g. A-12-04" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="block text-sm font-medium text-gray-500 mb-2">Date of Vacant Possession (VP):</label>
+                            <input type="date" id="nlVPDate" required class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="block text-sm font-medium text-gray-500 mb-2">SPA Reference / Date:</label>
+                            <input type="text" id="nlSPARef" required placeholder="e.g. Ref: SPA/2023/123" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                    </div>
+
+                    <h3 class="text-blue-600 font-bold mt-8 mb-4 pb-1.5 border-b border-gray-200">D. Schedule of Defects</h3>
+                    <p class="text-gray-400 text-xs mb-2">List the specific defects to be included in the formal letter.</p>
+
                     <div id="noticeDefectsContainer">
-                        <div class="form-group defect-notice-row" style="display: flex; gap: 15px;">
-                            <input type="text" class="nl-defect-location" placeholder="Location (e.g. Master Bath)" style="flex: 1;" required>
-                            <input type="text" class="nl-defect-desc" placeholder="Issue (e.g. Cracked floor tiles)" style="flex: 2;" required>
+                        <div class="form-group defect-notice-row flex gap-4">
+                            <input type="text" class="nl-defect-location flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Location (e.g. Master Bath)" required>
+                            <input type="text" class="nl-defect-desc flex-[2] px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Issue (e.g. Cracked floor tiles)" required>
                         </div>
                     </div>
-                    
-                    <button type="button" id="addNoticeDefectBtn" class="btn-secondary" style="margin-bottom: 30px; margin-top: 10px;">+ Add Another Defect</button>
 
-                    <button type="submit" class="btn-primary" style="width: 100%;">📄 Generate Formal Notice Letter</button>
+                    <button type="button" id="addNoticeDefectBtn" class="btn-secondary text-xs mt-2 mb-8">+ Add Another Defect</button>
+
+                    <button type="submit" class="btn-primary w-full px-8 py-4 bg-blue-600 text-white rounded-lg font-bold uppercase tracking-wider shadow-md hover:bg-blue-700 hover:shadow-lg transition-all">📄 Generate Formal Notice Letter</button>
                 </form>
 
-                <div id="noticeLetterOutputArea" class="scanner-result" style="display: none; max-width: 850px; margin: 30px auto; background: var(--bg-sidebar); padding: 50px;">
-                    <div id="letterContent" style="color: var(--text-primary); font-family: 'Times New Roman', serif; font-size: 16px; line-height: 1.5;">
-                        </div>
-                    
-                    <div style="margin-top: 40px; display: flex; gap: 15px; justify-content: center; border-top: 1px solid var(--border-dim); padding-top: 20px;" class="print:hidden">
-                        <button class="btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('letterContent').innerText); alert('Letter copied to clipboard!');">📋 Copy to Clipboard</button>
-                        <button class="btn-secondary" onclick="printNoticeLetter()">🖨️ Print / Save as PDF</button>
+                <div id="noticeLetterOutputArea" class="scanner-result max-w-4xl mx-auto bg-white p-10" style="display: none;">
+                    <div id="letterContent" class="text-gray-900" style="font-family: 'Times New Roman', serif; font-size: 16px; line-height: 1.5;"></div>
+
+                    <div class="mt-10 flex gap-4 justify-center border-t border-gray-200 pt-5 print:hidden">
+                        <button class="btn-primary px-6 py-3 bg-blue-600 text-white rounded-lg font-bold text-sm uppercase tracking-wider shadow-md hover:bg-blue-700 hover:shadow-lg transition-all" onclick="navigator.clipboard.writeText(document.getElementById('letterContent').innerText); alert('Letter copied to clipboard!');">📋 Copy to Clipboard</button>
+                        <button class="btn-secondary px-6 py-3 text-sm" onclick="printNoticeLetter()">🖨️ Print / Save as PDF</button>
                     </div>
                 </div>
             </section>
 
             <!-- 6. AI IMAGE SCANNER TAB -->
             <section id="scanner" class="tab-content">
-                <div class="content-header">
-                    <h2>📸 AI Defect Scanner</h2>
-                    <p>Upload a photo of the defect for an instant DLP analysis.</p>
+                <div class="content-header text-center px-5 pt-16 pb-8">
+                    <h2 class="text-gray-900 text-3xl font-bold mb-2 tracking-tight">📸 AI Defect Scanner</h2>
+                    <p class="text-blue-600 text-base">Upload a photo of the defect for an instant DLP analysis.</p>
                 </div>
-                <div class="scanner-container">
-                    <div class="upload-area" id="uploadArea">
+                <div class="scanner-container w-full max-w-3xl bg-white border border-gray-200 rounded-xl p-10 shadow-sm mx-auto">
+                    <div class="upload-area border-2 border-dashed border-gray-300 rounded-xl px-16 py-16 text-center bg-gray-50 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all mb-6" id="uploadArea">
                         <input type="file" id="defectImage" accept="image/*" hidden>
-                        <div class="upload-icon">📥</div>
-                        <h3>Drag & Drop your image here</h3>
-                        <p>or <span class="browse-link">browse</span> to choose a file</p>
+                        <div class="upload-icon text-5xl mb-4 text-blue-600">📥</div>
+                        <h3 class="text-gray-900 text-lg font-semibold mb-1">Drag & Drop your image here</h3>
+                        <p class="text-gray-400 text-sm">or <span class="browse-link text-blue-600 font-bold underline underline-offset-4">browse</span> to choose a file</p>
                     </div>
-                    <div class="preview-area" id="previewArea" style="display: none;">
+                    <div class="preview-area flex flex-col items-center w-full" id="previewArea" style="display: none;">
                         <img id="imagePreview" src="" alt="Defect Preview">
-                        <div class="preview-actions">
-                            <button id="removeImageBtn" class="btn-secondary">🗑️ Remove</button>
-                            <button id="scanBtn" class="btn-primary">✨ Analyze Defect</button>
+                        <div class="preview-actions flex gap-4 justify-center mt-5">
+                            <button id="removeImageBtn" class="btn-secondary text-xs">🗑️ Remove</button>
+                            <button id="scanBtn" class="btn-primary px-6 py-3 bg-blue-600 text-white rounded-lg font-bold text-sm uppercase tracking-wider shadow-md hover:bg-blue-700 hover:shadow-lg transition-all">✨ Analyze Defect</button>
                         </div>
                     </div>
-                    <div id="loadingIndicator" class="loading-state" style="display: none;">
+                    <div id="loadingIndicator" class="loading-state text-center py-8" style="display: none;">
                         <div class="spinner"></div>
-                        <p>Analyzing defect severity...</p>
+                        <p class="text-gray-500 text-sm">Analyzing defect severity...</p>
                     </div>
                     <div id="scanResult" class="scanner-result" style="display: none;"></div>
                 </div>
@@ -645,28 +490,28 @@
 
             <!-- 7. PDF SCANNER TAB -->
             <section id="pdfscanner" class="tab-content">
-                <div class="content-header">
-                    <h2>📄 AI Document Scanner</h2>
-                    <p>Upload a legal PDF (like your SPA) for an instant AI summary.</p>
+                <div class="content-header text-center px-5 pt-16 pb-8">
+                    <h2 class="text-gray-900 text-3xl font-bold mb-2 tracking-tight">📄 AI Document Scanner</h2>
+                    <p class="text-blue-600 text-base">Upload a legal PDF (like your SPA) for an instant AI summary.</p>
                 </div>
-                <div class="scanner-container">
-                    <div class="upload-area" id="pdfUploadArea">
+                <div class="scanner-container w-full max-w-3xl bg-white border border-gray-200 rounded-xl p-10 shadow-sm mx-auto">
+                    <div class="upload-area border-2 border-dashed border-gray-300 rounded-xl px-16 py-16 text-center bg-gray-50 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all mb-6" id="pdfUploadArea">
                         <input type="file" id="pdfFile" accept="application/pdf" hidden>
-                        <div class="upload-icon">📄</div>
-                        <h3>Drag & Drop your PDF here</h3>
-                        <p>or <span class="browse-link">browse</span> to choose a file</p>
+                        <div class="upload-icon text-5xl mb-4 text-blue-600">📄</div>
+                        <h3 class="text-gray-900 text-lg font-semibold mb-1">Drag & Drop your PDF here</h3>
+                        <p class="text-gray-400 text-sm">or <span class="browse-link text-blue-600 font-bold underline underline-offset-4">browse</span> to choose a file</p>
                     </div>
-                    <div class="preview-area" id="pdfPreviewArea" style="display: none;">
-                        <div style="font-size: 50px; margin-bottom: 15px;">📑</div>
-                        <h3 id="pdfFileName" style="color: var(--neon-cyan); margin-bottom: 20px;">document.pdf</h3>
-                        <div class="preview-actions">
-                            <button id="removePdfBtn" class="btn-secondary">🗑️ Remove</button>
-                            <button id="scanPdfBtn" class="btn-primary">✨ Summarize PDF</button>
+                    <div class="preview-area flex flex-col items-center w-full" id="pdfPreviewArea" style="display: none;">
+                        <div class="text-5xl mb-4">📑</div>
+                        <h3 id="pdfFileName" class="text-blue-600 font-semibold mb-5">document.pdf</h3>
+                        <div class="preview-actions flex gap-4 justify-center mt-5">
+                            <button id="removePdfBtn" class="btn-secondary text-xs">🗑️ Remove</button>
+                            <button id="scanPdfBtn" class="btn-primary px-6 py-3 bg-blue-600 text-white rounded-lg font-bold text-sm uppercase tracking-wider shadow-md hover:bg-blue-700 hover:shadow-lg transition-all">✨ Summarize PDF</button>
                         </div>
                     </div>
-                    <div id="pdfLoadingIndicator" class="loading-state" style="display: none;">
+                    <div id="pdfLoadingIndicator" class="loading-state text-center py-8" style="display: none;">
                         <div class="spinner"></div>
-                        <p>Reading legal document and extracting clauses...</p>
+                        <p class="text-gray-500 text-sm">Reading legal document and extracting clauses...</p>
                     </div>
                     <div id="pdfScanResult" class="scanner-result" style="display: none;"></div>
                 </div>
@@ -676,28 +521,20 @@
     </div>
 
     <div id="notification" class="notification"></div>
-    
-    <!-- Cache buster set to v7 here as well -->
-    <script src="{{ url_for('static', filename='js/app.js') }}?v=8"></script>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=9"></script>
 
     <script>
-        /**
-         * Prints the Notice Letter with a clean default filename.
-         * Temporarily swaps document.title so the browser's "Save As" dialog
-         * defaults to "Formal_Notice_of_Defects" instead of the page title.
-         */
         function printNoticeLetter() {
             const originalTitle = document.title;
             document.title = 'Formal Notice of Defects';
             window.print();
-            // Restore after a short delay — long enough for the print dialog to read it
             setTimeout(function() {
                 document.title = originalTitle;
             }, 1500);
         }
     </script>
 
-    <!-- TOAST NOTIFICATIONS -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3">
