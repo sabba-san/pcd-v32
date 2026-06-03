@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, session
+from flask import Blueprint, make_response, render_template, request, redirect, url_for, flash, abort, session
 import re
 from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import db, oauth
@@ -26,6 +26,7 @@ def login():
         return _redirect_by_role(current_user.user_type)
 
     if request.method == 'POST':
+        session.clear()
         email    = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
 
@@ -37,7 +38,11 @@ def login():
 
         flash('Invalid email or password. Please try again.', 'error')
 
-    return render_template('auth/login.html')
+    resp = make_response(render_template('auth/login.html'))
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 
 @auth.route('/logout')
@@ -45,7 +50,11 @@ def login():
 def logout():
     logout_user()
     session.clear()
-    return redirect(url_for('auth.login'))
+    resp = redirect(url_for('auth.login'))
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 
 # ── Google OAuth 2.0 Routes ───────────────────────────────────────────────

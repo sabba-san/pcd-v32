@@ -778,7 +778,13 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
             if os.path.exists(candidate_path):
                 image_path = candidate_path
 
-        if image_path:
+        img_to_draw = None
+        if image_path and os.path.exists(image_path):
+            img_to_draw = image_path
+        else:
+            img_to_draw = _get_evidence_image_bytesio(defect.get("id"))
+
+        if img_to_draw:
             if y < 180:
                 draw_footer(pdf, width, labels)
                 pdf.showPage()
@@ -789,18 +795,10 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
             y -= 10
 
             try:
-                pdf.drawImage(ImageReader(image_path), LABEL_X, y - 110, width=200, height=110)
+                pdf.drawImage(ImageReader(img_to_draw), LABEL_X, y - 110, width=200, height=110)
             except Exception:
-                img_bytes = _get_evidence_image_bytesio(defect.get("id"))
-                if img_bytes:
-                    try:
-                        pdf.drawImage(ImageReader(img_bytes), LABEL_X, y - 110, width=200, height=110)
-                    except Exception:
-                        pdf.setFont("Helvetica-Oblique", 8)
-                        pdf.drawString(LABEL_X, y - 10, f"Error: Evidence image not found.")
-                else:
-                    pdf.setFont("Helvetica-Oblique", 8)
-                    pdf.drawString(LABEL_X, y - 10, f"Error: Evidence image not found.")
+                pdf.setFont("Helvetica-Oblique", 8)
+                pdf.drawString(LABEL_X, y - 10, f"Error: Evidence image not found.")
             
             y -= 125
 
