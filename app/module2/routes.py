@@ -164,7 +164,16 @@ def dlp_info():
 def list_projects():
     """List all scans/projects, filtered by the logged-in user's role."""
     if current_user.user_type == 'developer':
-        scans = Scan.query.filter_by(developer_id=current_user.id).order_by(Scan.created_at.desc()).all()
+        scans = Scan.query.filter(
+            db.or_(
+                Scan.developer_id == current_user.id,
+                Scan.id.in_(
+                    db.session.query(Defect.scan_id).filter(
+                        Defect.assigned_developer_id == current_user.id
+                    )
+                )
+            )
+        ).order_by(Scan.created_at.desc()).all()
     elif current_user.user_type == 'lawyer':
         scans = Scan.query.filter_by(lawyer_id=current_user.id).order_by(Scan.created_at.desc()).all()
     else:  # homeowner
@@ -192,8 +201,12 @@ def visualize_scan(scan_id):
     scan = Scan.query.get_or_404(scan_id)
     if current_user.user_type == 'homeowner' and scan.user_id != current_user.id:
         abort(403)
-    elif current_user.user_type == 'developer' and scan.developer_id != current_user.id:
-        abort(403)
+    elif current_user.user_type == 'developer':
+        has_defect_link = Defect.query.filter_by(
+            scan_id=scan.id, assigned_developer_id=current_user.id
+        ).first() is not None
+        if scan.developer_id != current_user.id and not has_defect_link:
+            abort(403)
     elif current_user.user_type == 'lawyer' and scan.lawyer_id != current_user.id:
         abort(403)
     defects = Defect.query.filter_by(scan_id=scan_id).all()
@@ -595,8 +608,12 @@ def view_project(scan_id):
     scan = Scan.query.get_or_404(scan_id)
     if current_user.user_type == 'homeowner' and scan.user_id != current_user.id:
         abort(403)
-    elif current_user.user_type == 'developer' and scan.developer_id != current_user.id:
-        abort(403)
+    elif current_user.user_type == 'developer':
+        has_defect_link = Defect.query.filter_by(
+            scan_id=scan.id, assigned_developer_id=current_user.id
+        ).first() is not None
+        if scan.developer_id != current_user.id and not has_defect_link:
+            abort(403)
     elif current_user.user_type == 'lawyer' and scan.lawyer_id != current_user.id:
         abort(403)
     defects = Defect.query.filter_by(scan_id=scan_id).all()
