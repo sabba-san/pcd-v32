@@ -85,7 +85,27 @@
                 
                 <!-- Registration Form -->
                 <form class="space-y-6" method="POST">
-                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        <div class="space-y-2 mb-6">
+                          {% for category, message in messages %}
+                            {% set alert_class = 'bg-blue-50 border-blue-200 text-blue-700' %}
+                            {% if category == 'success' %}
+                              {% set alert_class = 'bg-green-50 border-green-200 text-green-700' %}
+                            {% elif category == 'error' or category == 'danger' %}
+                              {% set alert_class = 'bg-red-50 border-red-200 text-red-700' %}
+                            {% elif category == 'warning' %}
+                              {% set alert_class = 'bg-yellow-50 border-yellow-200 text-yellow-700' %}
+                            {% endif %}
+                            <div class="{{ alert_class }} border rounded-xl px-5 py-3 text-sm font-medium">
+                              {{ message }}
+                            </div>
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+                    <div id="form-error" class="hidden p-4 mb-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium"></div>
+
                     <!-- Row 1: Full Name & Email -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
@@ -162,7 +182,6 @@
                             <input class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface placeholder:text-outline"
                                 id="password" name="password" placeholder="••••••••" type="password"
                                 minlength="8"
-                                pattern="^(?=.*[!@#$%^&amp;*()_+\-=\[\]{};':&quot;\\|,.<>\/?]).{8,}$"
                                 oninput="checkPasswordStrength(this.value)"
                                 required>
                             <button class="absolute right-5 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" type="button" id="toggle-password">
@@ -269,6 +288,8 @@
         // ── Client-side submit guard ───────────────────────────────────────────
         document.querySelector('form').addEventListener('submit', function (e) {
             let valid = true;
+            const formError = document.getElementById('form-error');
+            formError.classList.add('hidden');
 
             const pw = document.getElementById('password').value;
             const pwError = document.getElementById('pw-error');
@@ -292,7 +313,17 @@
                 document.getElementById('phone').classList.remove('ring-2', 'ring-red-400');
             }
 
-            if (!valid) e.preventDefault();
+            if (!valid) {
+                e.preventDefault();
+                formError.textContent = 'Please fix the errors highlighted in red above.';
+                formError.classList.remove('hidden');
+                formError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            const btn = document.querySelector('button[type="submit"]');
+            btn.textContent = 'Registering...';
+            btn.disabled = true;
         });
     </script>
 
@@ -342,15 +373,13 @@
                 var input = document.getElementById(inputId);
                 if (!input) return;
 
-                const autocomplete = new google.maps.places.PlaceAutocompleteElement(options);
-                autocomplete.classList.add('w-full');
-                
-                input.parentNode.insertBefore(autocomplete, input);
-                input.style.display = 'none';
+                var autocomplete = new google.maps.places.Autocomplete(input, options);
 
-                autocomplete.addEventListener('gmp-placeselect', async ({ place }) => {
-                    await place.fetchFields({ fields: ['displayName', 'formattedAddress'] });
-                    input.value = place.formattedAddress || place.displayName;
+                autocomplete.addListener('place_changed', function () {
+                    var place = autocomplete.getPlace();
+                    if (place && place.formatted_address) {
+                        input.value = place.formatted_address;
+                    }
                 });
             }
 
