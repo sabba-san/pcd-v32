@@ -171,6 +171,20 @@
     <!-- ── Main Content ────────────────────────────────────── -->
     <main class="flex-1 md:ml-64 p-4 md:p-8 lg:p-12 pb-24 md:pb-12">
 
+        {% if not current_user.ic_number %}
+        <div class="flex items-start gap-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-5 mb-8 shadow-sm" role="alert">
+            <span class="material-symbols-outlined text-amber-600 text-2xl flex-shrink-0">warning</span>
+            <div class="flex-1 min-w-0">
+                <p class="font-bold text-sm">⚠ Action Required: Your profile is incomplete.</p>
+                <p class="text-sm text-amber-700 mt-1">Please update your IC Number and Address in the Settings page to submit defect claims.</p>
+            </div>
+            <a href="{{ url_for('module3.settings') }}"
+               class="flex-shrink-0 bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors shadow-sm">
+                Go to Settings
+            </a>
+        </div>
+        {% endif %}
+
         <!-- Page header -->
         <div class="mb-10">
             <h1 class="text-4xl font-headline font-extrabold text-on-surface tracking-tight">Reporting Dashboard</h1>
@@ -246,6 +260,12 @@
             </h2>
             {% set current_state_name    = claim_input.state_name    if claim_input and claim_input.state_name    else '' %}
             {% set current_court_location= claim_input.court_location if claim_input and claim_input.court_location else '' %}
+            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700 mb-4">
+                Homeowner IC Number
+                <input type="text" value="{{ current_user.ic_number or '' }}" readonly
+                    class="mt-1 rounded-xl border border-slate-300 py-2 px-3 text-sm bg-slate-50 text-slate-500 outline-none cursor-not-allowed">
+                <p class="text-[10px] text-slate-400 mt-1">Update your IC number in the Settings page.</p>
+            </label>
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                     Identity Card (MyKad) / IC
@@ -301,7 +321,12 @@
                         <option value="">Select Developer</option>
 
                         {% for dev in registered_developers %}
-                        <option value="{{ dev.id }}" {% if claim_input.respondent_company_name == dev.company_name %}selected{% endif %}>{{ dev.company_name }}</option>
+                        <option value="{{ dev.id }}"
+                            data-reg="{{ dev.registration_number or '' }}"
+                            data-email="{{ dev.email or '' }}"
+                            data-phone="{{ dev.phone_number or '' }}"
+                            data-address="{{ dev.address or '' }}"
+                            {% if claim_input.respondent_company_name == dev.company_name %}selected{% endif %}>{{ dev.company_name }}</option>
                         {% endfor %}
 
                         <option value="others" {% if claim_input.respondent_company_name and claim_input.respondent_company_name not in (registered_developers | map(attribute='company_name')) %}selected{% endif %}>Others (Please Specify)</option>
@@ -621,6 +646,34 @@ function m3ImgError(img) {
     document.addEventListener('click', function () { menu.classList.add('hidden'); btn.setAttribute('aria-expanded', 'false'); });
     menu.addEventListener('click', function (e) { e.stopPropagation(); });
 })();
+</script>
+
+<!-- ── Developer auto-fill ─────────────────────────────────── -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const sel = document.getElementById('m3-respondent-company-name');
+    if (!sel) return;
+
+    sel.addEventListener('change', function () {
+        const reg   = document.getElementById('m3-respondent-registration-number');
+        const email = document.getElementById('m3-respondent-email');
+        const phone = document.getElementById('m3-respondent-phone-number');
+        const addr  = document.getElementById('m3-respondent-address');
+
+        const option = this.selectedOptions[0];
+        if (option && option.value && option.value !== 'others') {
+            reg.value   = option.dataset.reg   || '';
+            email.value = option.dataset.email || '';
+            phone.value = option.dataset.phone || '';
+            addr.value  = option.dataset.address || '';
+        } else {
+            reg.value   = '';
+            email.value = '';
+            phone.value = '';
+            addr.value  = '';
+        }
+    });
+});
 </script>
 
 </body>

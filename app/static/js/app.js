@@ -460,13 +460,13 @@ class DLPChatbotApp {
 
         if (sender === 'bot') {
             const avatar = document.createElement('div');
-            avatar.className = 'chat-avatar w-9 h-9 rounded-lg bg-blue-50 border border-gray-200 flex items-center justify-center text-lg flex-shrink-0 text-blue-600';
-            avatar.innerHTML = '🤖';
+            avatar.className = 'chat-avatar w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 text-blue-600';
+            avatar.innerHTML = '<span class="material-symbols-outlined">smart_toy</span>';
             messageDiv.appendChild(avatar);
         }
 
         const bubble = document.createElement('div');
-        bubble.className = `message-bubble max-w-[75%] px-5 py-3.5 text-sm leading-relaxed break-words ${isUser ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm shadow-md' : 'bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-tl-sm shadow-sm'}`;
+        bubble.className = `message-bubble max-w-[75%] px-5 py-3.5 text-sm leading-relaxed break-words ${isUser ? 'bg-blue-600 text-white rounded-2xl rounded-br-sm shadow-sm' : 'bg-slate-50 border border-slate-100 text-slate-700 rounded-2xl rounded-bl-sm shadow-sm'}`;
         bubble.textContent = text;
         messageDiv.appendChild(bubble);
 
@@ -493,7 +493,7 @@ class DLPChatbotApp {
         div.id = 'typingIndicator';
         div.className = 'chat-message bot flex gap-3 mb-3 justify-start';
         div.innerHTML = `
-            <div class="chat-avatar w-9 h-9 rounded-lg bg-blue-50 border border-gray-200 flex items-center justify-center text-lg flex-shrink-0 text-blue-600">🤖</div>
+            <div class="chat-avatar w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 text-blue-600"><span class="material-symbols-outlined">smart_toy</span></div>
             <div class="typing-indicator bg-white border border-gray-200 rounded-2xl rounded-tl-sm shadow-sm px-5 py-4 flex items-center gap-1.5">
                 <div class="dot"></div>
                 <div class="dot"></div>
@@ -797,6 +797,44 @@ class DLPChatbotApp {
         if (this.showNotification) {
             this.showNotification('Formal Notice Generated Successfully!', 'success');
         }
+
+        // 6. Persist the notice to the database in the background (non-blocking)
+        const defectLocationsAll = document.querySelectorAll('.nl-defect-location');
+        const defectDescsAll     = document.querySelectorAll('.nl-defect-desc');
+        const defectsPayload = [];
+        for (let i = 0; i < defectLocationsAll.length; i++) {
+            defectsPayload.push({
+                location: defectLocationsAll[i].value,
+                issue:    defectDescsAll[i].value,
+            });
+        }
+
+        fetch('/api/save-formal-notice', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                buyer_name:    buyerName,
+                buyer_ic:      buyerIC,
+                buyer_address: document.getElementById('nlBuyerAddress').value,
+                buyer_contact: buyerContact,
+                dev_name:      devName,
+                dev_address:   document.getElementById('nlDevAddress').value,
+                project_name:  projectName,
+                unit_no:       unitNo,
+                vp_date:       document.getElementById('nlVPDate').value,   // ISO yyyy-mm-dd
+                spa_ref:       spaRef,
+                defects:       defectsPayload,
+                letter_html:   letterHTML,
+            }),
+        }).then(res => {
+            if (res.ok) {
+                console.info('[DLP] Formal notice saved to database.');
+            } else {
+                console.warn('[DLP] Notice save returned non-OK status:', res.status);
+            }
+        }).catch(err => {
+            console.warn('[DLP] Notice save failed (non-critical):', err);
+        });
     }
 
     // ==========================================================

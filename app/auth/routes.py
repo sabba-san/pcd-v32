@@ -135,6 +135,13 @@ def google_callback():
             return redirect(url_for('auth.login'))
 
     login_user(user)
+
+    # ── Profile completion check ─────────────────────────────────────────────────
+    if not user.ic_number:
+        flash('Please complete your profile details such as IC Number and Address before proceeding.', 'warning')
+        return redirect(url_for('module3.settings'))
+    # ─────────────────────────────────────────────────────────────────────────────
+
     return _redirect_by_role(user.user_type)
 
 
@@ -225,6 +232,7 @@ def reg_lawyer():
             user_type      = 'lawyer',
             full_name      = request.form.get('full_name', '').strip()[:150],
             email          = email[:150],
+            ic_number      = request.form.get('ic_number', '').strip()[:20],
             law_firm_name  = request.form.get('firm_name', '').strip()[:150],
             bar_council_id = request.form.get('bar_id', '').strip()[:50],
             ic_number      = request.form.get('ic_number', '').strip()[:20],

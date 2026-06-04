@@ -188,8 +188,8 @@
                                 id="email" name="email" placeholder="john@example.com" type="email">
                         </div>
                     </div>
-                   
-                    <!-- Row 2: 2-Column Grid: IC Number -->
+
+                    <!-- Row 2: IC Number -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label
@@ -197,7 +197,10 @@
                                 Card (MyKad) / IC</label>
                             <input
                                 class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all outline-none text-on-surface placeholder:text-outline"
-                                id="ic_number" name="ic_number" placeholder="YYMMDD-SS-XXXX" type="text" maxlength="20">
+                                id="ic_number" name="ic_number" placeholder="e.g., 901231-14-5566" type="text" maxlength="20" required>
+                        </div>
+                        <div class="space-y-2">
+                            <!-- Empty cell to preserve 2-col grid layout -->
                         </div>
                     </div>
 

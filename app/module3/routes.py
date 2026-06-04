@@ -3508,7 +3508,12 @@ def update_profile():
     if new_phone:
         current_user.phone_number = new_phone
 
-    # 5. Update Correspondence Address
+    # 3b. Update IC Number
+    new_ic = request.form.get('ic_number', '').strip()
+    if new_ic:
+        current_user.ic_number = new_ic
+
+    # 4. Update Correspondence Address
     new_address = request.form.get('correspondence_address', '').strip()
     if new_address:
         current_user.correspondence_address = new_address
