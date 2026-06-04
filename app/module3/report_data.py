@@ -16,7 +16,7 @@ IMPORTANT_NOTE = (
 )
 DEFAULT_CLAIMANT_HOMEOWNER_USERNAME = os.getenv("DEFAULT_CLAIMANT_HOMEOWNER_USERNAME", "").strip()
 DEFAULT_CLAIMANT_HOMEOWNER_ID = int(
-    os.getenv("DEFAULT_CLAIMANT_HOMEOWNER_ID", os.getenv("SIMULATED_LOGIN_USER_ID", "1"))
+    os.getenv("DEFAULT_CLAIMANT_HOMEOWNER_ID", "1")
 )
 APP_TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Kuala_Lumpur")
 
@@ -459,10 +459,16 @@ def _load_report_metadata(user_id=None, role=None, claimant_user_id=None):
 # BUILD SUMMARY STATISTICS (FROM DASHBOARD STATS)
 # ==================================================
 
-def build_summary_stats(stats, defects=None):
+def build_summary_stats(stats, defects=None, closed_count=0):
     """
-    Build structured statistical summary
-    Includes overdue count and HDA non-compliance count
+    Build structured statistical summary.
+    Includes overdue count and HDA non-compliance count.
+
+    Args:
+        stats: Dict of raw counts from calculate_stats() (active defects only).
+        defects: Optional list of active defect dicts for overdue/HDA counts.
+        closed_count: Number of auto-closed defects to add to totals so the
+                      certificate reflects ALL defects (active + closed).
     """
 
     overdue_count = 0
@@ -472,11 +478,16 @@ def build_summary_stats(stats, defects=None):
         overdue_count = len([d for d in defects if d.get("is_overdue")])
         hda_non_compliant_count = len([d for d in defects if d.get("hda_compliant") is False])
 
+    active_total = stats.get("total", 0)
+    active_completed = stats.get("completed", 0)
+
     return {
-        "total_defects": stats.get("total", 0),
+        # Include closed cases so total/completed reflect the full picture.
+        "total_defects": active_total + closed_count,
         "pending_defects": stats.get("pending", 0),
         "investigation_defects": stats.get("investigation", 0),
-        "completed_defects": stats.get("completed", 0),
+        # Closed cases are fully resolved, so they count as completed.
+        "completed_defects": active_completed + closed_count,
         "critical_defects": stats.get("critical", 0),
         "overdue_defects": overdue_count,
         "hda_non_compliant_defects": hda_non_compliant_count
@@ -650,6 +661,7 @@ def build_report_data(
     claimant_user_id=None,
     forced_claim_number=None,
     project_filter=None,
+    closed_count=0,
 ):
     # Normalize role string (e.g. 'homeowner' -> 'Homeowner')
     if role:
@@ -705,7 +717,7 @@ def build_report_data(
         "claimant": claimant,
         "respondent": respondent,
         "role_context": build_role_context(role, role_contexts),
-        "summary_stats": build_summary_stats(stats, defects),
+        "summary_stats": build_summary_stats(stats, defects, closed_count=closed_count),
         "defect_list": build_defect_list(defects, role),
         "important_note": nota_penting,
     }

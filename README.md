@@ -8,19 +8,21 @@ Our platform breaks down these silos through:
 
 - **Integrated 3D Visualisation**: Homeowners and developers collaboratively inspect properties using LiDAR-scanned GLB 3D models
 - **AI-Powered Legal Guidance**: Instant access to SPA/DLP clause interpretations and legal precedents via Groq/Llama
-- **Automated Tribunal Documentation**: One-click generation of court-admissible defect reports
+- **Automated Tribunal Documentation**: One-click generation of court-admissible defect reports with SHA-256 data integrity
 - **Role-Based Workflows**: Tailored dashboards ensuring each party accesses relevant information while maintaining data privacy
 - **Geospatial Context**: Google Maps Places API integration for accurate property location tagging
 
 This holistic approach transforms adversarial defect resolution into a collaborative, transparent process benefiting all stakeholders.
+
+---
 
 ## Key Features
 
 ### Three-Party Collaboration System
 | Role | Capabilities |
 |------|-------------|
-| **Homeowner** | Defect reporting with photographic evidence, progress tracking, LiDAR scan viewing |
-| **Developer** | Defect assignment, resolution workflow management, completion date tracking |
+| **Homeowner** | Defect reporting with photographic evidence, progress tracking, LiDAR scan viewing, tribunal report generation |
+| **Developer** | Defect assignment, resolution workflow management, completion date tracking, compliance report generation |
 | **Lawyer** | Case assignment, evidence verification, tribunal documentation preparation, compliance auditing |
 
 ### 3D LiDAR Inspection (Three.js)
@@ -35,11 +37,15 @@ This holistic approach transforms adversarial defect resolution into a collabora
 - Automated legal precedent retrieval for defect classification
 - Multilingual support (English / Bahasa Malaysia) for the Malaysian legal context
 
-### Automated Tribunal Report Generation
-- One-click generation of Form 1, Form 2, and consolidated tribunal reports
-- Evidence annexure automation (photographs, LiDAR coordinates, timestamps)
-- AI-driven defect severity and defect-type classification
-- Version tracking with report history across the defect lifecycle
+### Module 3: AI-Powered Automated Compliance Report Generation
+- **Multi-language PDF Reports**: One-click generation of Borang 1 TTPM-formatted reports in Bahasa Malaysia or English
+- **Groq AI Narrative Summaries**: AI-generated defect severity analysis and compliance narratives embedded in every report
+- **SHA-256 Data Integrity**: Every generated PDF includes a cryptographic hash of the report data for tamper evidence
+- **Certificate of Compliance Page**: Automatically appended compliance certificate with signature IDs
+- **Appendix A — Closed Cases**: Auto-closed defects are excluded from the main body and listed in a structured appendix
+- **HDA 30-Day Compliance Tracking**: Each defect is automatically assessed against the Housing Development Act requirement
+- **Role-Aware Reports**: Homeowner, Developer, and Legal reports each present tailored views of the same underlying data
+- **Evidence Annexure**: Photographic evidence images are embedded directly into the PDF for each defect
 
 ### Google Maps Location Autocomplete
 - Google Places API integration on all registration and property forms
@@ -51,6 +57,8 @@ This holistic approach transforms adversarial defect resolution into a collabora
 - Context-aware dashboards tailored to each role's workflow
 - Comprehensive audit trail logging every state change across all roles
 - Session-based authentication with HTTP-only, Secure, SameSite cookies
+
+---
 
 ## Technology Stack
 
@@ -77,8 +85,9 @@ This holistic approach transforms adversarial defect resolution into a collabora
 |-----------|-----------|
 | LLM Provider | Groq API (Llama 3 8B / 70B) |
 | Chatbot Engine | Custom context-aware agent with DLP knowledge base |
-| Report Generation | Domain-specific prompt templates with caching |
-| Translation | AI-assisted Malay ↔ English legal translation |
+| Report Generation | Domain-specific prompt templates with AI narrative generation |
+| Translation | AI-assisted Malay ↔ English legal translation with caching |
+| PDF Engine | ReportLab with custom layout, image embedding, and SHA-256 signing |
 
 ### DevOps & Security
 | Component | Implementation |
@@ -87,6 +96,8 @@ This holistic approach transforms adversarial defect resolution into a collabora
 | Reverse Proxy | Werkzeug ProxyFix for X-Forwarded-Proto trust |
 | Static Serving | WhiteNoise for Gunicorn-compatible static asset delivery |
 | CI/CD | GitHub Actions (configured pipeline) |
+
+---
 
 ## Security Implementations
 
@@ -103,7 +114,10 @@ The platform implements enterprise-grade security measures suitable for handling
   - Image integrity verification via Pillow (`img.verify()`)
   - Path traversal protection via `os.path.realpath` comparison
 - **Database Protection**: SQLAlchemy parameterised queries throughout — no raw SQL concatenation
+- **PDF Data Integrity**: SHA-256 hash of serialised report data embedded in every generated PDF
 - **Error Handling**: Generic error pages (404, 500) that avoid leaking stack traces to end users
+
+---
 
 ## Local Setup & Installation
 
@@ -150,6 +164,8 @@ The platform implements enterprise-grade security measures suitable for handling
 
 > **Note for macOS / Windows**: The `host.docker.internal` extra host is configured for host gateway access. If your Docker version does not support it, you may remove the `extra_hosts` block from `docker-compose.yml`.
 
+---
+
 ## Environment Variables
 
 Create a `.env` file in the project root using the template below. **Never commit actual values to version control.**
@@ -164,11 +180,14 @@ Create a `.env` file in the project root using the template below. **Never commi
 
 ### AI API Keys (Groq)
 
+> [!IMPORTANT]
+> `GROQ_API_KEY` is **required** to enable AI-powered features including the legal chatbot (Module 1) and the AI narrative report generation (Module 3). Without it, the app will start but AI features will be disabled and PDF reports will be generated without the AI summary section. Register at [console.groq.com](https://console.groq.com/) to obtain a free API key.
+
 | Variable | Description |
 |----------|-------------|
-| `GROQ_API_KEY` | Primary Groq API key (fallback for all scopes) |
-| `GROQ_API_KEY_REPORT` | Groq key for report generation (overrides primary) |
-| `GROQ_API_KEY_CHATBOT` | Groq key for chatbot (overrides primary) |
+| `GROQ_API_KEY` | Primary Groq API key (fallback for all AI features) |
+| `GROQ_API_KEY_REPORT` | Groq key for Module 3 report generation (overrides primary) |
+| `GROQ_API_KEY_CHATBOT` | Groq key for Module 1 chatbot (overrides primary) |
 
 ### Google Maps
 
@@ -198,12 +217,14 @@ Create a `.env` file in the project root using the template below. **Never commi
 |----------|-------------|---------|
 | `FLASK_APP` | Application entry point | `app:app` |
 | `FLASK_ENV` | Environment mode | `development` |
+| `APP_TIMEZONE` | Timezone for report timestamps | `Asia/Kuala_Lumpur` |
+| `AUTO_CLOSE_DAYS` | Days after completion before a case auto-closes | `14` |
 
 > **Google Cloud Setup**: Obtain OAuth credentials from the [Google Cloud Console](https://console.cloud.google.com/). Configure the authorised redirect URI as `http://localhost:5100/google/callback` (development) or `https://your-domain.com/google/callback` (production).
 >
-> **Groq Setup**: Register at [console.groq.com](https://console.groq.com/) to obtain API keys.
->
 > **Maps Setup**: Restrict your Google Maps API key to HTTP referrers matching your domain and enable only the Maps JavaScript API and Places API.
+
+---
 
 ## Project Structure
 
@@ -223,11 +244,16 @@ dlp-advisor-platform/
 │   │   └── pdf_utils.py          # PDF image extraction
 │   ├── module3/
 │   │   ├── routes.py             # Defect dashboards, report generation, compliance workflows
-│   │   ├── report_generator.py   # AI-powered tribunal report generation
-│   │   ├── report_data.py        # Report metadata assembly
-│   │   ├── ai_translate.py       # Legal translation helpers
+│   │   ├── report_generator.py   # AI-powered tribunal report generation (Groq integration)
+│   │   ├── report_data.py        # Report metadata assembly and claim number generation
+│   │   ├── ai_translate.py       # Legal translation helpers (EN ↔ MS)
+│   │   ├── ai_translate_cached.py# Cached translation layer for performance
 │   │   ├── groqai_client.py      # Groq API client factory
-│   │   └── prompts.py            # Domain-specific prompt templates
+│   │   ├── prompts.py            # Domain-specific prompt templates (HDA, SPA, DLP)
+│   │   ├── config_pdf_labels.py  # Bilingual PDF label definitions
+│   │   ├── config_mappings.py    # Status/priority normalisation maps
+│   │   └── services/
+│   │       └── pdf_service.py    # ReportLab PDF engine (Borang 1 TTPM layout, SHA-256, appendix)
 │   ├── module4/
 │   │   └── routes.py             # User feedback submission
 │   ├── chatbot_component/
@@ -244,6 +270,8 @@ dlp-advisor-platform/
 └── .env.example                  # Environment variable template
 ```
 
+---
+
 ## Docker Services
 
 | Service | Container Name | Port (Host:Container) | Purpose |
@@ -252,6 +280,8 @@ dlp-advisor-platform/
 | `flask_db` | `flask_db` | `5432:5432` | PostgreSQL database |
 
 Data persistence is managed through the `flask_db_data` Docker volume, ensuring database state survives container restarts.
+
+---
 
 ## Database Seeding
 
@@ -267,6 +297,8 @@ docker compose exec flask python scripts/db/seed_module3.py
 
 Seeded accounts include pre-configured Homeowner, Developer, and Lawyer profiles with sample defect data for immediate exploration of all role workflows.
 
+---
+
 ## Academic & Professional Value
 
 This Final Year Project demonstrates:
@@ -274,14 +306,15 @@ This Final Year Project demonstrates:
 - **Legal Innovation**: AI-assisted interpretation of complex Malaysian property law (SPA, DLP, Tribunal for Consumer Claims)
 - **Technical Excellence**: Production-grade full-stack implementation with modern tooling
 - **User-Centered Design**: Role-specific interfaces addressing genuine stakeholder needs in the property ecosystem
-- **Security Maturity**: Environment-isolated secrets, role-based access control, input validation, and safe file handling
+- **Security Maturity**: Environment-isolated secrets, role-based access control, input validation, safe file handling, and cryptographic report integrity
 - **Cloud Readiness**: Containerised deployment targeting DigitalOcean App Platform
 
 The system exhibits mastery of:
 - Microservices architecture and API design
 - Secure full-stack development practices
-- LLM integration in domain-specific applications
+- LLM integration in domain-specific applications (Groq / Llama 3)
 - Relational database design for complex multi-role workflows
+- PDF generation with structured layout, evidence embedding, and data integrity hashing
 - Containerisation and DevOps best practices
 - User experience design for professional cross-organisational workflows
 

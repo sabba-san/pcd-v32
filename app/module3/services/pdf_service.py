@@ -7,8 +7,10 @@ import re
 import json
 import hashlib
 import base64
+import uuid
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -304,6 +306,257 @@ def build_closed_appendix_lines(closed_evidence_appendix, language, auto_close_d
         appendix_lines.append("")
 
     return appendix_lines
+
+
+# ---- Timezone / Certificate Helpers ----
+
+APP_TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Kuala_Lumpur")
+
+
+def _now_app_timezone():
+    try:
+        return datetime.now(ZoneInfo(APP_TIMEZONE))
+    except Exception:
+        if APP_TIMEZONE == "Asia/Kuala_Lumpur":
+            return datetime.now(timezone.utc) + timedelta(hours=8)
+        return datetime.now()
+
+
+def _format_datetime_certificate(dt, language):
+    if language == "ms":
+        bulan_bm = {
+            1: "Januari", 2: "Februari", 3: "Mac", 4: "April",
+            5: "Mei", 6: "Jun", 7: "Julai", 8: "Ogos",
+            9: "September", 10: "Oktober", 11: "November", 12: "Disember",
+        }
+        return f"{dt.day:02d} {bulan_bm[dt.month]} {dt.year}, {dt.strftime('%H:%M')}"
+    return dt.strftime("%d %B %Y, %H:%M")
+
+
+def render_certificate_page(pdf, width, height, report_data, labels, language, digital_hash):
+    """
+    Draw the Certificate of Defect Record Compliance Summary page.
+    Must be called after pdf.showPage() so it starts on a fresh page.
+    """
+    pdf.showPage()
+
+    LEFT_MARGIN = 50
+    RIGHT_MARGIN = width - 50
+    CONTENT_WIDTH = width - 100
+    BOX_X = LEFT_MARGIN
+    BOX_WIDTH = CONTENT_WIDTH
+    LABEL_COLON = 200
+    VALUE_X = 210
+    VALUE_WIDTH = RIGHT_MARGIN - VALUE_X
+    SECTION_GAP = 28
+    BOX_PADDING = 8
+
+    y = 800
+
+    # ── Title ──
+    pdf.setFont("Helvetica-Bold", 14)
+    if language == "en":
+        pdf.drawCentredString(width / 2, y, "Certificate of Defect Record Compliance Summary")
+    else:
+        pdf.drawCentredString(width / 2, y, "Sijil Ringkasan Pematuhan Rekod Kecacatan")
+    y -= 24
+
+    # Subtitle line
+    pdf.setFont("Helvetica", 8)
+    pdf.drawCentredString(width / 2, y, "-" * 90)
+    y -= 18
+
+    case_info = report_data.get("case_info", {})
+    summary_stats = report_data.get("summary_stats", {})
+    now = _now_app_timezone()
+    formatted_dt = _format_datetime_certificate(now, language)
+    claim_number = case_info.get("claim_number", "-")
+    generated_date = case_info.get("generated_date", formatted_dt)
+
+    total = int(summary_stats.get("total_defects", 0))
+    completed = int(summary_stats.get("completed_defects", 0))
+    pending = int(summary_stats.get("pending_defects", 0))
+    investigation = int(summary_stats.get("investigation_defects", 0))
+    not_completed = pending + investigation
+    rate = (completed / total * 100) if total > 0 else 0.0
+
+    if language == "en":
+        if total > 0 and completed >= total:
+            status_text = "Complete"
+        elif completed > 0:
+            status_text = "In Review"
+        else:
+            status_text = "In Progress"
+    else:
+        if total > 0 and completed >= total:
+            status_text = "Lengkap"
+        elif completed > 0:
+            status_text = "Dalam Semakan"
+        else:
+            status_text = "Dalam Proses"
+
+    signature_id = hashlib.sha256(
+        (digital_hash + str(uuid.uuid4())).encode()
+    ).hexdigest()[:16]
+
+    # ── Helper to draw a boxed section ──
+    def _draw_section(title, pairs, start_y):
+        """pairs: list of (label, value) tuples. Draws box, returns new y."""
+        row_height = 16
+        header_height = 20
+        box_pad = 10
+        n_rows = max(len(pairs), 1)
+        box_h = header_height + n_rows * row_height + box_pad * 2
+
+        if start_y - box_h < 60:
+            return start_y
+
+        y0 = start_y
+        # Section title inside box
+        pdf.setFont("Helvetica-Bold", 10)
+        if language == "en":
+            pdf.drawString(BOX_X + box_pad, y0 - 14, title)
+        else:
+            pdf.drawString(BOX_X + box_pad, y0 - 14, title)
+
+        # Box around entire section
+        pdf.rect(BOX_X, y0 - box_h, BOX_WIDTH, box_h)
+
+        # Draw rows
+        pdf.setFont("Helvetica", 9)
+        ry = y0 - header_height - box_pad
+        for label, value in pairs:
+            pdf.drawString(BOX_X + box_pad, ry, str(label))
+            pdf.drawString(BOX_X + LABEL_COLON, ry, ":")
+            # Wrap value text if needed
+            val_str = str(value)
+            vw = pdf.stringWidth(val_str, "Helvetica", 9)
+            if vw <= BOX_WIDTH - LABEL_COLON - box_pad * 2 - 10:
+                pdf.drawString(BOX_X + LABEL_COLON + 10, ry, val_str)
+            else:
+                ry = draw_wrapped_text(
+                    pdf, val_str, BOX_X + LABEL_COLON + 10, ry,
+                    BOX_WIDTH - LABEL_COLON - box_pad * 2 - 15,
+                    "Helvetica", 9, 14
+                )
+                continue
+            ry -= row_height
+
+        return y0 - box_h - SECTION_GAP
+
+    # ── 1. Maklumat Laporan / Report Information ──
+    if language == "en":
+        section1_title = "Report Information"
+    else:
+        section1_title = "Maklumat Laporan"
+
+    y = _draw_section(section1_title, [
+        ("ID Laporan" if language == "ms" else "Report ID", claim_number),
+        ("ID Tandatangan" if language == "ms" else "Signature ID", signature_id),
+        ("Tarikh & Masa" if language == "ms" else "Date & Time", formatted_dt),
+    ], y)
+
+    # ── 2. Status Pematuhan / Compliance Status ──
+    if language == "en":
+        section2_title = "Compliance Status"
+        status_label = "Status"
+    else:
+        section2_title = "Status Pematuhan"
+        status_label = "Status"
+
+    y = _draw_section(section2_title, [
+        (status_label, status_text),
+    ], y)
+
+    # ── 3. Ringkasan Kecacatan / Defect Summary ──
+    if language == "en":
+        section3_title = "Defect Summary"
+        label_total = "Total Defects"
+        label_completed = "Completed Defects"
+        label_rate = "Resolution Rate"
+    else:
+        section3_title = "Ringkasan Kecacatan"
+        label_total = "Jumlah Kecacatan"
+        label_completed = "Bilangan Kecacatan Diselesaikan"
+        label_rate = "Kadar Penyelesaian"
+
+    y = _draw_section(section3_title, [
+        (label_total, str(total)),
+        (label_completed, str(completed)),
+        (label_rate, f"{rate:.1f}%"),
+    ], y)
+
+    # ── 4. Integriti Data / Data Integrity ──
+    if language == "en":
+        section4_title = "Data Integrity"
+        hash_label = "SHA-256 Hash"
+    else:
+        section4_title = "Integriti Data"
+        hash_label = "SHA-256"
+
+    display_hash = digital_hash[:45] + "..."
+
+    # Draw hash in a smaller font with wrapping
+    hash_box_h = 70
+    if y - hash_box_h < 60:
+        return y
+
+    pdf.setFont("Helvetica-Bold", 10)
+    if language == "en":
+        pdf.drawString(BOX_X + BOX_PADDING, y - 14, section4_title)
+    else:
+        pdf.drawString(BOX_X + BOX_PADDING, y - 14, section4_title)
+    pdf.rect(BOX_X, y - hash_box_h, BOX_WIDTH, hash_box_h)
+
+    pdf.setFont("Courier", 8)
+    yh = y - 30
+    pdf.drawString(BOX_X + BOX_PADDING, yh, hash_label)
+    pdf.drawString(BOX_X + LABEL_COLON, yh, ":")
+    yh = draw_wrapped_text(
+        pdf, display_hash, BOX_X + LABEL_COLON + 10, yh,
+        BOX_WIDTH - LABEL_COLON - BOX_PADDING * 2 - 15,
+        "Courier", 8, 12
+    )
+
+    y = y - hash_box_h - SECTION_GAP
+
+    # ── 5. Ringkasan Garis Masa / Timeline Summary ──
+    if language == "en":
+        section5_title = "Timeline Summary"
+        label_completed_count = "Completed"
+        label_pending_count = "Pending / In Progress"
+        label_initial = "Initial Report"
+        label_last_update = "Last Update"
+    else:
+        section5_title = "Ringkasan Garis Masa"
+        label_completed_count = "Telah Siap"
+        label_pending_count = "Belum Siap"
+        label_initial = "Laporan Awal"
+        label_last_update = "Kemas Kini Terakhir"
+
+    y = _draw_section(section5_title, [
+        (label_completed_count, str(completed)),
+        (label_pending_count, str(not_completed)),
+        (label_initial, str(generated_date)),
+        (label_last_update, formatted_dt),
+    ], y)
+
+    # ── Footer note ──
+    footer_y = y - 10
+    if footer_y > 40:
+        pdf.setFont("Helvetica-Oblique", 8)
+        if language == "en":
+            pdf.drawCentredString(
+                width / 2, footer_y,
+                "This certificate should be read together with the verification and signature page."
+            )
+        else:
+            pdf.drawCentredString(
+                width / 2, footer_y,
+                "Sijil ini hendaklah dibaca bersama halaman pengesahan dan tandatangan."
+            )
+
+    return y
 
 
 # ---- Main PDF Generation Function ----
@@ -785,7 +1038,7 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
             img_to_draw = _get_evidence_image_bytesio(defect.get("id"))
 
         if img_to_draw:
-            if y < 180:
+            if y < 320:
                 draw_footer(pdf, width, labels)
                 pdf.showPage()
                 y = height - 50
@@ -930,8 +1183,7 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
 
         appendix_lines = build_closed_appendix_lines(closed_evidence_appendix, language, auto_close_days)
         
-        current_appendix_item = None  # Track the current defect's data for image rendering
-        
+        current_appendix_item = None
         for idx, raw_line in enumerate(appendix_lines):
             line = (raw_line or "").rstrip()
 
@@ -941,7 +1193,8 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
                 y = height - 50
 
             if not line:
-                y -= 10
+                # FIX 5: Increased blank-line gap for better visual separation between entries
+                y -= 18
                 continue
 
             is_header = bool(
@@ -971,11 +1224,18 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
                 # Check for image markers in the line
                 has_image_marker = "[imej]" in line or "[image]" in line
                 
-                # Clean the text (remove markers)
+                # FIX 1: Pre-image page break — move check BEFORE drawing the label
+                # so the label and image are always kept together on the same page.
+                if has_image_marker and y < 200:
+                    draw_footer(pdf, width, labels)
+                    pdf.showPage()
+                    y = height - 50
+
+                # Clean the text (remove markers) and draw the label
                 display_line = line.replace("[imej]", "").replace("[image]", "")
                 y = draw_wrapped_text(pdf, display_line, x, y, width - 100, "Helvetica", 9, 14)
                 
-                # After appending text, check the flag and draw image if needed
+                # After drawing the label, render the image if a marker was found
                 if has_image_marker and current_appendix_item:
                     appendix_image_path = _resolve_evidence_image_path(
                         evidence_dir,
@@ -998,17 +1258,22 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
                         img_to_draw = _get_evidence_image_bytesio(current_appendix_item.get("id"))
 
                     if img_to_draw:
-                        if y < 170:
-                            draw_footer(pdf, width, labels)
-                            pdf.showPage()
-                            y = height - 50
+                        # FIX 2: Pre-image padding — small gap between label text and image
+                        y -= 5
+
                         try:
                             pdf.drawImage(ImageReader(img_to_draw), 70, y - 95, width=180, height=95)
                             y -= 110
+                            # FIX 3: Post-image padding — extra gap after image before next entry
+                            y -= 15
                         except Exception:
                             pdf.setFont("Helvetica-Oblique", 8)
                             pdf.drawString(70, y - 10, "Evidence image not found.")
                             y -= 25
+                    else:
+                        # FIX 4: No-image fallback spacing — prevent squashed layout
+                        # when the entry has an image marker but no actual image file
+                        y -= 5
 
     # ============================================
     # SIGNATURE & METERAI
@@ -1083,14 +1348,18 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
     pdf.setAuthor("Automated Compliance Report Generation")
     pdf.setSubject("Tribunal Compliance Report")
 
-    # Digital Validation Hash
+    # Digital Validation Hash (computed from report_data for integrity)
     report_string = json.dumps(report_data, sort_keys=True)
     digital_hash = hashlib.sha256(report_string.encode()).hexdigest()
 
-    pdf.setFont("Helvetica-Oblique", 7)
-    pdf.drawString(50, 30, f"Digital Validation Hash: {digital_hash}")
-
+    # Finalise the signature page before moving to certificate
     draw_footer(pdf, width, labels)
+
+    # ============================================
+    # CERTIFICATE PAGE (final summary page)
+    # ============================================
+    render_certificate_page(pdf, width, height, report_data, labels, language, digital_hash)
+
     pdf.save()
     buffer.seek(0)
 

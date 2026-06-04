@@ -25,9 +25,8 @@ except ImportError:  # pragma: no cover - fallback for direct execution from mod
         PRIORITY_TRANSLATION,
     )
 
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
+# reportlab is used exclusively in services/pdf_service.py — no direct
+# reportlab imports are needed here.
 
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
@@ -39,6 +38,8 @@ import json
 import re
 import hashlib
 import base64
+
+
 def get_connection():
     from ..extensions import db
     return db.engine.raw_connection()
@@ -284,6 +285,11 @@ def _now_app_timezone():
         return datetime.now()
 
 
+# NOTE: The three helpers below (VALID_IMAGE_EXTENSIONS, _is_valid_image_path,
+# _resolve_evidence_image_path) are also defined in services/pdf_service.py.
+# They are kept here because they are called at multiple sites within this file
+# (e.g. build_closed_appendix_lines calls at lines ~1607, ~1622).
+# Future consolidation: import them from pdf_service and remove these copies.
 VALID_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.tif', '.tiff', '.gif', '.bmp', '.webp'}
 
 def _is_valid_image_path(path):
@@ -2854,6 +2860,7 @@ def generate_ai_report_api():
                             case_key=cached_case_key,
                             claimant_user_id=claimant_user_id,
                             project_filter=project_filter,
+                            closed_count=len(closed_evidence_appendix),
                         )
 
                         report_text = enforce_closed_appendix_format(
@@ -3321,6 +3328,7 @@ def export_pdf():
         claimant_user_id=claimant_user_id,
         forced_claim_number=preview_claim_id,
         project_filter=project_filter,
+        closed_count=len(closed_evidence_appendix),
     )
     if preview_claim_id:
         report_data.setdefault("case_info", {})["claim_id"] = preview_claim_id
