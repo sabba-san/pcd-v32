@@ -208,7 +208,28 @@
                                 id="bar_id" name="bar_id" placeholder="BC-99283-X" type="text">
                         </div>
                     </div>
-                    <!-- Row 4: Full Width Password -->
+                    <!-- Row 4: 2-Column Grid: Office Address + Office Telephone -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label
+                                class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Office
+                                Address</label>
+                            <input
+                                class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="office_address" name="office_address"
+                                placeholder="Level 8, Menara KLK, Petaling Jaya" type="text">
+                        </div>
+                        <div class="space-y-2">
+                            <label
+                                class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Office
+                                Telephone</label>
+                            <input
+                                class="w-full px-6 py-4 rounded-full border-none bg-[#F0F4F8] focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all outline-none text-on-surface placeholder:text-outline"
+                                id="office_telephone" name="office_telephone"
+                                placeholder="+603-1234 5678" type="tel">
+                        </div>
+                    </div>
+                    <!-- Row 5: Full Width Password -->
                     <div class="space-y-2">
                         <label
                             class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider px-4">Password</label>
@@ -410,7 +431,7 @@
                 });
             }
 
-            setupAutocomplete('firm_name');
+            setupAutocomplete('office_address');
         }
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&loading=async&callback=initMap" async defer></script>
