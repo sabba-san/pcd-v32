@@ -243,6 +243,23 @@
     </main>
 </div>
 
+<!-- Mobile bottom nav -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-t border-slate-200 flex justify-around items-center py-2 px-2">
+    <a href="{{ url_for('module3.dashboard') }}" class="flex flex-col items-center gap-0.5 text-primary">
+        <span class="material-symbols-outlined text-xl">admin_panel_settings</span>
+        <span class="text-[10px] font-bold">Dashboard</span>
+    </a>
+    <a href="{{ url_for('module3.settings') }}" class="flex flex-col items-center gap-0.5 text-slate-400">
+        <span class="material-symbols-outlined text-xl">tune</span>
+        <span class="text-[10px] font-bold">Settings</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="flex flex-col items-center gap-0.5 text-slate-400">
+        <span class="material-symbols-outlined text-xl">logout</span>
+        <span class="text-[10px] font-bold">Logout</span>
+    </a>
+</nav>
+<div class="md:hidden h-16"></div>
+
     <!-- TOAST NOTIFICATIONS -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}

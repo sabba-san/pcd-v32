@@ -114,34 +114,34 @@
             </div>
 
             <!-- Role Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
 
                 <!-- Homeowner Card -->
-                <a href="{{ url_for('auth.reg_homeowner') }}" class="group flex flex-col items-center justify-center p-6 rounded-xl border border-transparent bg-surface-container-low hover:bg-surface-container-lowest hover:border-primary/30 transition-all duration-200">
-                    <div class="w-12 h-12 rounded-full flex items-center justify-center bg-surface-container-highest text-primary mb-4 group-hover:bg-primary group-hover:text-white transition-colors duration-200">
+                <a href="{{ url_for('auth.reg_homeowner') }}"
+                   class="flex flex-col items-center justify-center p-6 rounded-2xl border border-slate-200 bg-white shadow-sm hover:-translate-y-1 hover:shadow-md hover:border-primary transition-all duration-300 cursor-pointer">
+                    <div class="w-14 h-14 rounded-full flex items-center justify-center bg-blue-50 text-primary mx-auto mb-4">
                         <span class="material-symbols-outlined text-2xl">home</span>
                     </div>
-                    <span class="font-headline font-bold text-on-surface">Homeowner</span>
+                    <span class="font-headline text-lg font-bold text-slate-800 text-center">Homeowner</span>
                 </a>
-
 
                 <!-- Housing Developer Card -->
-                <a href="{{ url_for('auth.reg_housedeveloper') }}" class="group flex flex-col items-center justify-center p-6 rounded-xl border border-transparent bg-surface-container-low hover:bg-surface-container-lowest hover:border-primary/30 transition-all duration-200">
-                    <div class="w-12 h-12 rounded-full flex items-center justify-center bg-surface-container-highest text-primary mb-4 group-hover:bg-primary group-hover:text-white transition-colors duration-200">
+                <a href="{{ url_for('auth.reg_housedeveloper') }}"
+                   class="flex flex-col items-center justify-center p-6 rounded-2xl border border-slate-200 bg-white shadow-sm hover:-translate-y-1 hover:shadow-md hover:border-primary transition-all duration-300 cursor-pointer">
+                    <div class="w-14 h-14 rounded-full flex items-center justify-center bg-blue-50 text-primary mx-auto mb-4">
                         <span class="material-symbols-outlined text-2xl">construction</span>
                     </div>
-                    <span class="font-headline font-bold text-on-surface text-center">Housing Developer</span>
+                    <span class="font-headline text-lg font-bold text-slate-800 text-center">Housing Developer</span>
                 </a>
-
 
                 <!-- Lawyer Card -->
-                <a href="{{ url_for('auth.reg_lawyer') }}" class="group flex flex-col items-center justify-center p-6 rounded-xl border border-transparent bg-surface-container-low hover:bg-surface-container-lowest hover:border-primary/30 transition-all duration-200">
-                    <div class="w-12 h-12 rounded-full flex items-center justify-center bg-surface-container-highest text-primary mb-4 group-hover:bg-primary group-hover:text-white transition-colors duration-200">
+                <a href="{{ url_for('auth.reg_lawyer') }}"
+                   class="flex flex-col items-center justify-center p-6 rounded-2xl border border-slate-200 bg-white shadow-sm hover:-translate-y-1 hover:shadow-md hover:border-primary transition-all duration-300 cursor-pointer">
+                    <div class="w-14 h-14 rounded-full flex items-center justify-center bg-blue-50 text-primary mx-auto mb-4">
                         <span class="material-symbols-outlined text-2xl">gavel</span>
                     </div>
-                    <span class="font-headline font-bold text-on-surface">Lawyer</span>
+                    <span class="font-headline text-lg font-bold text-slate-800 text-center">Lawyer</span>
                 </a>
-
 
             </div>
 

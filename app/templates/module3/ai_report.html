@@ -1,22 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html class="light" lang="en">
 <head>
-    <title>AI Report</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Report | DLP Advisor</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="bg-surface font-body text-on-surface min-h-screen">
 
-<div class="container">
-    <h1>{{ role }} AI Report</h1>
+<div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+        <h1 class="text-2xl font-extrabold font-headline text-slate-900 mb-6">{{ role }} AI Report</h1>
 
-    <pre style="white-space: pre-wrap;">{{ report }}</pre>
+        {% if report %}
+        <pre style="white-space: pre-wrap; background: #f8fafc; padding: 1.5rem; border-radius: 12px; font-size: 0.9rem; line-height: 1.6;">{{ report }}</pre>
+        {% else %}
+        <div class="text-center py-16 text-slate-400">
+            <span class="material-symbols-outlined text-6xl mb-4 block">description</span>
+            <p class="text-lg font-semibold">No report generated yet.</p>
+            <p class="text-sm">Go to the Reporting Dashboard and click "Generate AI Report".</p>
+        </div>
+        {% endif %}
 
-    <form action="{{ url_for('module3.export_pdf') }}" method="POST">
-        <input type="hidden" name="role" value="{{ role }}">
-        <button class="btn btn-success">Export PDF</button>
-    </form>
+        <form action="{{ url_for('module3.export_pdf') }}" method="POST" class="mt-6">
+            <input type="hidden" name="role" value="{{ role }}">
+            <button class="bg-primary text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                Export PDF
+            </button>
+        </form>
+    </div>
 </div>
-
 
     <!-- TOAST NOTIFICATIONS -->
     {% with messages = get_flashed_messages(with_categories=true) %}

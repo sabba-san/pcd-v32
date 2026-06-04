@@ -301,8 +301,16 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="8" class="px-6 py-10 text-center text-sm text-on-surface-variant">
-                                            No defects found for this project.
+                                        <td colspan="8" class="px-6 py-16 text-center">
+                                            <div class="flex flex-col items-center gap-3">
+                                                <span class="material-symbols-outlined text-5xl text-slate-300">construction</span>
+                                                <p class="text-lg font-semibold text-slate-500">No defects found</p>
+                                                <p class="text-sm text-slate-400">This project has no reported defects yet.</p>
+                                                <a href="{{ url_for('module2.list_projects') }}" class="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                                                    <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+                                                    Back to Projects
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 {% endif %}

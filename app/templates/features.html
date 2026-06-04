@@ -5,6 +5,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Features | DLP Advisor</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script id="tailwind-config">
@@ -43,7 +44,7 @@
 </head>
 <body class="bg-background dot-pattern min-h-screen flex flex-col">
     <!-- Navbar -->
-    <header class="bg-[#f7f9fb] sticky top-0 z-50">
+    <header class="bg-[#f7f9fb] sticky top-0 z-50" x-data="{ mobileOpen: false }">
         <nav class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
             <div class="text-2xl font-bold tracking-tight text-[#191c1e] brand-font uppercase">
                 DLP Advisor
@@ -53,70 +54,123 @@
                 <a class="text-[#434655] hover:text-[#191c1e] font-medium transition-colors duration-200" href="{{ url_for('auth.login') }}">Login</a>
                 <a class="bg-primary text-white px-6 py-2 rounded-full font-bold shadow-lg hover:opacity-90 transition-all scale-100 active:scale-95" href="{{ url_for('auth.register') }}">Register</a>
             </div>
-            <button class="md:hidden text-on-surface">
-                <span class="material-symbols-outlined">menu</span>
+            <button class="md:hidden text-on-surface" @click="mobileOpen = !mobileOpen" aria-label="Toggle menu">
+                <span class="material-symbols-outlined" x-text="mobileOpen ? 'close' : 'menu'">menu</span>
             </button>
         </nav>
+        <!-- Mobile nav panel -->
+        <div x-show="mobileOpen" @click.outside="mobileOpen = false" class="md:hidden bg-white border-t border-slate-100 px-8 py-4 space-y-3" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+            <a class="block text-primary font-bold text-sm" href="{{ url_for('auth.features') }}">Features</a>
+            <a class="block text-slate-600 hover:text-slate-900 font-medium text-sm" href="{{ url_for('auth.login') }}">Login</a>
+            <a class="block text-center bg-primary text-white px-6 py-2 rounded-full font-bold shadow-lg text-sm" href="{{ url_for('auth.register') }}">Register</a>
+        </div>
     </header>
 
     <main class="flex-grow flex flex-col items-center px-4 py-16 relative overflow-hidden">
-        <!-- Hero Section -->
-        <div class="text-center max-w-3xl mb-20 relative z-10">
-            <h1 class="text-5xl md:text-6xl font-extrabold text-on-surface mb-6 leading-tight tracking-tight">
-                Empowering Property Defect Management.
+
+        <!-- Hero / Page Header -->
+        <div class="text-center max-w-3xl mb-6 relative z-10">
+            <!-- Eyebrow badge -->
+            <div class="inline-flex items-center gap-2 bg-blue-50 text-primary text-sm font-semibold px-4 py-1.5 rounded-full mb-6 border border-blue-100">
+                <span class="material-symbols-outlined text-base" style="font-size:16px;">auto_awesome</span>
+                Ciri-Ciri Platform
+            </div>
+            <h1 class="text-5xl md:text-6xl font-extrabold text-on-surface mb-5 leading-tight tracking-tight">
+                Empowering Property<br class="hidden sm:block"> Defect Management.
             </h1>
-            <p class="text-xl text-on-surface-variant font-medium">
+            <p class="text-lg text-on-surface-variant font-medium leading-relaxed mb-3">
                 DLP Advisor streamlines everything from visual defect mapping to legal compliance, giving Homeowners, Developers, and Lawyers a unified source of truth.
+            </p>
+            <p class="text-base text-slate-400 leading-relaxed">
+                Terokai ciri-ciri canggih yang dikuasakan oleh Kecerdasan Buatan untuk pengurusan DLP anda.
             </p>
         </div>
 
-        <!-- Features Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl w-full relative z-10">
-            
-            <!-- Feature 1 -->
-            <div class="bg-surface-container-lowest p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,74,198,0.08)] border border-blue-50 hover:-translate-y-1 transition-transform duration-300">
-                <div class="w-16 h-16 bg-blue-50 text-primary rounded-2xl flex items-center justify-center mb-6">
-                    <span class="material-symbols-outlined text-4xl">view_in_ar</span>
+        <!-- Divider decoration -->
+        <div class="flex items-center gap-3 mb-14 relative z-10">
+            <div class="h-px w-16 bg-gradient-to-r from-transparent to-blue-200"></div>
+            <span class="material-symbols-outlined text-blue-300" style="font-size:18px;">fiber_manual_record</span>
+            <div class="h-px w-16 bg-gradient-to-l from-transparent to-blue-200"></div>
+        </div>
+
+        <!-- Features Grid — 1 col → 2 col → 3 col -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl w-full relative z-10">
+
+            <!-- Feature 1 — 3D Defect Visualizer -->
+            <div class="bg-white flex flex-col justify-start p-6 rounded-2xl border border-slate-100 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group">
+                <div class="self-start w-12 h-12 bg-blue-50 text-primary rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors duration-300 shrink-0">
+                    <span class="material-symbols-outlined" style="font-size:24px;line-height:1;">view_in_ar</span>
                 </div>
-                <h3 class="text-2xl font-bold text-on-surface mb-3">3D Defect Visualizer</h3>
-                <p class="text-on-surface-variant leading-relaxed">
+                <h3 class="text-base font-bold text-slate-800 mb-2">3D Defect Visualizer</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">
                     Upload GLB models to interactively map and pinpoint property defects visually in a rich 3D environment, ensuring ultimate clarity on structural issues.
                 </p>
             </div>
 
-            <!-- Feature 2 -->
-            <div class="bg-surface-container-lowest p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,74,198,0.08)] border border-blue-50 hover:-translate-y-1 transition-transform duration-300">
-                <div class="w-16 h-16 bg-blue-50 text-primary rounded-2xl flex items-center justify-center mb-6">
-                    <span class="material-symbols-outlined text-4xl">smart_toy</span>
+            <!-- Feature 2 — AI-Powered Legal Chatbot -->
+            <div class="bg-white flex flex-col justify-start p-6 rounded-2xl border border-slate-100 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group">
+                <div class="self-start w-12 h-12 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-300 shrink-0">
+                    <span class="material-symbols-outlined" style="font-size:24px;line-height:1;">smart_toy</span>
                 </div>
-                <h3 class="text-2xl font-bold text-on-surface mb-3">AI-Powered Legal Chatbot</h3>
-                <p class="text-on-surface-variant leading-relaxed">
+                <h3 class="text-base font-bold text-slate-800 mb-2">AI-Powered Legal Chatbot</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">
                     Get instant, intelligent answers regarding Defect Liability Period (DLP) rules, housing tribunal regulations, and compliance standards right when you need them.
                 </p>
             </div>
 
-            <!-- Feature 3 -->
-            <div class="bg-surface-container-lowest p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,74,198,0.08)] border border-blue-50 hover:-translate-y-1 transition-transform duration-300">
-                <div class="w-16 h-16 bg-blue-50 text-primary rounded-2xl flex items-center justify-center mb-6">
-                    <span class="material-symbols-outlined text-4xl">dashboard</span>
+            <!-- Feature 3 — Role-Based Dashboards -->
+            <div class="bg-white flex flex-col justify-start p-6 rounded-2xl border border-slate-100 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group">
+                <div class="self-start w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300 shrink-0">
+                    <span class="material-symbols-outlined" style="font-size:24px;line-height:1;">dashboard</span>
                 </div>
-                <h3 class="text-2xl font-bold text-on-surface mb-3">Role-Based Dashboards</h3>
-                <p class="text-on-surface-variant leading-relaxed">
+                <h3 class="text-base font-bold text-slate-800 mb-2">Role-Based Dashboards</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">
                     Experience isolated, secure, and tailored portals specifically designed for Homeowners, Developers, and Lawyers to manage tasks without overlap.
                 </p>
             </div>
 
-            <!-- Feature 4 -->
-            <div class="bg-surface-container-lowest p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,74,198,0.08)] border border-blue-50 hover:-translate-y-1 transition-transform duration-300">
-                <div class="w-16 h-16 bg-blue-50 text-primary rounded-2xl flex items-center justify-center mb-6">
-                    <span class="material-symbols-outlined text-4xl">summarize</span>
+            <!-- Feature 4 — Automated Defect Reports -->
+            <div class="bg-white flex flex-col justify-start p-6 rounded-2xl border border-slate-100 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group">
+                <div class="self-start w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-amber-500 group-hover:text-white transition-colors duration-300 shrink-0">
+                    <span class="material-symbols-outlined" style="font-size:24px;line-height:1;">summarize</span>
                 </div>
-                <h3 class="text-2xl font-bold text-on-surface mb-3">Automated Defect Reports</h3>
-                <p class="text-on-surface-variant leading-relaxed">
+                <h3 class="text-base font-bold text-slate-800 mb-2">Automated Defect Reports</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">
                     Streamline your claims and compliance with easy tracking, evidence collection, and automated PDF report generation ready for the housing tribunal.
                 </p>
             </div>
 
+            <!-- Feature 5 — Evidence Management -->
+            <div class="bg-white flex flex-col justify-start p-6 rounded-2xl border border-slate-100 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group">
+                <div class="self-start w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-rose-600 group-hover:text-white transition-colors duration-300 shrink-0">
+                    <span class="material-symbols-outlined" style="font-size:24px;line-height:1;">photo_library</span>
+                </div>
+                <h3 class="text-base font-bold text-slate-800 mb-2">Evidence Management</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">
+                    Attach photos and documents directly to defect records. Build a robust, court-ready evidence trail with organised timestamps and audit logs.
+                </p>
+            </div>
+
+            <!-- Feature 6 — Compliance Tracking -->
+            <div class="bg-white flex flex-col justify-start p-6 rounded-2xl border border-slate-100 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group">
+                <div class="self-start w-12 h-12 bg-cyan-50 text-cyan-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-cyan-600 group-hover:text-white transition-colors duration-300 shrink-0">
+                    <span class="material-symbols-outlined" style="font-size:24px;line-height:1;">verified_user</span>
+                </div>
+                <h3 class="text-base font-bold text-slate-800 mb-2">Compliance Tracking</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">
+                    Monitor DLP deadlines, statutory obligations, and resolution milestones in real time so no critical date ever slips through the cracks.
+                </p>
+            </div>
+
+        </div>
+
+        <!-- CTA Strip -->
+        <div class="mt-16 relative z-10 text-center">
+            <p class="text-slate-500 text-sm mb-4">Ready to get started?</p>
+            <a href="{{ url_for('auth.register') }}" class="inline-flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-full font-bold shadow-lg hover:opacity-90 hover:shadow-xl transition-all duration-300 active:scale-95">
+                <span>Create Free Account</span>
+                <span class="material-symbols-outlined text-base" style="font-size:18px;">arrow_forward</span>
+            </a>
         </div>
 
         <!-- Decorative background blobs -->

@@ -231,7 +231,10 @@
 </div>
 
 <!-- Right Slim Sidebar (Defect List) -->
-<aside class="w-80 bg-slate-50 flex flex-col border-l border-slate-200 shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-20">
+<aside id="defect-sidebar"
+class="w-80 bg-slate-50 flex flex-col border-l border-slate-200 shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-20
+       fixed md:static right-0 top-16 h-[calc(100vh-4rem)] md:h-auto
+       transform translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
 <div class="p-6 pb-2">
 <div class="flex items-center justify-between mb-3">
 <h2 class="font-headline font-bold text-lg text-slate-800">Defects</h2>
@@ -276,6 +279,11 @@
 </div>
 </aside>
 </main>
+
+<!-- Mobile defect list toggle button -->
+<button id="mobile-defects-toggle" class="md:hidden fixed bottom-6 right-6 z-50 bg-primary text-white w-14 h-14 rounded-full shadow-xl flex items-center justify-center hover:opacity-90 transition-all active:scale-95">
+    <span class="material-symbols-outlined">list_alt</span>
+</button>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <!--  VIEW DEFECT MODAL (existing defects)                         -->
@@ -1143,6 +1151,19 @@
     
     // Start System
     window.addEventListener('load', initBabylonScene);
+</script>
+
+<!-- Mobile defect sidebar toggle -->
+<script>
+(function() {
+    var btn = document.getElementById('mobile-defects-toggle');
+    var sidebar = document.getElementById('defect-sidebar');
+    if (btn && sidebar) {
+        btn.addEventListener('click', function() {
+            sidebar.classList.toggle('translate-x-full');
+        });
+    }
+})();
 </script>
 
     <!-- TOAST NOTIFICATIONS -->
