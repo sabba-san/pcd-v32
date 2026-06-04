@@ -173,7 +173,7 @@ def get_homeowner_claimants(lawyer_user_id=None):
         if lawyer_user_id is not None:
             result = db.session.execute(text(
                 """
-                SELECT DISTINCT hp.homeowner_id, hp.name, hp.address, hp.email
+                SELECT DISTINCT hp.homeowner_id, hp.name, hp.address, hp.email, hp.ic_number
                 FROM report_homeowner_profile hp
                 JOIN defects d ON d.user_id = hp.homeowner_id
                 WHERE d.assigned_lawyer_id = :lawyer_user_id
@@ -183,7 +183,7 @@ def get_homeowner_claimants(lawyer_user_id=None):
         else:
             result = db.session.execute(text(
                 """
-                SELECT homeowner_id, name, address, email
+                SELECT homeowner_id, name, address, email, ic_number
                 FROM report_homeowner_profile
                 ORDER BY homeowner_id ASC
                 """
@@ -194,6 +194,7 @@ def get_homeowner_claimants(lawyer_user_id=None):
                 "name": row[1] or "-",
                 "unit": row[2] or "-",
                 "email": row[3] or "-",
+                "ic_number": row[4] or "-",
             }
             for row in result.fetchall()
         ]

@@ -80,7 +80,7 @@ function populateTable(data) {
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!data.length) {
-        const cols = window.M3_TABLE_COLS || 6;
+        const cols = window.M3_TABLE_COLS || 7;
         const msg = (window.M3_CONFIG || {}).role === 'Developer' 
             ? 'No active work orders.' 
             : 'No defects match the selected filters.';
@@ -107,6 +107,7 @@ window.buildRow = window.buildRow || function(d, statusClass) {
     return `
         <td class="m3-td">#${d.id}</td>
         <td class="m3-td">${d.unit || '-'}</td>
+        <td class="m3-td">${d.ic_number || '-'}</td>
         <td class="m3-td">${d.desc || '-'}</td>
         <td class="m3-td"><span class="m3-badge ${statusClass}">${d.display_status}</span></td>
         <td class="m3-td">${d.remarks || '-'}</td>

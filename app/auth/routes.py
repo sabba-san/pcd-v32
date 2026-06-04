@@ -227,6 +227,7 @@ def reg_lawyer():
             email          = email[:150],
             law_firm_name  = request.form.get('firm_name', '').strip()[:150],
             bar_council_id = request.form.get('bar_id', '').strip()[:50],
+            ic_number      = request.form.get('ic_number', '').strip()[:20],
         )
         user.set_password(password)
         db.session.add(user)

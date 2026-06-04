@@ -198,7 +198,7 @@
                     class="mt-1 rounded-xl border border-slate-300 py-2 px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none min-w-[200px]">
                     {% if homeowner_claimants %}
                         {% for c in homeowner_claimants %}
-                        <option value="{{ c.homeowner_id }}">{{ c.name }} ({{ c.unit }})</option>
+                        <option value="{{ c.homeowner_id }}">{{ c.name }} ({{ c.unit }}) — IC: {{ c.ic_number }}</option>
                         {% endfor %}
                     {% else %}
                         <option value="">No homeowners available</option>
@@ -259,6 +259,7 @@
                         <tr class="bg-surface-container-highest/30">
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">ID</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Project / Taman</th>
+                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">IC</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Description</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Status</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Case</th>
@@ -333,7 +334,7 @@
 
 <script>
 window.M3_CONFIG = { base_url: '/module3', role: {{ role | tojson }} };
-window.M3_TABLE_COLS = 6;
+window.M3_TABLE_COLS = 7;
 window.allDefects = [
 {% for d in defects %}
 {
@@ -367,6 +368,7 @@ window.buildRow = function(d, statusClass) {
     return `
         <td class="m3-td">#${d.id}</td>
         <td class="m3-td">${projectLabel}</td>
+        <td class="m3-td">${d.ic_number || '-'}</td>
         <td class="m3-td" style="max-width:260px;">${d.desc||'-'}</td>
         <td class="m3-td"><span class="m3-badge ${statusClass}">${d.display_status||d.status||'Reported'}</span></td>
         <td class="m3-td">${caseEl}</td>

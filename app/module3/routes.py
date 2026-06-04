@@ -1024,9 +1024,11 @@ def get_defects_for_role(role):
                        COALESCE(d.element, '') AS element, COALESCE(d.location, '') AS location,
                        COALESCE(s.name, '') AS scan_name,
                        d.scan_id,
-                       COALESCE(d.image_path, '') AS image_path
+                       COALESCE(d.image_path, '') AS image_path,
+                       COALESCE(u.ic_number, '') AS ic_number
                 FROM defects d
                 LEFT JOIN scans s ON d.scan_id = s.id
+                LEFT JOIN users u ON d.user_id = u.id
                 WHERE d.user_id = %s
                 ORDER BY d.id
                 """,
@@ -1041,9 +1043,11 @@ def get_defects_for_role(role):
                        COALESCE(d.element, '') AS element, COALESCE(d.location, '') AS location,
                        COALESCE(s.name, '') AS scan_name,
                        d.scan_id,
-                       COALESCE(d.image_path, '') AS image_path
+                       COALESCE(d.image_path, '') AS image_path,
+                       COALESCE(u.ic_number, '') AS ic_number
                 FROM defects d
                 LEFT JOIN scans s ON d.scan_id = s.id
+                LEFT JOIN users u ON d.user_id = u.id
                 WHERE d.assigned_lawyer_id = %s
                 ORDER BY d.id
                 """,
@@ -1058,9 +1062,11 @@ def get_defects_for_role(role):
                        COALESCE(d.element, '') AS element, COALESCE(d.location, '') AS location,
                        COALESCE(s.name, '') AS scan_name,
                        d.scan_id,
-                       COALESCE(d.image_path, '') AS image_path
+                       COALESCE(d.image_path, '') AS image_path,
+                       COALESCE(u.ic_number, '') AS ic_number
                 FROM defects d
                 LEFT JOIN scans s ON d.scan_id = s.id
+                LEFT JOIN users u ON d.user_id = u.id
                 WHERE d.assigned_developer_id = %s
                 ORDER BY d.id
                 """,
@@ -1074,9 +1080,11 @@ def get_defects_for_role(role):
                        COALESCE(d.element, '') AS element, COALESCE(d.location, '') AS location,
                        COALESCE(s.name, '') AS scan_name,
                        d.scan_id,
-                       COALESCE(d.image_path, '') AS image_path
+                       COALESCE(d.image_path, '') AS image_path,
+                       COALESCE(u.ic_number, '') AS ic_number
                 FROM defects d
                 LEFT JOIN scans s ON d.scan_id = s.id
+                LEFT JOIN users u ON d.user_id = u.id
                 ORDER BY d.id
                 """
             )
@@ -1088,6 +1096,7 @@ def get_defects_for_role(role):
             scan_name = row[12] or ''
             scan_id = row[13]
             image_path = row[14] or ''
+            ic_number  = row[15] or ''
             raw_unit  = row[1]
             # project_name: explicit unit first, then scan name (taman), then location/element
             project_name = (
@@ -1115,6 +1124,7 @@ def get_defects_for_role(role):
                 "scan_id":        scan_id,
                 "image_path":     image_path,
                 "image_url":      url_for('module2.serve_defect_image', defect_id=row[0]) if image_path else "",
+                "ic_number":      ic_number,
             }
 
             defect["hda_compliant"] = calculate_hda_compliance(
@@ -3485,17 +3495,25 @@ def update_profile():
         elif file and file.filename != '':
             flash('Invalid file type. Only .jpg, .jpeg, .png are allowed.', 'error')
 
-    # 3. Update Phone Number
+    # 3. Update Identity Card (IC / NRIC)
+    new_ic = request.form.get('ic_number', '').strip()
+    if new_ic:
+        if current_user.user_type == 'developer':
+            current_user.representative_nric = new_ic
+        else:
+            current_user.ic_number = new_ic
+
+    # 4. Update Phone Number
     new_phone = request.form.get('phone_number', '').strip()
     if new_phone:
         current_user.phone_number = new_phone
 
-    # 4. Update Correspondence Address
+    # 5. Update Correspondence Address
     new_address = request.form.get('correspondence_address', '').strip()
     if new_address:
         current_user.correspondence_address = new_address
 
-    # 5. Update Housing Project and Unit (For Homeowners)
+    # 6. Update Housing Project and Unit (For Homeowners)
     if current_user.user_type == 'homeowner':
         new_project = request.form.get('housing_project', '').strip()
         if new_project:

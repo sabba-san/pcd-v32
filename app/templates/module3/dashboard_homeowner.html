@@ -247,6 +247,11 @@
             {% set current_state_name    = claim_input.state_name    if claim_input and claim_input.state_name    else '' %}
             {% set current_court_location= claim_input.court_location if claim_input and claim_input.court_location else '' %}
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
+                <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                    Identity Card (MyKad) / IC
+                    <input type="text" value="{{ user.ic_number or 'USR-' + (user.id|string).zfill(4) }}" disabled
+                        class="mt-1 rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-sm text-slate-600 outline-none cursor-not-allowed">
+                </label>
                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700 sm:col-span-2 xl:col-span-3">
                     Homeowner Address
                     <textarea id="m3-homeowner-address" name="homeowner_address" rows="3" placeholder="Mailing or property address"
@@ -379,6 +384,7 @@
                         <tr class="bg-surface-container-highest/30">
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">ID</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Project / Taman</th>
+                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">IC</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">PHOTO</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Description</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Status</th>
@@ -455,7 +461,7 @@ window.M3_CONFIG = {
     initial_court_location:{{ (claim_input.court_location if claim_input and claim_input.court_location else '') | tojson }},
 };
 window.STATE_COURT_MAP = {{ state_court_map | tojson }};
-window.M3_TABLE_COLS = 7;
+window.M3_TABLE_COLS = 8;
 
 window.allDefects = [
 {% for d in defects %}
@@ -508,6 +514,7 @@ window.buildRow = function(d, statusClass) {
     return `
         <td class="m3-td">#${d.id}</td>
         <td class="m3-td">${projectLabel}</td>
+        <td class="m3-td">${d.ic_number || '-'}</td>
         <td class="m3-td">${photoHtml}</td>
         <td class="m3-td" style="max-width:260px;">${descText}</td>
         <td class="m3-td"><span class="m3-badge ${statusClass}">${d.display_status || d.status || 'Reported'}</span></td>

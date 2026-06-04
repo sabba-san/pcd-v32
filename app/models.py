@@ -33,6 +33,7 @@ class User(db.Model, UserMixin):
     # ── Lawyer fields ─────────────────────────────────────────────────────────
     law_firm_name  = db.Column(db.String(150))
     bar_council_id = db.Column(db.String(50))
+    ic_number      = db.Column(db.String(20))
 
     # ── Homeowner fields ──────────────────────────────────────────────────────
     housing_project        = db.Column(db.String(150))
