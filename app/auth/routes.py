@@ -356,7 +356,17 @@ def lawyer_dashboard():
             'client_name':   user_map.get(d.user_id, '—'),
             'assigned_date': d.created_at.strftime('%d %b %Y') if d.created_at else '—',
         })
-    return render_template('role/dashboard/lawyer.html', pending_cases=pending_cases)
+    total_defects_count = len(defects)
+    action_required_count = Defect.query.filter_by(
+        assigned_lawyer_id=current_user.id, is_locked=False
+    ).count()
+
+    return render_template(
+        'role/dashboard/lawyer.html',
+        pending_cases=pending_cases,
+        total_defects_count=total_defects_count,
+        action_required_count=action_required_count
+    )
 
 
 @auth.route('/lawyer/lock_evidence', methods=['POST'])

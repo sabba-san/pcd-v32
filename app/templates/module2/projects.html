@@ -229,10 +229,12 @@
                 <h1 class="text-4xl font-headline font-extrabold tracking-tight text-on-surface mb-2">Projects</h1>
                 <p class="text-on-surface-variant max-w-md">Manage and monitor defect scans across your active infrastructure portfolio.</p>
             </div>
+            {% if current_user.user_type != 'lawyer' %}
             <a href="{{ url_for('module2.upload_scan') }}" class="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-primary-container transition-colors">
                 <span class="material-symbols-outlined text-lg">add_circle</span>
                 New Project
             </a>
+            {% endif %}
         </div>
 
         <!-- Toolbar: Search & Filters -->
@@ -335,6 +337,12 @@
                         </div>
                     </a>
                 {% endfor %}
+            {% elif current_user.user_type == 'lawyer' %}
+                <div class="col-span-full bg-surface-container-lowest p-12 rounded-xl ghost-border text-center flex flex-col items-center justify-center">
+                    <span class="material-symbols-outlined text-6xl text-outline-variant mb-4">visibility</span>
+                    <h3 class="text-2xl font-bold text-on-surface mb-2">No Scans Assigned</h3>
+                    <p class="text-on-surface-variant max-w-md mb-6">There are currently no 3D scan projects linked to your assigned cases. Scans will appear here once developers upload them.</p>
+                </div>
             {% else %}
                 <div class="col-span-full bg-surface-container-lowest p-12 rounded-xl ghost-border text-center flex flex-col items-center justify-center">
                     <span class="material-symbols-outlined text-6xl text-outline-variant mb-4">deployed_code</span>
