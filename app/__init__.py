@@ -122,6 +122,7 @@ def create_app():
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER REFERENCES users(id)",
             "ALTER TABLE scans ADD COLUMN IF NOT EXISTS developer_id INTEGER REFERENCES users(id)",
             "ALTER TABLE scans ADD COLUMN IF NOT EXISTS lawyer_id INTEGER REFERENCES users(id)",
+            "ALTER TABLE defects ADD COLUMN IF NOT EXISTS is_locked BOOLEAN NOT NULL DEFAULT FALSE",
             # Formal Notice persistence table (idempotent)
             """CREATE TABLE IF NOT EXISTS formal_notices (
                 id SERIAL PRIMARY KEY,
