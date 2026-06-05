@@ -377,5 +377,7 @@ def _redirect_by_role(user_type: str):
         return redirect(url_for('auth.developer_dashboard'))
     elif user_type == 'lawyer':
         return redirect(url_for('auth.lawyer_dashboard'))
+    elif user_type == 'admin':
+        return redirect(url_for('module3.dashboard'))
     else:
         return redirect(url_for('auth.homeowner_dashboard'))

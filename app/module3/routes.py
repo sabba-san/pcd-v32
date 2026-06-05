@@ -10,6 +10,7 @@ from flask import (
     url_for,
     session,
     flash,
+    abort,
 )
 
 try:
@@ -79,6 +80,9 @@ except ImportError:  # pragma: no cover - fallback for direct execution from mod
         translate_report_cached,
         translate_remark_cached,
     )
+
+from ..extensions import db
+from ..models import User
 
 SUPPORT_CONTACT = "1800-700-321 | support@dlp-project.edu.my"
 AUTO_CLOSE_DAYS = int(os.getenv("AUTO_CLOSE_DAYS", "14"))
@@ -1848,7 +1852,6 @@ def dashboard():
     if role == "Homeowner":
         exempt_endpoints = ['module3.profile', 'module3.settings', 'module3.update_profile', 'module3.change_password']
         if not request.endpoint or request.endpoint not in exempt_endpoints:
-            from ..models import User
             user = User.query.get(current_user.id)
             if not user.housing_project or not user.unit or not user.correspondence_address:
                 flash('Please complete your property details to continue', 'warning')
@@ -1860,6 +1863,8 @@ def dashboard():
     if role == "Admin":
         defects = get_defects_for_role("Developer")
         stats = calculate_stats(defects)
+        users = User.query.all()
+        total_users = User.query.count()
         audit_role = (request.args.get("audit_role") or "").strip()
         audit_action = (request.args.get("audit_action") or "").strip()
         audit_date = (request.args.get("audit_date") or "").strip()
@@ -1898,6 +1903,8 @@ def dashboard():
             role=role,
             stats=stats,
             defects=defects,
+            users=users,
+            total_users=total_users,
             audit_entries=audit_entries,
             total_audit=total_audit,
             audit_page=audit_page,
@@ -2015,6 +2022,72 @@ def dashboard():
         support_contact=SUPPORT_CONTACT,
         username=_current_actor_name(),
     )
+
+
+@routes.route("/admin_delete_user", methods=["POST"])
+@login_required
+def admin_delete_user():
+    if current_user.user_type != "admin":
+        abort(403)
+
+    user_id = request.form.get("user_id", type=int)
+    if not user_id:
+        flash("Invalid user ID.", "danger")
+        return redirect(url_for("module3.dashboard"))
+
+    if user_id == current_user.id:
+        flash("You cannot delete your own account.", "danger")
+        return redirect(url_for("module3.dashboard"))
+
+    target = User.query.get(user_id)
+    if not target:
+        flash("User not found.", "danger")
+        return redirect(url_for("module3.dashboard"))
+
+    db.session.delete(target)
+    db.session.commit()
+
+    _append_audit_event(
+        action=f"Deleted user {target.email} (id={target.id})",
+        role="Admin",
+    )
+    flash(f"User {target.email} has been deleted.", "success")
+    return redirect(url_for("module3.dashboard"))
+
+
+@routes.route("/admin_update_user_role", methods=["POST"])
+@login_required
+def admin_update_user_role():
+    if current_user.user_type != "admin":
+        abort(403)
+
+    user_id = request.form.get("user_id", type=int)
+    new_user_type = request.form.get("user_type", "").strip().lower()
+
+    if not user_id or new_user_type not in ("homeowner", "developer", "lawyer", "admin"):
+        flash("Invalid request parameters.", "danger")
+        return redirect(url_for("module3.dashboard"))
+
+    if user_id == current_user.id:
+        flash("You cannot change your own role.", "danger")
+        return redirect(url_for("module3.dashboard"))
+
+    target = User.query.get(user_id)
+    if not target:
+        flash("User not found.", "danger")
+        return redirect(url_for("module3.dashboard"))
+
+    # Sync both user_type and legacy role field
+    target.user_type = new_user_type
+    target.role = new_user_type.capitalize()
+    db.session.commit()
+
+    _append_audit_event(
+        action=f"Changed user {target.email} (id={target.id}) role to {new_user_type}",
+        role="Admin",
+    )
+    flash(f"User {target.email} role updated to {new_user_type.capitalize()}.", "success")
+    return redirect(url_for("module3.dashboard"))
 
 
 @routes.route("/save_homeowner_claim_details", methods=["POST"])

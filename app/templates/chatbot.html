@@ -192,6 +192,7 @@
 
                 <!-- Quick Reply Bubbles -->
                 <div class="flex flex-wrap gap-2 mb-3 px-6">
+                    {% if current_user.user_type == 'homeowner' %}
                     <button onclick="sendQuickReply('What is the Defect Liability Period (DLP)?')"
                         class="bg-blue-50 text-primary border border-blue-200 rounded-full px-4 py-1.5 text-sm hover:bg-primary hover:text-white transition-colors cursor-pointer">
                         What is the Defect Liability Period (DLP)?
@@ -204,6 +205,42 @@
                         class="bg-blue-50 text-primary border border-blue-200 rounded-full px-4 py-1.5 text-sm hover:bg-primary hover:text-white transition-colors cursor-pointer">
                         The developer is ignoring my complaints. What's next?
                     </button>
+                    {% elif current_user.user_type == 'developer' %}
+                    <button onclick="sendQuickReply('What is the legal timeframe to rectify reported defects?')"
+                        class="bg-blue-50 text-primary border border-blue-200 rounded-full px-4 py-1.5 text-sm hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        What is the legal timeframe to rectify reported defects?
+                    </button>
+                    <button onclick="sendQuickReply('How do I manage a contractor who fails to fix defects?')"
+                        class="bg-blue-50 text-primary border border-blue-200 rounded-full px-4 py-1.5 text-sm hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        How do I manage a contractor who fails to fix defects?
+                    </button>
+                    <button onclick="sendQuickReply('What constitutes a completed rectification under HDA?')"
+                        class="bg-blue-50 text-primary border border-blue-200 rounded-full px-4 py-1.5 text-sm hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        What constitutes a 'completed' rectification under HDA?
+                    </button>
+                    {% elif current_user.user_type == 'lawyer' %}
+                    <button onclick="sendQuickReply('What are the specific SPA clauses governing the DLP?')"
+                        class="bg-blue-50 text-primary border border-blue-200 rounded-full px-4 py-1.5 text-sm hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        What are the specific SPA clauses governing the DLP?
+                    </button>
+                    <button onclick="sendQuickReply('Show me recent tribunal precedents for structural defects.')"
+                        class="bg-blue-50 text-primary border border-blue-200 rounded-full px-4 py-1.5 text-sm hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        Show me recent tribunal precedents for structural defects.
+                    </button>
+                    <button onclick="sendQuickReply('What documents are required to serve a formal notice?')"
+                        class="bg-blue-50 text-primary border border-blue-200 rounded-full px-4 py-1.5 text-sm hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        What documents are required to serve a formal notice?
+                    </button>
+                    {% else %}
+                    <button onclick="sendQuickReply('What is the Defect Liability Period (DLP)?')"
+                        class="bg-blue-50 text-primary border border-blue-200 rounded-full px-4 py-1.5 text-sm hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        What is the Defect Liability Period (DLP)?
+                    </button>
+                    <button onclick="sendQuickReply('How can this system help me?')"
+                        class="bg-blue-50 text-primary border border-blue-200 rounded-full px-4 py-1.5 text-sm hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                        How can this system help me?
+                    </button>
+                    {% endif %}
                 </div>
                 <div class="px-6 py-4 border-t border-slate-100 bg-white rounded-b-2xl print:hidden">
                     <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-full shadow-sm px-3 py-1.5">

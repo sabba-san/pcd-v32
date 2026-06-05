@@ -116,19 +116,33 @@
         <!-- Main nav -->
         <nav class="space-y-1 flex-1">
             <a href="{{ url_for('auth.developer_dashboard') }}"
-               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold
+                      {% if request.endpoint == 'auth.developer_dashboard' %}bg-white text-blue-700 shadow-sm font-bold{% else %}text-slate-500 hover:bg-slate-200/50{% endif %}">
                 <span class="material-symbols-outlined">dashboard</span><span>Overview</span>
             </a>
             <a href="{{ url_for('module2.list_projects') }}"
-               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
-                <span class="material-symbols-outlined">architecture</span><span>Lidar Scans</span>
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold
+                      {% if request.endpoint in ('module2.list_projects', 'module2.project_detail', 'module2.visualize_scan') %}bg-white text-blue-700 shadow-sm font-bold{% else %}text-slate-500 hover:bg-slate-200/50{% endif %}">
+                <span class="material-symbols-outlined">3d_rotation</span><span>Lidar Scans</span>
+            </a>
+            <a href="{{ url_for('core_features.chatbot_ui') }}"
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold
+                      {% if request.endpoint == 'core_features.chatbot_ui' %}bg-white text-blue-700 shadow-sm font-bold{% else %}text-slate-500 hover:bg-slate-200/50{% endif %}">
+                <span class="material-symbols-outlined">smart_toy</span><span>Premium AI Chatbot</span>
             </a>
             <a href="{{ url_for('module3.dashboard') }}"
-               class="flex items-center gap-3 bg-white text-blue-700 rounded-xl px-4 py-3 shadow-sm text-sm font-bold">
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold
+                      {% if request.endpoint == 'module3.dashboard' %}bg-white text-blue-700 shadow-sm font-bold{% else %}text-slate-500 hover:bg-slate-200/50{% endif %}">
                 <span class="material-symbols-outlined">description</span><span>Reporting Dashboard</span>
             </a>
+            <a href="{{ url_for('module2.upload_scan') }}"
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold
+                      {% if request.endpoint == 'module2.upload_scan' %}bg-white text-blue-700 shadow-sm font-bold{% else %}text-slate-500 hover:bg-slate-200/50{% endif %}">
+                <span class="material-symbols-outlined">upload_file</span><span>Upload GLB Model</span>
+            </a>
             <a href="{{ url_for('module3.settings') }}"
-               class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-slate-200/50 rounded-xl text-sm font-semibold">
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold
+                      {% if request.endpoint in ('module3.settings', 'module3.profile') %}bg-white text-blue-700 shadow-sm font-bold{% else %}text-slate-500 hover:bg-slate-200/50{% endif %}">
                 <span class="material-symbols-outlined">tune</span><span>Settings</span>
             </a>
         </nav>
