@@ -269,7 +269,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                     Identity Card (MyKad) / IC
-                    <input type="text" value="{{ user.ic_number or 'USR-' + (user.id|string).zfill(4) }}" disabled
+                    <input type="text" value="{{ current_user.ic_number or 'USR-' + (current_user.id|string).zfill(4) }}" disabled
                         class="mt-1 rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-sm text-slate-600 outline-none cursor-not-allowed">
                 </label>
                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700 sm:col-span-2 xl:col-span-3">
