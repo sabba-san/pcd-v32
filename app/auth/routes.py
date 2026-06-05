@@ -359,6 +359,20 @@ def lawyer_dashboard():
     return render_template('role/dashboard/lawyer.html', pending_cases=pending_cases)
 
 
+@auth.route('/lawyer/lock_evidence', methods=['POST'])
+@login_required
+def lock_evidence():
+    """Lock all active evidence assigned to this lawyer — makes records immutable."""
+    if current_user.user_type != 'lawyer':
+        abort(403)
+    defects = Defect.query.filter_by(assigned_lawyer_id=current_user.id).all()
+    for d in defects:
+        d.is_locked = True
+    db.session.commit()
+    flash("Evidence legally sealed. Records are now immutable for Tribunal review.", "success")
+    return redirect(url_for('auth.lawyer_dashboard'))
+
+
 @auth.route('/dashboard/developer')
 @login_required
 def developer_dashboard():

@@ -136,6 +136,8 @@ class Defect(db.Model):
     is_verified = db.Column(db.Boolean, default=False, nullable=False)
     verified_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     legal_remarks = db.Column(db.Text, nullable=True)
+    # ── Evidence Locking ─────────────────────────────────────────────────────
+    is_locked = db.Column(db.Boolean, default=False, nullable=False)
     remarks_list = db.relationship('Remark', backref='defect', lazy=True)
     completion_dates = db.relationship('CompletionDate', backref='defect', lazy=True)
     evidence_list = db.relationship('Evidence', backref='defect', lazy=True)
