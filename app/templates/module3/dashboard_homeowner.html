@@ -79,13 +79,13 @@
         <div class="flex items-center gap-3">
             <a href="{{ url_for('module3.profile') }}" class="flex items-center gap-2 group" title="View Profile">
                 <div class="w-8 h-8 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
-                    {% if user_info.profile_picture %}
-                    <img src="{{ url_for('static', filename=user_info.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
+                    {% if current_user.profile_picture %}
+                    <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
                     {% else %}
-                    {{ user_info.name[0].upper() if user_info.name else 'H' }}
+                    {{ current_user.full_name[0].upper() if current_user.full_name else 'U' }}
                     {% endif %}
                 </div>
-                <p class="hidden sm:block text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors">{{ user_info.name }}</p>
+                <p class="hidden sm:block text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors">{{ current_user.full_name }}</p>
             </a>
             <div x-data="{ open: false }" class="relative">
                 <button @click="open = !open" class="relative p-2 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg transition-colors" title="Notifications">
@@ -115,15 +115,15 @@
         <!-- User info -->
         <div class="flex items-center gap-3 p-4 mb-2">
             <div class="w-10 h-10 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white font-bold flex-shrink-0">
-                {% if user_info.profile_picture %}
-                <img src="{{ url_for('static', filename=user_info.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
+                {% if current_user.profile_picture %}
+                <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Avatar" class="w-full h-full object-cover">
                 {% else %}
-                {{ user_info.name[0].upper() if user_info.name else 'H' }}
+                {{ current_user.full_name[0].upper() if current_user.full_name else 'U' }}
                 {% endif %}
             </div>
             <div class="overflow-hidden">
-                <h3 class="font-headline text-sm font-bold text-slate-900 leading-tight truncate">{{ user_info.name }}</h3>
-                <p class="text-xs text-slate-500">Homeowner</p>
+                <h3 class="font-headline text-sm font-bold text-slate-900 leading-tight truncate">{{ current_user.full_name }}</h3>
+                <p class="text-xs text-slate-500">{{ 'Legal Counsel' if current_user.user_type == 'lawyer' else current_user.user_type | capitalize }}</p>
             </div>
         </div>
 

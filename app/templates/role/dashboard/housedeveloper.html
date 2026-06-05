@@ -167,10 +167,9 @@
                 {{ (current_user.company_name or current_user.full_name)[0].upper() }}
                 {% endif %}
             </div>
-            <div class="min-w-0">
-                <h3 class="font-headline text-sm font-bold text-slate-900 leading-tight line-clamp-2 whitespace-normal break-words"
-                    title="{{ current_user.company_name or current_user.full_name }}">{{ current_user.company_name or current_user.full_name }}</h3>
-                <p class="text-xs text-slate-500">Developer</p>
+            <div class="overflow-hidden">
+                <h3 class="font-headline text-sm font-bold text-slate-900 leading-tight truncate">{{ current_user.full_name }}</h3>
+                <p class="text-xs text-slate-500">{{ 'Legal Counsel' if current_user.user_type == 'lawyer' else current_user.user_type | capitalize }}</p>
             </div>
         </div>
 

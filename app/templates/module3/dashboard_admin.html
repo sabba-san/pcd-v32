@@ -47,10 +47,12 @@
 <div class="flex min-h-screen">
     <aside class="h-screen w-64 fixed left-0 top-16 hidden md:flex flex-col bg-slate-50 p-4 space-y-2 border-r border-slate-200/60">
         <div class="flex items-center gap-3 p-4 mb-2">
-            <div class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white font-bold">A</div>
-            <div>
-                <h3 class="font-headline text-sm font-bold text-slate-900">{{ username }}</h3>
-                <p class="text-xs text-slate-500">Administrator</p>
+            <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold flex-shrink-0">
+                {{ current_user.full_name[0].upper() if current_user.full_name else 'U' }}
+            </div>
+            <div class="overflow-hidden">
+                <h3 class="font-headline text-sm font-bold text-slate-900 leading-tight truncate">{{ current_user.full_name }}</h3>
+                <p class="text-xs text-slate-500">{{ 'Legal Counsel' if current_user.user_type == 'lawyer' else current_user.user_type | capitalize }}</p>
             </div>
         </div>
         <nav class="space-y-1 flex-1">
