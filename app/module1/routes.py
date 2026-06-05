@@ -135,3 +135,68 @@ def api_analyze_pdf():
         return jsonify({"error": f"Server Error: {str(e)}"}), 500
 
 
+@module1.route('/save-formal-notice', methods=['POST'])
+def api_save_formal_notice():
+    """Persist a generated Formal Notice letter to the database.
+
+    Expects a JSON body with all form fields plus a ``letter_html`` string
+    containing the fully rendered letter.  Returns the new record's ``id``
+    so the frontend can optionally display a confirmation reference.
+    """
+    from flask_login import current_user, login_required
+    from datetime import datetime
+
+    if not current_user.is_authenticated:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        from ..models import FormalNotice, User
+        from ..extensions import db
+
+        data = request.get_json(silent=True) or {}
+
+        # Parse VP date safely
+        vp_date = None
+        vp_raw = data.get('vp_date', '')
+        if vp_raw:
+            try:
+                vp_date = datetime.strptime(vp_raw, '%Y-%m-%d').date()
+            except ValueError:
+                pass  # Leave as None if parsing fails
+
+        # Resolve developer_id: prefer linked developer, fall back to None
+        developer_id = current_user.assigned_developer_id or None
+
+        notice = FormalNotice(
+            homeowner_id  = current_user.id,
+            developer_id  = developer_id,
+            buyer_name    = (data.get('buyer_name') or '').strip()[:150],
+            buyer_ic      = (data.get('buyer_ic') or '').strip()[:20],
+            buyer_address = (data.get('buyer_address') or '').strip(),
+            buyer_contact = (data.get('buyer_contact') or '').strip()[:30],
+            dev_name      = (data.get('dev_name') or '').strip()[:150],
+            dev_address   = (data.get('dev_address') or '').strip(),
+            project_name  = (data.get('project_name') or '').strip()[:150],
+            unit_no       = (data.get('unit_no') or '').strip()[:100],
+            vp_date       = vp_date,
+            spa_ref       = (data.get('spa_ref') or '').strip()[:150],
+            defects_json  = data.get('defects') or [],
+            letter_html   = data.get('letter_html') or '',
+        )
+
+        db.session.add(notice)
+        db.session.commit()
+
+        return jsonify({"status": "ok", "notice_id": notice.id}), 201
+
+    except Exception as e:
+        print(f"SAVE FORMAL NOTICE ERROR: {e}")
+        try:
+            from ..extensions import db
+            db.session.rollback()
+        except Exception:
+            pass
+        return jsonify({"error": f"Server Error: {str(e)}"}), 500
+
+
+

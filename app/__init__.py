@@ -122,6 +122,25 @@ def create_app():
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_lawyer_id INTEGER REFERENCES users(id)",
             "ALTER TABLE scans ADD COLUMN IF NOT EXISTS developer_id INTEGER REFERENCES users(id)",
             "ALTER TABLE scans ADD COLUMN IF NOT EXISTS lawyer_id INTEGER REFERENCES users(id)",
+            # Formal Notice persistence table (idempotent)
+            """CREATE TABLE IF NOT EXISTS formal_notices (
+                id SERIAL PRIMARY KEY,
+                homeowner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                developer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                buyer_name VARCHAR(150) NOT NULL,
+                buyer_ic VARCHAR(20),
+                buyer_address TEXT,
+                buyer_contact VARCHAR(30),
+                dev_name VARCHAR(150),
+                dev_address TEXT,
+                project_name VARCHAR(150),
+                unit_no VARCHAR(100),
+                vp_date DATE,
+                spa_ref VARCHAR(150),
+                defects_json JSON,
+                letter_html TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            )""",
         ]:
             try:
                 db.session.execute(text(stmt))

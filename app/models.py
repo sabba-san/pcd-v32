@@ -263,3 +263,44 @@ class LoginAccount(db.Model):
     role = db.Column(db.String(50))                   # Legacy compatibility
     is_active = db.Column(db.Boolean, default=True)   # Legacy compatibility
     created_at = db.Column(db.DateTime, default=db.func.now())
+
+
+class FormalNotice(db.Model):
+    """Persists each Auto-Generated Formal Notice letter submitted by a homeowner.
+
+    The ``developer_id`` foreign key allows the housing developer to query all
+    notices addressed to them on their own dashboard.
+    """
+    __tablename__ = 'formal_notices'
+
+    id            = db.Column(db.Integer, primary_key=True)
+    homeowner_id  = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    developer_id  = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+
+    # Section A — Purchaser details
+    buyer_name    = db.Column(db.String(150), nullable=False)
+    buyer_ic      = db.Column(db.String(20))
+    buyer_address = db.Column(db.Text)
+    buyer_contact = db.Column(db.String(30))
+
+    # Section B — Developer details (captured at submission time)
+    dev_name      = db.Column(db.String(150))
+    dev_address   = db.Column(db.Text)
+
+    # Section C — Property details
+    project_name  = db.Column(db.String(150))
+    unit_no       = db.Column(db.String(100))
+    vp_date       = db.Column(db.Date, nullable=True)
+    spa_ref       = db.Column(db.String(150))
+
+    # Section D — Defects (stored as JSON array of {location, issue})
+    defects_json  = db.Column(db.JSON)
+
+    # Full rendered letter HTML for archival
+    letter_html   = db.Column(db.Text)
+
+    created_at    = db.Column(db.DateTime, default=db.func.now())
+
+    # Relationships for easy ORM traversal
+    homeowner     = db.relationship('User', foreign_keys=[homeowner_id], backref='formal_notices_sent')
+    developer     = db.relationship('User', foreign_keys=[developer_id], backref='formal_notices_received')

@@ -17,5 +17,13 @@ def get_started():
 @bp.route('/chatbot')
 @login_required
 def chatbot_ui():
-    """Renders the chatbot interface."""
-    return render_template('chatbot.html')
+    """Renders the chatbot interface with auto-fill data for the Notice Letter form."""
+    from ..models import User
+
+    # Fetch the assigned developer so Jinja can pre-fill Sections B & C
+    linked_developer = None
+    if current_user.assigned_developer_id:
+        linked_developer = User.query.get(current_user.assigned_developer_id)
+
+    return render_template('chatbot.html', linked_developer=linked_developer)
+
