@@ -308,6 +308,220 @@ def build_closed_appendix_lines(closed_evidence_appendix, language, auto_close_d
     return appendix_lines
 
 
+# ---- Defect Card Drawer (Side-by-Side Layout) ----
+
+def draw_defect_card(pdf, defect, y, width, language, labels, role, evidence_dir, card_index, height, extra_fields=None):
+    """
+    Draw a single defect as a side-by-side card with text left, image right.
+    extra_fields: optional list of (label, value) tuples appended after standard fields.
+    Returns (new_y, did_page_break).
+    """
+    CARD_MARGIN = 45
+    CARD_WIDTH = width - 2 * CARD_MARGIN
+    TEXT_X = CARD_MARGIN + 10
+    TEXT_COL_WIDTH = int(CARD_WIDTH * 0.62)
+    VALUE_X = TEXT_X + 110
+    VALUE_WIDTH = TEXT_COL_WIDTH - 120
+    DIVIDER_X = TEXT_X + TEXT_COL_WIDTH
+
+    # --- Resolve evidence image (preserves all existing fallback logic) ---
+    image_path = _resolve_evidence_image_path(
+        evidence_dir, defect.get("id"), defect.get("evidence_filename")
+    )
+    if not image_path and defect.get("evidence_file_path"):
+        raw_fp = defect.get("evidence_file_path", "").strip()
+        if raw_fp and _is_valid_image_path(raw_fp):
+            static_candidate = os.path.join(evidence_dir, os.path.basename(raw_fp))
+            if os.path.exists(static_candidate):
+                image_path = static_candidate
+    if not image_path and defect.get("image_path"):
+        candidate_path = os.path.join(evidence_dir, os.path.basename(defect.get("image_path", "")))
+        if os.path.exists(candidate_path):
+            image_path = candidate_path
+
+    img_to_draw = None
+    if image_path and os.path.exists(image_path):
+        img_to_draw = image_path
+    else:
+        img_to_draw = _get_evidence_image_bytesio(defect.get("id"))
+
+    has_image = img_to_draw is not None
+
+    # --- Pre-compute long text values for height estimation and drawing ---
+    desc = defect.get("desc", "-")
+    if defect.get("hda_compliant"):
+        hda_msg = (
+            "Rectified within thirty (30) days from date of notification pursuant to HDA"
+            if language == "en"
+            else "Diselesaikan dalam tempoh tiga puluh (30) hari dari tarikh notifikasi menurut HDA"
+        )
+    else:
+        hda_msg = (
+            "Failed to Comply with 30-Day Requirement under HDA"
+            if language == "en"
+            else "Tidak diselesaikan dalam tempoh tiga puluh (30) hari dari tarikh notifikasi menurut HDA"
+        )
+
+    # --- Estimate card height ---
+    desc_lines = _estimate_wrapped_lines_with_font(pdf, desc, "Helvetica", 9, VALUE_WIDTH)
+    hda_lines = _estimate_wrapped_lines_with_font(
+        pdf, f": {hda_msg}", "Helvetica", 9, VALUE_WIDTH
+    )
+
+    text_px = 18  # header (bold, larger)
+    text_px += desc_lines * 13  # description (wrapped)
+    text_px += 7 * 13  # 7 single-line fields: Unit, Status, Reported, Deadline, Completed, Days, Overdue
+    text_px += hda_lines * 13  # HDA compliance (wrapped)
+    if defect.get("priority"):
+        text_px += 13
+    if role.lower() == "homeowner" and defect.get("remarks"):
+        rem_lines = _estimate_wrapped_lines_with_font(
+            pdf, defect.get("remarks", ""), "Helvetica", 9, VALUE_WIDTH
+        )
+        text_px += 13 + rem_lines * 13
+    if extra_fields:
+        for _label, _value in extra_fields:
+            v_lines = _estimate_wrapped_lines_with_font(
+                pdf, str(_value), "Helvetica", 9, VALUE_WIDTH
+            )
+            text_px += 13 + v_lines * 13  # 1 line for label + wrapped value lines
+
+    CARD_PAD = 12
+    text_block_height = text_px + CARD_PAD * 2
+    MIN_CARD_HEIGHT = 170 if has_image else 120
+    card_height = max(text_block_height, MIN_CARD_HEIGHT)
+    card_height += 6  # bottom gap after border
+
+    # --- Page break check (guarantees entire card fits on one page) ---
+    did_page_break = False
+    if y - card_height < 60:
+        draw_footer(pdf, width, labels)
+        pdf.showPage()
+        y = height - 50
+        did_page_break = True
+
+    # --- Draw card border (light fill + rounded rect) ---
+    pdf.setFillColorRGB(0.98, 0.98, 0.98)
+    pdf.setStrokeColorRGB(0.61, 0.64, 0.69)
+    pdf.roundRect(CARD_MARGIN, y - card_height, CARD_WIDTH, card_height, 4, fill=1, stroke=1)
+    pdf.setFillColorRGB(0, 0, 0)
+    pdf.setStrokeColorRGB(0, 0, 0)
+
+    # --- Draw vertical divider if image exists ---
+    if has_image:
+        pdf.setStrokeColorRGB(0.8, 0.8, 0.8)
+        pdf.line(DIVIDER_X, y - 8, DIVIDER_X, y - card_height + 8)
+        pdf.setStrokeColorRGB(0, 0, 0)
+
+    # ================================================================
+    # Draw text fields (left column)
+    # ================================================================
+    cy = y - 14
+
+    # Defect header
+    pdf.setFont("Helvetica-Bold", 10)
+    letter = chr(64 + card_index) if card_index <= 26 else chr(64 + (card_index % 26))
+    header_text = f"{letter}. {labels.get('defect_id', 'Defect ID')} {defect.get('id', '')}:"
+    pdf.drawString(TEXT_X, cy, header_text)
+    cy -= 16
+    pdf.setFont("Helvetica", 9)
+
+    # Description
+    pdf.drawString(TEXT_X, cy, labels.get("description", "Description"))
+    cy = draw_wrapped_text(pdf, f": {desc}", VALUE_X, cy, VALUE_WIDTH)
+
+    # Unit
+    pdf.drawString(TEXT_X, cy, labels.get("unit", "Unit"))
+    pdf.drawString(VALUE_X, cy, f": {defect.get('unit', '-')}")
+    cy -= 13
+
+    # Status
+    pdf.drawString(TEXT_X, cy, labels.get("status", "Status"))
+    pdf.drawString(VALUE_X, cy, f": {defect.get('status', '-')}")
+    cy -= 13
+
+    # Reported Date
+    pdf.drawString(TEXT_X, cy, labels.get("reported_date", "Reported Date"))
+    clean_reported = format_pdf_date(defect.get("reported_date"))
+    pdf.drawString(VALUE_X, cy, f": {clean_reported}")
+    cy -= 13
+
+    # Scheduled Completion Date
+    pdf.drawString(TEXT_X, cy, labels.get("deadline", "Scheduled Completion Date"))
+    pdf.drawString(VALUE_X, cy, f": {defect.get('deadline', '-')}")
+    cy -= 13
+
+    # Actual Completion Date
+    pdf.drawString(TEXT_X, cy, labels.get("actual_completion_date", "Actual Completion Date"))
+    completed_val = defect.get("completed_date") if defect.get("completed_date") else "-"
+    pdf.drawString(VALUE_X, cy, f": {completed_val}")
+    cy -= 13
+
+    # Days to Complete
+    days_to_complete = calculate_days_to_complete(
+        defect.get("reported_date"), defect.get("completed_date")
+    )
+    days_str = str(days_to_complete) if days_to_complete is not None else "-"
+    if language == "en":
+        pdf.drawString(TEXT_X, cy, "Days to Complete")
+        pdf.drawString(VALUE_X, cy, f": {days_str}")
+    else:
+        pdf.drawString(TEXT_X, cy, "Tempoh Siap (Hari)")
+        pdf.drawString(VALUE_X, cy, f": {days_str}")
+    cy -= 13
+
+    # HDA Compliance
+    hda_label = "HDA Compliance (30 Days)" if language == "en" else "Pematuhan HDA (30 Hari)"
+    pdf.drawString(TEXT_X, cy, hda_label)
+    cy = draw_wrapped_text(pdf, f": {hda_msg}", VALUE_X, cy, VALUE_WIDTH)
+
+    # Overdue
+    is_overdue = defect.get("is_overdue", False)
+    overdue_str = "Yes" if language == "en" else "Ya" if is_overdue else ("No" if language == "en" else "Tidak")
+    pdf.drawString(TEXT_X, cy, "Overdue" if language == "en" else "Melebihi Tarikh")
+    pdf.drawString(VALUE_X, cy, f": {overdue_str}")
+    cy -= 13
+
+    # Priority
+    if defect.get("priority"):
+        pdf.drawString(TEXT_X, cy, labels.get("priority", "Priority"))
+        pdf.drawString(VALUE_X, cy, f": {defect['priority']}")
+        cy -= 13
+
+    # Remarks (homeowner only)
+    if role.lower() == "homeowner" and defect.get("remarks"):
+        pdf.drawString(TEXT_X, cy, labels.get("remarks", "Remarks"))
+        cy = draw_wrapped_text(pdf, f": {defect['remarks']}", VALUE_X, cy, VALUE_WIDTH)
+
+    # Extra fields (appendix-specific)
+    if extra_fields:
+        for f_label, f_value in extra_fields:
+            pdf.drawString(TEXT_X, cy, f_label)
+            cy = draw_wrapped_text(pdf, f": {f_value}", VALUE_X, cy, VALUE_WIDTH)
+
+    # ================================================================
+    # Draw evidence image (right column, vertically centered)
+    # ================================================================
+    if has_image:
+        IMG_COL_X = DIVIDER_X + 8
+        IMG_COL_W = CARD_WIDTH - (IMG_COL_X - CARD_MARGIN) - 10
+        img_h = min(150, card_height - 20)
+        img_y = y - (card_height / 2) - (img_h / 2)
+        try:
+            pdf.drawImage(
+                ImageReader(img_to_draw),
+                IMG_COL_X, img_y,
+                width=IMG_COL_W, height=img_h,
+                preserveAspectRatio=True
+            )
+        except Exception:
+            pdf.setFont("Helvetica-Oblique", 8)
+            fallback_msg = "Error: Evidence image not found." if language == "en" else "Ralat: Imej bukti tidak ditemui."
+            pdf.drawString(IMG_COL_X, y - card_height / 2, fallback_msg)
+
+    return y - card_height - 6, did_page_break
+
+
 # ---- Timezone / Certificate Helpers ----
 
 APP_TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Kuala_Lumpur")
@@ -887,184 +1101,21 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
             )
         y -= 6
     
-    # --- Defect List ---
+    # --- Defect List (Card Layout) ---
     y -= 35
     pdf.setFont("Helvetica-Bold", 10)
     if language == "en":
         pdf.drawString(50, y, "Defect List:")
     else:
         pdf.drawString(50, y, "Senarai Kecacatan:")
-    
+
     y -= 20
     pdf.setFont("Helvetica", 9)
 
     for i, defect in enumerate(defects, 1):
-        HEADER_X = 50
-        LABEL_X = 70
-        VALUE_X = 220
-        RIGHT_MARGIN = 50
-        TEXT_WIDTH = width - VALUE_X - RIGHT_MARGIN
-
-        # Estimate height needed
-        desc_lines = _estimate_wrapped_lines_with_font(pdf, f": {defect.get('desc', '-')}", "Helvetica", 9, TEXT_WIDTH)
-        
-        estimated_height = 0
-        estimated_height += 16
-        estimated_height += desc_lines * 14
-        estimated_height += 14 * 7
-        if defect.get("priority"):
-            estimated_height += 14
-        if role == "homeowner" and defect.get("remarks"):
-            estimated_height += 14 * 3
-        if _resolve_evidence_image_path(evidence_dir, defect.get("id"), defect.get("evidence_filename")):
-            estimated_height += 140
-        estimated_height += 25
-
-        if y - estimated_height < 80:
-            draw_footer(pdf, width, labels)
-            pdf.showPage()
-            y = height - 50
-            pdf.setFont("Helvetica-Bold", 10)
-            if language == "en":
-                pdf.drawString(50, y, "Defect List (continued):")
-            else:
-                pdf.drawString(50, y, "Senarai Kecacatan (sambungan):")
-            y -= 30
-
-        # Defect Header
-        pdf.setFont("Helvetica-Bold", 10)
-        pdf.drawString(HEADER_X, y, f"{chr(64+i) if i <= 26 else chr(64 + (i % 26))}. {labels.get('defect_id', 'Defect ID')} {defect.get('id', '')}:")
-        y -= 16
-
-        pdf.setFont("Helvetica", 9)
-
-        # Description
-        pdf.drawString(LABEL_X, y, labels.get('description', 'Description'))
-        y = draw_wrapped_text(pdf, f": {defect.get('desc', '-')}", VALUE_X, y, TEXT_WIDTH)
-
-        # Unit
-        pdf.drawString(LABEL_X, y, labels.get('unit', 'Unit'))
-        pdf.drawString(VALUE_X, y, f": {defect.get('unit', '-')}")
-        y -= 14
-
-        # Status
-        pdf.drawString(LABEL_X, y, labels.get('status', 'Status'))
-        pdf.drawString(VALUE_X, y, f": {defect.get('status', '-')}")
-        y -= 14
-
-        # Reported Date
-        pdf.drawString(LABEL_X, y, labels.get('reported_date', 'Reported Date'))
-        clean_reported_date = format_pdf_date(defect.get('reported_date'))
-        pdf.drawString(VALUE_X, y, f": {clean_reported_date}")
-        y -= 14
-
-        # Scheduled Completion Date
-        pdf.drawString(LABEL_X, y, labels.get('deadline', 'Scheduled Completion Date'))
-        pdf.drawString(VALUE_X, y, f": {defect.get('deadline', '-')}")
-        y -= 14
-
-        # Actual Completion Date
-        pdf.drawString(LABEL_X, y, labels.get('actual_completion_date', 'Actual Completion Date'))
-        pdf.drawString(VALUE_X, y, f": {defect.get('completed_date') if defect.get('completed_date') else '-'}")
-        y -= 14
-
-        # Days to Complete
-        days_to_complete = calculate_days_to_complete(defect.get("reported_date"), defect.get("completed_date"))
-        if language == "en":
-            pdf.drawString(LABEL_X, y, "Days to Complete")
-            pdf.drawString(VALUE_X, y, f": {days_to_complete if days_to_complete is not None else '-'}")
-        else:
-            pdf.drawString(LABEL_X, y, "Tempoh Siap (Hari)")
-            pdf.drawString(VALUE_X, y, f": {days_to_complete if days_to_complete is not None else '-'}")
-        y -= 14
-
-        # HDA Compliance
-        if language == "en":
-            pdf.drawString(LABEL_X, y, "HDA Compliance (30 Days)")
-            if defect.get("hda_compliant"):
-                message = "Rectified within thirty (30) days from date of notification pursuant to HDA"
-            else:
-                message = "Failed to Comply with 30-Day Requirement under HDA"
-        else:
-            pdf.drawString(LABEL_X, y, "Pematuhan HDA (30 Hari)")
-            if defect.get("hda_compliant"):
-                message = "Diselesaikan dalam tempoh tiga puluh (30) hari dari tarikh notifikasi menurut HDA"
-            else:
-                message = "Tidak diselesaikan dalam tempoh tiga puluh (30) hari dari tarikh notifikasi menurut HDA"
-        
-        pdf.drawString(VALUE_X, y, f": {message}")
-        y -= 14
-
-        # Overdue
-        is_overdue = defect.get("is_overdue", False)
-        if language == "en":
-            pdf.drawString(LABEL_X, y, "Overdue")
-            pdf.drawString(VALUE_X, y, f": {'Yes' if is_overdue else 'No'}")
-        else:
-            pdf.drawString(LABEL_X, y, "Melebihi Tarikh")
-            pdf.drawString(VALUE_X, y, f": {'Ya' if is_overdue else 'Tidak'}")
-        y -= 14
-
-        # Priority
-        if defect.get("priority"):
-            pdf.drawString(LABEL_X, y, labels.get('priority', 'Priority'))
-            pdf.drawString(VALUE_X, y, f": {defect['priority']}")
-            y -= 14
-
-        # Remarks
-        if role == "homeowner" and defect.get("remarks"):
-            pdf.drawString(LABEL_X, y, labels.get('remarks', 'Remarks'))
-            y = draw_wrapped_text(pdf, f": {defect['remarks']}", VALUE_X, y, TEXT_WIDTH)
-
-        # Evidence Image
-        image_path = _resolve_evidence_image_path(evidence_dir, defect.get("id"), defect.get("evidence_filename"))
-        
-        if not image_path and defect.get("evidence_file_path"):
-            raw_fp = defect.get("evidence_file_path", "").strip()
-            if raw_fp and _is_valid_image_path(raw_fp):
-                static_candidate = os.path.join(evidence_dir, os.path.basename(raw_fp))
-                if os.path.exists(static_candidate):
-                    image_path = static_candidate
-
-        if not image_path and defect.get("image_path"):
-            candidate_path = os.path.join(evidence_dir, os.path.basename(defect.get('image_path', '')))
-            if os.path.exists(candidate_path):
-                image_path = candidate_path
-
-        img_to_draw = None
-        if image_path and os.path.exists(image_path):
-            img_to_draw = image_path
-        else:
-            img_to_draw = _get_evidence_image_bytesio(defect.get("id"))
-
-        if img_to_draw:
-            if y < 320:
-                draw_footer(pdf, width, labels)
-                pdf.showPage()
-                y = height - 50
-
-            pdf.setFont("Helvetica-Oblique", 8)
-            pdf.drawString(LABEL_X, y, f"{labels.get('evidence', 'Evidence')}:")
-            y -= 10
-
-            try:
-                pdf.drawImage(ImageReader(img_to_draw), LABEL_X, y - 110, width=200, height=110)
-            except Exception:
-                pdf.setFont("Helvetica-Oblique", 8)
-                pdf.drawString(LABEL_X, y - 10, f"Error: Evidence image not found.")
-            
-            y -= 125
-
-            upload_time = format_pdf_date(defect.get("evidence_uploaded_at", "-"))
-            pdf.setFont("Helvetica", 8)
-            if language == "en":
-                pdf.drawString(LABEL_X, y - 5, f"Uploaded At: {upload_time}")
-            else:
-                pdf.drawString(LABEL_X, y - 5, f"Tarikh Muat Naik: {upload_time}")
-            
-            y -= 15
-
-        y -= 25
+        y, _ = draw_defect_card(
+            pdf, defect, y, width, language, labels, role, evidence_dir, i, height
+        )
 
     # ============================================
     # AI REPORT SECTION
@@ -1174,106 +1225,68 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
                 y -= LINE_HEIGHT
 
     # ============================================
-    # APPENDIX: CLOSED CASE DETAILS
+    # APPENDIX: CLOSED CASE DETAILS (Card Layout)
     # ============================================
     if role in ["Homeowner", "Developer", "Legal", "Admin"] and closed_evidence_appendix:
         draw_footer(pdf, width, labels)
         pdf.showPage()
         y = height - 50
 
-        appendix_lines = build_closed_appendix_lines(closed_evidence_appendix, language, auto_close_days)
-        
-        current_appendix_item = None
-        for idx, raw_line in enumerate(appendix_lines):
-            line = (raw_line or "").rstrip()
-
-            if y < 80:
-                draw_footer(pdf, width, labels)
-                pdf.showPage()
-                y = height - 50
-
-            if not line:
-                # FIX 5: Increased blank-line gap for better visual separation between entries
-                y -= 18
-                continue
-
-            is_header = bool(
-                re.match(r"^[A-Z]\.\s+(Defect ID|Kecacatan ID)", line)
-                or re.match(r"^\d+\.\s+(Defect ID|Kecacatan ID)", line)
-                or "APPENDIX A:" in line
-                or "LAMPIRAN A:" in line
+        # Draw appendix header
+        pdf.setFont("Helvetica-Bold", 11)
+        if language == "en":
+            pdf.drawCentredString(width / 2, y, "APPENDIX A: CLOSED CASE DETAILS")
+            pdf.setFont("Helvetica", 8)
+            pdf.drawCentredString(
+                width / 2, y - 14,
+                "Closed cases are excluded from the main body and listed here for reference only."
             )
+        else:
+            pdf.drawCentredString(width / 2, y, "LAMPIRAN A: BUTIRAN KES DITUTUP")
+            pdf.setFont("Helvetica", 8)
+            pdf.drawCentredString(
+                width / 2, y - 14,
+                "Kes ditutup dikecualikan daripada badan laporan utama dan disenaraikan di sini untuk rujukan sahaja."
+            )
+        y -= 35
 
-            if is_header:
-                pdf.setFont("Helvetica-Bold", 10)
-                pdf.drawString(50, y, line)
-                y -= 14
-                
-                # Extract defect ID from header and lookup the appendix item
-                header_match = re.match(r"^(?:[A-Z]|\d+)\.\s+(?:Defect ID|Kecacatan ID)\s+([^:]+):", line)
-                if header_match:
-                    defect_id_text = header_match.group(1).strip()
-                    current_appendix_item = next(
-                        (item for item in closed_evidence_appendix if str(item.get("id")) == defect_id_text),
-                        None,
-                    )
+        for j, item in enumerate(closed_evidence_appendix, 1):
+            closed_days = calculate_days_to_complete(
+                item.get("reported_date"), item.get("completed_date")
+            )
+            days_str = str(closed_days) if closed_days is not None else "-"
+
+            if language == "en":
+                closed_rule_text = f"Closed after {auto_close_days} days from completion"
+                uploaded_text = f"Uploaded: {format_pdf_date(item.get('uploaded_at'))}"
             else:
-                pdf.setFont("Helvetica", 9)
-                x = 70 if line.startswith(":") else 50
-                
-                # Check for image markers in the line
-                has_image_marker = "[imej]" in line or "[image]" in line
-                
-                # FIX 1: Pre-image page break — move check BEFORE drawing the label
-                # so the label and image are always kept together on the same page.
-                if has_image_marker and y < 200:
-                    draw_footer(pdf, width, labels)
-                    pdf.showPage()
-                    y = height - 50
+                closed_rule_text = f"Ditutup selepas {auto_close_days} hari dari tarikh siap"
+                uploaded_text = f"Muat Naik: {format_pdf_date(item.get('uploaded_at'))}"
 
-                # Clean the text (remove markers) and draw the label
-                display_line = line.replace("[imej]", "").replace("[image]", "")
-                y = draw_wrapped_text(pdf, display_line, x, y, width - 100, "Helvetica", 9, 14)
-                
-                # After drawing the label, render the image if a marker was found
-                if has_image_marker and current_appendix_item:
-                    appendix_image_path = _resolve_evidence_image_path(
-                        evidence_dir,
-                        current_appendix_item.get("id"),
-                        current_appendix_item.get("filename"),
-                    )
-                    
-                    # Also try file_path from the item
-                    if not appendix_image_path and current_appendix_item.get("file_path"):
-                        raw_fp = current_appendix_item.get("file_path", "").strip()
-                        if raw_fp and _is_valid_image_path(raw_fp):
-                            static_candidate = os.path.join(evidence_dir, os.path.basename(raw_fp))
-                            if os.path.exists(static_candidate):
-                                appendix_image_path = static_candidate
-                    
-                    img_to_draw = None
-                    if appendix_image_path and os.path.exists(appendix_image_path):
-                        img_to_draw = appendix_image_path
-                    else:
-                        img_to_draw = _get_evidence_image_bytesio(current_appendix_item.get("id"))
+            extra_fields = [
+                ("Closed Rule", closed_rule_text),
+                ("Uploaded", format_pdf_date(item.get("uploaded_at"))),
+            ]
 
-                    if img_to_draw:
-                        # FIX 2: Pre-image padding — small gap between label text and image
-                        y -= 5
-
-                        try:
-                            pdf.drawImage(ImageReader(img_to_draw), 70, y - 95, width=180, height=95)
-                            y -= 110
-                            # FIX 3: Post-image padding — extra gap after image before next entry
-                            y -= 15
-                        except Exception:
-                            pdf.setFont("Helvetica-Oblique", 8)
-                            pdf.drawString(70, y - 10, "Evidence image not found.")
-                            y -= 25
-                    else:
-                        # FIX 4: No-image fallback spacing — prevent squashed layout
-                        # when the entry has an image marker but no actual image file
-                        y -= 5
+            appendix_defect = {
+                "id": item.get("id"),
+                "desc": "",
+                "unit": item.get("unit", "-"),
+                "status": "Closed",
+                "reported_date": item.get("reported_date"),
+                "deadline": "-",
+                "completed_date": item.get("completed_date"),
+                "hda_compliant": item.get("hda_compliant", True),
+                "is_overdue": False,
+                "priority": "",
+                "remarks": "",
+                "evidence_filename": item.get("filename"),
+                "evidence_file_path": item.get("file_path"),
+            }
+            y, _ = draw_defect_card(
+                pdf, appendix_defect, y, width, language, labels, role,
+                evidence_dir, j, height, extra_fields=extra_fields
+            )
 
     # ============================================
     # SIGNATURE & METERAI

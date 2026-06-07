@@ -498,11 +498,24 @@ def build_summary_stats(stats, defects=None, closed_count=0):
 # BUILD DEFECT DETAILS (TABLE → REPORT)
 # ==================================================
 
-def build_defect_list(defects, role):
+def build_defect_list(defects, role, claimant_user_id=None):
     """
     Convert raw defect data into structured report format.
     Remarks are included ONLY for Homeowner.
+    For Developer/Legal roles, adds homeowner_group for owner-based grouping.
     """
+
+    # Resolve homeowner names for Developer/Legal grouping
+    homeowner_names = {}
+    if role in ("Developer", "Legal") and defects:
+        from ..extensions import db
+        user_ids = list({d.get("user_id") for d in defects if d.get("user_id") is not None})
+        if user_ids:
+            rows = db.session.execute(
+                text("SELECT id, full_name FROM users WHERE id = ANY(:ids)"),
+                {"ids": user_ids}
+            ).fetchall()
+            homeowner_names = {row[0]: row[1] for row in rows}
 
     report_defects = []
 
@@ -517,6 +530,18 @@ def build_defect_list(defects, role):
                 days_to_complete = "-"
 
         evidence_filename = d.get("evidence_filename")
+
+        # Determine owner group for Developer/Legal roles
+        uid = d.get("user_id")
+        owner_name = homeowner_names.get(uid, "")
+        if role in ("Developer", "Legal") and uid is not None:
+            if claimant_user_id is not None and uid == claimant_user_id:
+                homeowner_group = "Claimant Owner"
+            else:
+                homeowner_group = "Other Owner"
+        else:
+            homeowner_group = ""
+
         defect_item = {
             "defect_id": d.get("id"),
             "unit": d.get("unit", "-"),
@@ -529,7 +554,9 @@ def build_defect_list(defects, role):
             "overdue": "Yes" if d.get("is_overdue") else "No",
             "hda_compliance_30_days": "Yes" if d.get("hda_compliant") else "No",
             "priority": d.get("urgency", "Normal"),
-            "evidence_image": f"evidence/{evidence_filename}" if evidence_filename else "-"
+            "evidence_image": f"evidence/{evidence_filename}" if evidence_filename else "-",
+            "homeowner_group": homeowner_group,
+            "homeowner_name": owner_name,
         }
 
         # Only Homeowner sees remarks
@@ -719,6 +746,6 @@ def build_report_data(
         "respondent": respondent,
         "role_context": build_role_context(role, role_contexts),
         "summary_stats": build_summary_stats(stats, defects, closed_count=closed_count),
-        "defect_list": build_defect_list(defects, role),
+        "defect_list": build_defect_list(defects, role, claimant_user_id=claimant_user_id),
         "important_note": nota_penting,
     }

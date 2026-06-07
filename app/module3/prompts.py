@@ -91,7 +91,9 @@ def translate_report_data_to_en(report_data, include_remarks=False):
                 if d.get("hda_compliance_30_days") == "Yes"
                 else "Failed to Comply with 30-Day Requirement under HDA"
             ),
-            "priority": d.get("priority", "")
+            "priority": d.get("priority", ""),
+            "homeowner_group": d.get("homeowner_group", ""),
+            "homeowner_name": d.get("homeowner_name", ""),
         }
 
         if include_remarks:
@@ -307,15 +309,19 @@ IMPORTANT INSTRUCTIONS (MUST BE COMPLIED WITH):
 2. Use passive, objective, and factual sentence structures throughout the report.
 3. Avoid the use of personal narratives, conversational language, or argumentative statements.
 4. Ensure all defect descriptions are written in formal English
-   (e.g. “Wall crack in master bedroom”, “Broken tile in bathroom”,
-   “Leaking pipe under kitchen sink”, “Faulty electrical wiring in living room”,
-   “Balcony sliding door stuck”, “Ceiling water stain near air-conditioner”).
+   (e.g. "Wall crack in master bedroom", "Broken tile in bathroom",
+   "Leaking pipe under kitchen sink", "Faulty electrical wiring in living room",
+   "Balcony sliding door stuck", "Ceiling water stain near air-conditioner").
 5. Ensure all defect statuses are written consistently in English
    (Pending, In Progress, Completed, Delayed).
 6. Do not add any new facts, assumptions, estimates, or explanations beyond the records provided.
 7. Do not make any admission of liability, fault, or legal responsibility.
 8. Do not use any markdown formatting, emphasis symbols, or decorative text.
 9. Ensure the report is neatly structured, professional, and reflects the tone of an official administrative document.
+10. Each defect in the data includes a "homeowner_group" field with value "Claimant Owner" or "Other Owner".
+    Group defects under "Completed Rectification Works" (Section 3) and "Outstanding or Delayed Rectification Works" (Section 4)
+    by homeowner group. Present the "Claimant Owner" group first, then the "Other Owner" group.
+    Within each group, also state the homeowner_name.
 
 The report shall be written as though it is intended to be filed as
 an official compliance document before the Malaysia Consumer Claims Tribunal.
@@ -345,8 +351,9 @@ Compliance Report for Reference before the Malaysia Consumer Claims Tribunal (TT
 - Any records reflecting non-compliance with the 30-day HDA timeframe]
 
 3. Completed Rectification Works
-[List defects recorded as completed using the following structure:
+[Group defects by homeowner_group ("Claimant Owner" first, then "Other Owner"). Within each group, list defects recorded as completed using the following structure:
 
+Claimant Owner: [homeowner_name]
 a. Defect ID [number]
    Description: [description]
    Unit: [unit]
@@ -357,11 +364,16 @@ a. Defect ID [number]
    HDA Compliance (30 Days): [hda_compliant]
 
 b. Defect ID [number]
+...
+
+Other Owner: [homeowner_name]
+a. Defect ID [number]
 ...]
 
 4. Outstanding or Delayed Rectification Works
-[List defects not recorded as completed using the following structure:
+[Group defects by homeowner_group ("Claimant Owner" first, then "Other Owner"). Within each group, list defects not recorded as completed using the following structure:
 
+Claimant Owner: [homeowner_name]
 a. Defect ID [number]
    Description: [description]
    Unit: [unit]
@@ -373,6 +385,10 @@ a. Defect ID [number]
    HDA Compliance (30 Days): [hda_compliant]
 
 b. Defect ID [number]
+...
+
+Other Owner: [homeowner_name]
+a. Defect ID [number]
 ...]
 
 5. Observations on Timeframe Compliance
@@ -385,8 +401,8 @@ Act (HDA).
 The observations should be summarised strictly based on the information
 recorded and must not attribute fault or responsibility to any party.]
 
-6. Developer’s Commitment Statement
-[Briefly state the developer’s commitment to continue carrying out
+6. Developer's Commitment Statement
+[Briefly state the developer's commitment to continue carrying out
 rectification works for defects that are still recorded as unresolved
 based on the information available in the records.]
 
@@ -425,6 +441,11 @@ ARAHAN PENTING (WAJIB DIPATUHI):
 8. Jangan membuat sebarang pengakuan kesalahan, liabiliti, atau tanggungjawab undang-undang.
 9. Jangan gunakan sebarang format markdown, simbol penegasan, atau hiasan teks.
 10. Pastikan laporan disusun secara kemas, konsisten, dan menyerupai dokumen pentadbiran rasmi.
+11. Setiap kecacatan dalam data mengandungi medan "homeowner_group" dengan nilai "Claimant Owner" atau "Other Owner".
+    Kumpulkan kecacatan di bawah "Kerja Pembaikan yang Telah Diselesaikan" (Seksyen 3) dan
+    "Kerja Pembaikan yang Masih Tertunggak atau Tertunda" (Seksyen 4) mengikut kumpulan pemilik.
+    Paparkan kumpulan "Claimant Owner" terlebih dahulu, kemudian kumpulan "Other Owner".
+    Dalam setiap kumpulan, nyatakan juga nama pemilik (homeowner_name).
 
 Laporan ini hendaklah ditulis seolah-olah ia akan difailkan sebagai
 dokumen pematuhan rasmi kepada Tribunal Tuntutan Pengguna Malaysia.
@@ -454,8 +475,9 @@ Laporan Pematuhan Bagi Rujukan Tribunal Tuntutan Pengguna Malaysia (TTPM)
 - Jika terdapat ketidakpatuhan tempoh 30 hari di bawah HDA]
 
 3. Kerja Pembaikan yang Telah Diselesaikan
-[Senaraikan seperti berikut:
+[Kumpulkan kecacatan mengikut homeowner_group ("Claimant Owner" dahulu, kemudian "Other Owner"). Dalam setiap kumpulan, senaraikan seperti berikut:
 
+Claimant Owner: [homeowner_name]
 a. ID Kecacatan [nombor]
    Keterangan: [keterangan]
    Unit: [unit]
@@ -466,11 +488,16 @@ a. ID Kecacatan [nombor]
    Pematuhan HDA (30 Hari): [hda_compliant]
 
 b. ID Kecacatan [nombor]
+...
+
+Other Owner: [homeowner_name]
+a. ID Kecacatan [nombor]
 ...]
 
 4. Kerja Pembaikan yang Masih Tertunggak atau Tertunda
-[Senaraikan seperti berikut:
+[Kumpulkan kecacatan mengikut homeowner_group ("Claimant Owner" dahulu, kemudian "Other Owner"). Dalam setiap kumpulan, senaraikan seperti berikut:
 
+Claimant Owner: [homeowner_name]
 a. ID Kecacatan [nombor]
    Keterangan: [keterangan]
    Unit: [unit]
@@ -482,6 +509,10 @@ a. ID Kecacatan [nombor]
    Pematuhan HDA (30 Hari): [hda_compliant]
 
 b. ID Kecacatan [nombor]
+...
+
+Other Owner: [homeowner_name]
+a. ID Kecacatan [nombor]
 ...]
 
 5. Pemerhatian Berkaitan Pematuhan Tempoh
@@ -538,7 +569,7 @@ IMPORTANT INSTRUCTIONS (MUST BE COMPLIED WITH):
 3. Avoid the use of personal narratives, conversational language, or argumentative statements.
 4. All statements must be strictly based on records, information, and documents submitted.
 5. Do not add any new facts, estimates, assumptions, interpretations, or inferences.
-6. Do not make any determination of fault, liability, or legal responsibility.
+6. This report does not aim to make any assessment, conclusion, or determination regarding fault, liability, or legal responsibility.
 7. Do not make any legal conclusions, findings, or recommendations.
 8. Do not use any markdown formatting, emphasis symbols, or decorative text.
 9. Ensure the report is structured, consistent, and reflects the tone of an official administrative reference document.
@@ -557,7 +588,7 @@ Defect List:
 
 Write the report in English with these NUMBERED sections (you MUST include the numbers):
 
-Overview Report on Defect Liability Period (DLP) Compliance
+DLP Compliance Overview Report
 
 1. Case Background
 [Briefly outline:
@@ -643,8 +674,8 @@ ARAHAN PENTING (WAJIB DIPATUHI):
    dan dokumen yang dikemukakan sahaja.
 5. Jangan menambah sebarang fakta baharu, anggaran, inferens,
    tafsiran, atau penjelasan di luar rekod yang tersedia.
-6. Jangan membuat sebarang penentuan kesalahan, liabiliti,
-   atau tanggungjawab undang-undang.
+6. Laporan ini tidak bertujuan untuk membuat sebarang penilaian, kesimpulan,
+   atau penentuan berkenaan kesalahan, liabiliti, atau tanggungjawab undang-undang.
 7. Jangan membuat sebarang kesimpulan atau syor undang-undang.
 8. Jangan gunakan sebarang format markdown, simbol penegasan,
    atau hiasan teks.
@@ -665,7 +696,7 @@ Senarai Kecacatan:
 
 Tulis laporan dengan format berikut:
 
-Laporan Gambaran Keseluruhan Pematuhan Tempoh Liabiliti Kecacatan (DLP)
+Laporan Gambaran Keseluruhan Pematuhan DLP
 
 1. Latar Belakang Kes
 [Nyatakan secara ringkas:
