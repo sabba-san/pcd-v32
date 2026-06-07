@@ -1198,6 +1198,14 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
 
             prev_line_is_sub_item = is_sub_item
 
+            # Pre-check before a new defect section (keep block intact)
+            if re.match(r"^[a-z]\.\s+(Kecacatan ID|Defect ID)", stripped):
+                if y < 120:
+                    draw_footer(pdf, width, labels)
+                    pdf.showPage()
+                    y = height - 50
+                    pdf.setFont("Helvetica", 9)
+
             words = stripped.split()
             current_line = ""
 
@@ -1223,6 +1231,11 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
             if current_line:
                 pdf.drawString(x_pos, y, current_line)
                 y -= LINE_HEIGHT
+                if y < 80:
+                    draw_footer(pdf, width, labels)
+                    pdf.showPage()
+                    y = height - 50
+                    pdf.setFont("Helvetica", 9)
 
     # ============================================
     # APPENDIX: CLOSED CASE DETAILS (Card Layout)
