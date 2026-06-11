@@ -29,7 +29,8 @@ def load_pdf_knowledge():
     logging.debug(f"Total characters loaded: {len(KNOWLEDGE_TEXT)}")
     return KNOWLEDGE_TEXT
 
-# Dummy variables to prevent the UI from crashing
+# Standalone helpers for route endpoints (returns empty — guidelines rendered server-side)
 DLP_RULES = {}
 def get_all_guidelines(): return []
+
 def get_all_legal_references(): return []

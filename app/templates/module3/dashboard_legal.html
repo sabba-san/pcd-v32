@@ -163,18 +163,18 @@
         <!-- Summary cards -->
         <div class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-4 mb-10">
             {% set cards = [
-                ('0f172a','1e293b','description','Total'),
-                ('0284c7','2563eb','pending_actions','Pending'),
-                ('f97316','fb923c','manage_search','In Progress'),
-                ('c2410c','ea580c','timer_off','Delayed'),
-                ('db2777','ec4899','warning','Overdue'),
-                ('16a34a','22c55e','task_alt','Completed'),
-                ('6b7280','9ca3af','lock','Closed'),
+                ('0f172a','1e293b','description','Total',       'total'),
+                ('0284c7','2563eb','pending_actions','Pending',  'pending'),
+                ('f97316','fb923c','manage_search','In Progress','in_progress'),
+                ('c2410c','ea580c','timer_off','Delayed',        'delayed'),
+                ('db2777','ec4899','warning','Overdue',          'overdue'),
+                ('16a34a','22c55e','task_alt','Completed',       'completed'),
+                ('6b7280','9ca3af','lock','Closed',              'closed'),
             ] %}
-            {% for from_c, to_c, icon, label in cards %}
+            {% for from_c, to_c, icon, label, key in cards %}
             <div class="stat-grad" style="background:linear-gradient(135deg,#{{ from_c }} 0%,#{{ to_c }} 100%);">
                 <div class="flex flex-col">
-                    <span class="m3-value text-2xl font-extrabold font-headline">0</span>
+                    <span class="m3-value text-2xl font-extrabold font-headline">{{ stats[key] if stats else 0 }}</span>
                     <span class="text-white/90 text-xs font-semibold mt-1">{{ label }}</span>
                 </div>
                 <span class="material-symbols-outlined text-white/20 text-3xl ml-auto">{{ icon }}</span>

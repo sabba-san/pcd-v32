@@ -368,34 +368,75 @@ class DLPChatbotApp {
         const text = this.userInput.value.trim();
         if (!text) return;
 
-        this.userInput.style.height = 'auto';
         this.userInput.value = '';
+        this.userInput.style.height = 'auto';
+
+        const chat = this.conversations.find(c => c.id === this.activeChatId);
+        const messageHistory = (chat?.messages || []).slice(-5).map(m => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.text
+        }));
 
         this.addMessageToActiveChat(text, 'user', false);
-        this.showTypingIndicator();
+
+        const botMessageDiv = this.createMessageStructure('', 'bot');
+        const bubble = botMessageDiv.querySelector('.message-bubble');
+        const readBtn = botMessageDiv.querySelector('.btn-read-aloud');
+        if (readBtn) readBtn.classList.add('hidden');
+        this.chatMessages.appendChild(botMessageDiv);
 
         try {
-            const response = await fetch('/api/chat', { 
+            const response = await fetch('/api/chat/stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({ message: text, history: messageHistory })
             });
 
-            const data = await response.json();
-            
-            if (data.error) {
-                throw new Error(data.error);
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
             }
 
-            const botReply = data.response || "I didn't understand that.";
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = '';
 
-            this.removeTypingIndicator();
-            this.addMessageToActiveChat(botReply, 'bot', true);
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
+                const raw = decoder.decode(value, { stream: true });
+                const lines = raw.split('\n');
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    try {
+                        const payload = JSON.parse(line.slice(6));
+                        if (payload.type === 'chunk') {
+                            fullText += payload.content;
+                            bubble.textContent = fullText;
+                            this.scrollToBottom();
+                        } else if (payload.type === 'done') {
+                            const active = this.conversations.find(c => c.id === this.activeChatId);
+                            if (active) {
+                                active.messages.push({ text: fullText, sender: 'bot', timestamp: new Date() });
+                                this.saveData();
+                            }
+                            if (readBtn) readBtn.classList.remove('hidden');
+                        }
+                    } catch (e) {
+                        console.warn('SSE parse error:', e);
+                    }
+                }
+            }
         } catch (error) {
             console.error('Chat error:', error);
-            this.removeTypingIndicator();
-            this.addMessageToActiveChat(`Error: ${error.message || "Connection failed"}`, 'bot', false);
+            bubble.textContent = `Error: ${error.message || "Connection failed"}`;
+            const active = this.conversations.find(c => c.id === this.activeChatId);
+            if (active) {
+                active.messages.push({ text: `Error: ${error.message || "Connection failed"}`, sender: 'bot', timestamp: new Date() });
+                this.saveData();
+            }
+            if (readBtn) readBtn.classList.remove('hidden');
         }
     }
 
@@ -415,42 +456,13 @@ class DLPChatbotApp {
             this.welcomeScreen.style.display = 'none';
         }
 
-        if (animate && sender === 'bot') {
-            this.renderMessageTypewriter(text);
-        } else {
-            this.renderMessageHTML(text, sender);
-        }
+        this.renderMessageHTML(text, sender);
     }
 
     renderMessageHTML(message, sender) {
         const messageDiv = this.createMessageStructure(message, sender);
         this.chatMessages.appendChild(messageDiv);
         this.scrollToBottom();
-    }
-
-    renderMessageTypewriter(text) {
-        const messageDiv = this.createMessageStructure('', 'bot'); 
-        const bubble = messageDiv.querySelector('.message-bubble');
-        const readBtn = messageDiv.querySelector('.btn-read-aloud');
-        
-        if(readBtn) readBtn.classList.add('hidden');
-        this.chatMessages.appendChild(messageDiv);
-        
-        let i = 0;
-        const speed = 15; 
-
-        const typeLoop = () => {
-            if (i < text.length) {
-                bubble.textContent += text.charAt(i);
-                i++;
-                this.scrollToBottom(); 
-                setTimeout(typeLoop, speed);
-            } else {
-                if(readBtn) readBtn.classList.remove('hidden');
-            }
-        };
-
-        typeLoop();
     }
 
     createMessageStructure(text, sender) {
@@ -486,27 +498,6 @@ class DLPChatbotApp {
         }
 
         return messageDiv;
-    }
-
-    showTypingIndicator() {
-        const div = document.createElement('div');
-        div.id = 'typingIndicator';
-        div.className = 'chat-message bot flex gap-3 mb-3 justify-start';
-        div.innerHTML = `
-            <div class="chat-avatar w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 text-blue-600"><span class="material-symbols-outlined">smart_toy</span></div>
-            <div class="typing-indicator bg-white border border-gray-200 rounded-2xl rounded-tl-sm shadow-sm px-5 py-4 flex items-center gap-1.5">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
-            </div>
-        `;
-        this.chatMessages.appendChild(div);
-        this.scrollToBottom();
-    }
-
-    removeTypingIndicator() {
-        const el = document.getElementById('typingIndicator');
-        if (el) el.remove();
     }
 
     scrollToBottom() {

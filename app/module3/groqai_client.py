@@ -45,8 +45,3 @@ def get_ai_client(scope: str = "report"):
     _clients[cache_key] = Groq(api_key=api_key)
     return _clients[cache_key]
 
-
-# Keep backward compatibility
-def get_openai_client():
-    """Deprecated: Use get_ai_client() instead"""
-    return get_ai_client()

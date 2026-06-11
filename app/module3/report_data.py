@@ -486,7 +486,7 @@ def build_summary_stats(stats, defects=None, closed_count=0):
         # Include closed cases so total/completed reflect the full picture.
         "total_defects": active_total + closed_count,
         "pending_defects": stats.get("pending", 0),
-        "investigation_defects": stats.get("investigation", 0),
+        "investigation_defects": stats.get("in_progress", 0),
         # Closed cases are fully resolved, so they count as completed.
         "completed_defects": active_completed + closed_count,
         "critical_defects": stats.get("critical", 0),

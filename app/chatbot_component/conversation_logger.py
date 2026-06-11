@@ -25,6 +25,3 @@ def clear_history(user_id="guest"):
     file_path = get_history_file(user_id)
     if os.path.exists(file_path):
         os.remove(file_path)
-
-def view_history(user_id="guest"):
-    return load_history(user_id)
