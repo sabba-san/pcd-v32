@@ -281,6 +281,7 @@ def update_defect_status(defect_id):
     defect = Defect.query.get_or_404(defect_id)
     authorize_defect_access(defect)
     data = request.get_json()
+    old_status = defect.status
     # Note: Lidar code checked current_user.role == 'developer'. In pcd-v32, the attribute is user_type
     if 'status' in data and current_user.user_type == 'developer':
         defect.status = data['status']
@@ -293,6 +294,20 @@ def update_defect_status(defect_id):
     if 'severity' in data:
         defect.severity = data['severity']
     db.session.commit()
+
+    # ── NOTIFICATION: status change ──
+    if 'status' in data and old_status != data['status'] and defect.user_id:
+        if defect.user_id != current_user.id:
+            actor = current_user.full_name or current_user.email or f"user:{current_user.id}"
+            from ..models import Notification
+            db.session.add(Notification(
+                user_id=defect.user_id,
+                title="Status Updated",
+                message=f"Defect #{defect.id} changed from '{old_status}' to '{data['status']}' by {actor}",
+                notification_type="status_update",
+            ))
+            db.session.commit()
+
     return jsonify({'message': 'Defect updated successfully', 'status': defect.status})
 
 @module2.route('/defect/<int:defect_id>', methods=['DELETE'])
