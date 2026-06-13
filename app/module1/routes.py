@@ -148,7 +148,11 @@ def api_analyze_image():
         if "," in base64_image:
             base64_image = base64_image.split(",", 1)[-1]
 
-        return jsonify({"response": ChatService.analyze_image(base64_image)})
+        result = ChatService.analyze_image(base64_image)
+        if isinstance(result, dict) and not result.get("success"):
+            return jsonify({"error": result.get("message", "Vision AI unavailable")}), 502
+
+        return jsonify({"response": result.get("data", result)})
 
     except Exception as e:
         return jsonify({"error": f"Server Error: {str(e)}"}), 500

@@ -302,12 +302,19 @@ class ChatService:
                         }},
                     ],
                 }],
-                model="llama-3.2-11b-vision-instruct",
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
                 temperature=0.1,
             )
-            return resp.choices[0].message.content
+            return {"success": True, "data": resp.choices[0].message.content}
+        except groq.NotFoundError as e:
+            logging.error(f"Groq model not found (404): {e}")
+            return {"success": False, "error": "model_not_found", "message": "The AI vision model is unavailable. Please check the model ID or contact support."}
+        except groq.APIError as e:
+            logging.error(f"Groq API error ({e.status_code}): {e}")
+            return {"success": False, "error": "api_error", "message": f"AI service returned an error (HTTP {e.status_code}). Please try again later."}
         except Exception as e:
-            return f"Vision AI Error: {str(e)}"
+            logging.error(f"Vision AI unexpected error: {e}")
+            return {"success": False, "error": "unknown", "message": f"Vision AI service encountered an unexpected error."}
 
     @classmethod
     def analyze_pdf(cls, pdf_bytes):
