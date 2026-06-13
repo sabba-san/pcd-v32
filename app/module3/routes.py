@@ -2592,7 +2592,7 @@ def update_status():
     cur = conn.cursor()
     try:
         cur.execute(
-            "SELECT status, deadline FROM defects WHERE id = %s",
+            "SELECT status, deadline, user_id FROM defects WHERE id = %s",
             (int(defect_id),),
         )
         row = cur.fetchone()
@@ -2601,6 +2601,7 @@ def update_status():
 
         old_status = row[0]
         old_deadline = _to_iso(row[1])
+        defect_owner_id = row[2]
 
         cur.execute(
             "UPDATE defects SET status = %s WHERE id = %s",
@@ -2662,8 +2663,26 @@ def update_status():
         },
     )
 
+    # ── NOTIFICATION: status change ──
+    if old_status != new_status and defect_owner_id:
+        try:
+            from ..models import Notification
+            from ..extensions import db
+
+            actor_name = _current_actor_name()
+            if defect_owner_id != current_user.id:
+                db.session.add(Notification(
+                    user_id=defect_owner_id,
+                    title="Status Updated",
+                    message=f"Defect #{defect_id} changed from '{old_status}' to '{new_status}' by {actor_name}",
+                    notification_type="status_update",
+                ))
+                db.session.commit()
+        except Exception:
+            current_app.logger.warning("Failed to create status-change notification", exc_info=True)
+
     return jsonify({"success": True})
-    
+
 # =================================================
 # GENERATE AI REPORT (JSON)
 # =================================================

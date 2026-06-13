@@ -11,6 +11,7 @@ from .module3.routes import module3
 from .module4.routes import module4
 from .auth.routes import auth
 from .core_features import core_features
+from .notifications.routes import notifications
 
 # Load .env before any app config or AI client access.
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -93,6 +94,7 @@ def create_app():
     app.register_blueprint(module4)
     app.register_blueprint(auth)
     app.register_blueprint(core_features)
+    app.register_blueprint(notifications)
 
     # ── Error Handlers ────────────────────────────────────────────────────────
     @app.errorhandler(404)

@@ -1,0 +1,105 @@
+<div x-data="notificationBell()" class="relative">
+    <button @click="toggle()" class="relative p-2 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg transition-colors" title="Notifications">
+        <span class="material-symbols-outlined text-xl">notifications</span>
+        <template x-if="count > 0">
+            <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1 border-2 border-white" x-text="count"></span>
+        </template>
+    </button>
+    <div x-show="open" @click.outside="open = false"
+         class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         style="display: none;">
+        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-900 font-headline">Notifications</h3>
+            <span class="text-xs text-slate-400 font-medium" x-text="count > 0 ? count + ' new' : ''"></span>
+        </div>
+        <div class="max-h-80 overflow-y-auto">
+            <template x-if="items.length === 0">
+                <div class="p-6 text-center text-slate-400 text-sm">
+                    <span class="material-symbols-outlined text-4xl mb-2 block">notifications_off</span>
+                    <p class="font-medium">No new notifications</p>
+                </div>
+            </template>
+            <template x-for="item in items" :key="item.id">
+                <div class="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer"
+                     @click="markRead(item.id)">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5">
+                            <template x-if="item.notification_type === 'status_update'">
+                                <span class="material-symbols-outlined text-sm text-amber-500">sync</span>
+                            </template>
+                            <template x-if="item.notification_type === 'assignment'">
+                                <span class="material-symbols-outlined text-sm text-blue-500">person_add</span>
+                            </template>
+                            <template x-if="item.notification_type === 'remark'">
+                                <span class="material-symbols-outlined text-sm text-green-500">chat</span>
+                            </template>
+                            <template x-if="!['status_update','assignment','remark'].includes(item.notification_type)">
+                                <span class="material-symbols-outlined text-sm text-slate-400">circle</span>
+                            </template>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-slate-900 truncate" x-text="item.title"></p>
+                            <p class="text-xs text-slate-500 mt-0.5 line-clamp-2" x-text="item.message"></p>
+                            <p class="text-[11px] text-slate-400 mt-1" x-text="item.time_ago"></p>
+                        </div>
+                        <template x-if="!item.is_read">
+                            <span class="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2"></span>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+        <template x-if="count > 0">
+            <div class="px-4 py-2.5 border-t border-slate-100 text-center">
+                <button @click="markAllRead()" class="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+                    Mark all as read
+                </button>
+            </div>
+        </template>
+    </div>
+</div>
+<script>
+function notificationBell() {
+    return {
+        open: false,
+        count: 0,
+        items: [],
+        init() { this.fetchUnread(); },
+        toggle() {
+            this.open = !this.open;
+            if (this.open) this.fetchUnread();
+        },
+        async fetchUnread() {
+            try {
+                const res = await fetch('/notifications/api/unread');
+                const data = await res.json();
+                this.count = data.count;
+                this.items = data.notifications;
+            } catch (e) {
+                console.error('Failed to fetch notifications', e);
+            }
+        },
+        async markRead(id) {
+            try {
+                await fetch('/notifications/api/' + id + '/read', { method: 'POST' });
+                this.items = this.items.filter(function(n) { return n.id !== id; });
+                this.count = Math.max(0, this.count - 1);
+            } catch (e) {
+                console.error('Failed to mark as read', e);
+            }
+        },
+        async markAllRead() {
+            try {
+                await fetch('/notifications/api/read-all', { method: 'POST' });
+                this.items = [];
+                this.count = 0;
+            } catch (e) {
+                console.error('Failed to mark all as read', e);
+            }
+        }
+    };
+}
+</script>

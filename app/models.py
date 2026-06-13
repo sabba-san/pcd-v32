@@ -306,3 +306,20 @@ class FormalNotice(db.Model):
     # Relationships for easy ORM traversal
     homeowner     = db.relationship('User', foreign_keys=[homeowner_id], backref='formal_notices_sent')
     developer     = db.relationship('User', foreign_keys=[developer_id], backref='formal_notices_received')
+
+
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+
+    id                = db.Column(db.Integer, primary_key=True)
+    user_id           = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    title             = db.Column(db.String(255), nullable=False)
+    message           = db.Column(db.Text, nullable=False)
+    is_read           = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    notification_type = db.Column(db.String(50), nullable=False, default='general')
+    created_at        = db.Column(db.DateTime, default=db.func.now(), index=True)
+
+    user = db.relationship('User', backref=db.backref(
+        'notifications', lazy='dynamic',
+        order_by='Notification.created_at.desc()'
+    ))
