@@ -290,39 +290,6 @@ function saveClaimDetails() {
     .catch(() => showToast('Save failed.', 'error'));
 }
 
-// ── Report data inspector (Debug) ───────────────────────────
-function closeClaimStateInspector() {
-    const modal = document.getElementById('m3-claim-debug-modal');
-    if (modal) modal.classList.remove('m3-modal-show');
-}
-
-function inspectSavedData() {
-    const output = document.getElementById('m3-claim-debug-output');
-    const modal = document.getElementById('m3-claim-debug-modal');
-    if (modal) modal.classList.add('m3-modal-show');
-    if (output) output.textContent = 'Loading saved claim state…';
-
-    fetch(`${BASE}/debug/claim_state`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-    })
-    .then(async response => {
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            throw new Error(data.error || `Debug request failed with ${response.status}`);
-        }
-        console.log('CLAIM STATE DEBUG:', data);
-        if (output) output.textContent = JSON.stringify(data, null, 2);
-    })
-    .catch(error => {
-        const message = error && error.message ? error.message : 'Debug request failed.';
-        console.error('CLAIM STATE DEBUG ERROR:', error);
-        if (output) output.textContent = message;
-        showToast(message, 'error');
-        alert(message);
-    });
-}
-
 // ── Court location helper ────────────────────────────────────
 window.STATE_COURT_MAP = window.STATE_COURT_MAP || {};
 
