@@ -46,6 +46,7 @@ def get_connection():
     return db.engine.raw_connection()
 
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 
 # --------------------------------
 # IMPORT DATA & SERVICES
@@ -2044,14 +2045,67 @@ def admin_delete_user():
         flash("User not found.", "danger")
         return redirect(url_for("module3.dashboard"))
 
-    db.session.delete(target)
-    db.session.commit()
+    # Capture email before any session changes
+    target_email = target.email
 
-    _append_audit_event(
-        action=f"Deleted user {target.email} (id={target.id})",
-        role="Admin",
-    )
-    flash(f"User {target.email} has been deleted.", "success")
+    # Manually sever FK references that lack ON DELETE rules in the DB
+    try:
+        # Scans — nullify all user references that would block deletion
+        from ..models import Defect, Scan
+
+        Scan.query.filter(Scan.user_id == target.id).update(
+            {"user_id": None}, synchronize_session="fetch"
+        )
+        Scan.query.filter(Scan.developer_id == target.id).update(
+            {"developer_id": None}, synchronize_session="fetch"
+        )
+        Scan.query.filter(Scan.lawyer_id == target.id).update(
+            {"lawyer_id": None}, synchronize_session="fetch"
+        )
+
+        # Defects — delete those owned by this user (cascades to Remark,
+        # Evidence, CompletionDate, ReportVersion via DB-level ON DELETE CASCADE)
+        Defect.query.filter(Defect.user_id == target.id).delete(
+            synchronize_session="fetch"
+        )
+
+        # Defects — nullify verified_by where this user was the verifier
+        Defect.query.filter(Defect.verified_by_id == target.id).update(
+            {"verified_by_id": None}, synchronize_session="fetch"
+        )
+
+        db.session.delete(target)
+        db.session.commit()
+
+        _append_audit_event(
+            action=f"Deleted user {target_email} (id={target.id})",
+            role="Admin",
+        )
+        flash(f"User {target_email} has been deleted.", "success")
+
+    except IntegrityError:
+        db.session.rollback()
+        current_app.logger.error(
+            "IntegrityError deleting user %s (id=%s)", target_email, user_id,
+            exc_info=True,
+        )
+        flash(
+            "Cannot delete user due to tied records. "
+            "Ensure all related defects, scans, and reports are removed first.",
+            "danger",
+        )
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(
+            "Unexpected error deleting user %s (id=%s): %s",
+            target_email, user_id, e, exc_info=True,
+        )
+        flash(
+            "An unexpected error occurred while deleting the user. "
+            "Please try again or contact support.",
+            "danger",
+        )
+
     return redirect(url_for("module3.dashboard"))
 
 
