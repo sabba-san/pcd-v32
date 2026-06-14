@@ -2,6 +2,7 @@
 import base64
 import glob
 import json
+import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -14,7 +15,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
 from ..extensions import db
-from ..models import Defect, Scan, Evidence
+from ..models import Defect, Remark, Scan, Evidence
 from .utils import load_upload_metadata, upload_root, metadata_path, scan_metadata_path
 from .pdf_utils import extract_pdf_images
 from .glb_snapshot import extract_snapshots
@@ -22,6 +23,7 @@ from .storage import upload_glb, get_glb_url
 
 from app.utils.auth_helper import authorize_defect_access
 from ..chatbot_component.dlp_knowledge_base import DLP_RULES
+from app.services.chat_service import ChatService
 
 module2 = Blueprint('module2', __name__)
 
@@ -462,6 +464,24 @@ def report_defect(scan_id):
         db.session.add(new_evidence)
 
     db.session.commit()
+
+    # ── AI Auto-Analysis: populate Ulasan (remarks) from evidence image ────
+    if image_data:
+        try:
+            ai_result = ChatService.analyze_image_for_ulasan(image_data)
+            if isinstance(ai_result, dict) and ai_result.get("success"):
+                ai_text = ai_result["data"]
+                remark = Remark(
+                    defect_id=defect.id,
+                    role="Homeowner",
+                    remarks=ai_text,
+                )
+                db.session.add(remark)
+                defect.remarks = ai_text
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logging.warning("AI auto-analysis failed for defect %d — skipping", defect.id)
 
     image_url = url_for('module2.serve_defect_image', defect_id=defect.id) if image_path else None
 

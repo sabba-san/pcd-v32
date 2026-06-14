@@ -36,6 +36,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import json
+import logging
 import re
 import hashlib
 import base64
@@ -84,6 +85,7 @@ except ImportError:  # pragma: no cover - fallback for direct execution from mod
 
 from ..extensions import db
 from ..models import User
+from app.services.chat_service import ChatService
 
 SUPPORT_CONTACT = "1800-700-321 | support@dlp-project.edu.my"
 AUTO_CLOSE_DAYS = int(os.getenv("AUTO_CLOSE_DAYS", "14"))
@@ -2444,7 +2446,23 @@ def upload_evidence():
                 "uploaded_at": evidence_img[defect_id].get("uploaded_at"),
             },
         )
-        
+
+        # ── AI Auto-Analysis: populate Ulasan (remarks) from evidence image ──
+        try:
+            _ui_language = _normalise_language(
+                request.form.get("language") or request.args.get("language") or "ms"
+            )
+            ai_result = ChatService.analyze_image_for_ulasan(image_data, language=_ui_language)
+            if isinstance(ai_result, dict) and ai_result.get("success"):
+                ai_text = ai_result["data"]
+                remarks = load_remarks()
+                remarks[str(defect_id)] = ai_text
+                save_remarks(remarks)
+        except Exception:
+            logging.warning(
+                "AI auto-analysis failed for defect %s — skipping", defect_id
+            )
+
         return jsonify({
             "success": True,
             "message": f"Evidence uploaded for defect #{defect_id}",

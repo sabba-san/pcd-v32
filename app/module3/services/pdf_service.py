@@ -109,19 +109,24 @@ def draw_footer(pdf, width, labels):
 
 def draw_wrapped_text(pdf, text, x, y, max_width, font_name="Helvetica", font_size=9, leading=14):
     pdf.setFont(font_name, font_size)
-    words = text.split()
-    line = ""
-    for word in words:
-        test = line + " " + word if line else word
-        if pdf.stringWidth(test, font_name, font_size) <= max_width:
-            line = test
-        else:
+    paragraphs = text.split('\n')
+    for para in paragraphs:
+        if not para.strip():
+            y -= leading
+            continue
+        words = para.split()
+        line = ""
+        for word in words:
+            test = line + " " + word if line else word
+            if pdf.stringWidth(test, font_name, font_size) <= max_width:
+                line = test
+            else:
+                pdf.drawString(x, y, line)
+                y -= leading
+                line = word
+        if line:
             pdf.drawString(x, y, line)
             y -= leading
-            line = word
-    if line:
-        pdf.drawString(x, y, line)
-        y -= leading
     return y
 
 
@@ -223,6 +228,30 @@ def _estimate_wrapped_lines_with_font(pdf, text, font_name, font_size, max_width
     if line:
         line_count += 1
     return max(line_count, 1)
+
+
+def _estimate_wrapped_lines_with_breaks(pdf, text, font_name, font_size, max_width):
+    paragraphs = text.split('\n')
+    total_lines = 0
+    for para in paragraphs:
+        if not para.strip():
+            total_lines += 1
+            continue
+        words = para.split()
+        if not words:
+            total_lines += 1
+            continue
+        line = ""
+        for word in words:
+            candidate = f"{line} {word}" if line else word
+            if pdf.stringWidth(candidate, font_name, font_size) <= max_width:
+                line = candidate
+            else:
+                total_lines += 1
+                line = word
+        if line:
+            total_lines += 1
+    return max(total_lines, 1)
 
 
 def _estimate_wrapped_lines(text, max_width):
@@ -375,10 +404,13 @@ def draw_defect_card(pdf, defect, y, width, language, labels, role, evidence_dir
     if defect.get("priority"):
         text_px += 13
     if role.lower() == "homeowner" and defect.get("remarks"):
-        rem_lines = _estimate_wrapped_lines_with_font(
-            pdf, defect.get("remarks", ""), "Helvetica", 9, VALUE_WIDTH
-        )
-        text_px += 13 + rem_lines * 13
+        # Count each non-empty bullet line; +8 for top separator gap
+        raw_bullets = [ln for ln in defect.get("remarks", "").split("\n") if ln.strip()]
+        rem_lines = sum(
+            _estimate_wrapped_lines_with_font(pdf, ln.strip(), "Helvetica", 9, VALUE_WIDTH)
+            for ln in raw_bullets
+        ) or 1
+        text_px += 8 + 13 + rem_lines * 15 + max(len(raw_bullets) - 1, 0) * 4
     if extra_fields:
         for _label, _value in extra_fields:
             v_lines = _estimate_wrapped_lines_with_font(
@@ -388,7 +420,7 @@ def draw_defect_card(pdf, defect, y, width, language, labels, role, evidence_dir
 
     CARD_PAD = 12
     text_block_height = text_px + CARD_PAD * 2
-    MIN_CARD_HEIGHT = 170 if has_image else 120
+    MIN_CARD_HEIGHT = 260 if has_image else 120
     card_height = max(text_block_height, MIN_CARD_HEIGHT)
     card_height += 6  # bottom gap after border
 
@@ -488,10 +520,31 @@ def draw_defect_card(pdf, defect, y, width, language, labels, role, evidence_dir
         pdf.drawString(VALUE_X, cy, f": {defect['priority']}")
         cy -= 13
 
-    # Remarks (homeowner only)
+    # Remarks (homeowner only) — rendered as spaced bullet list
     if role.lower() == "homeowner" and defect.get("remarks"):
-        pdf.drawString(TEXT_X, cy, labels.get("remarks", "Remarks"))
-        cy = draw_wrapped_text(pdf, f": {defect['remarks']}", VALUE_X, cy, VALUE_WIDTH)
+        # Thin separator above remarks block
+        cy -= 6
+        pdf.setStrokeColorRGB(0.78, 0.78, 0.78)
+        pdf.line(TEXT_X, cy, DIVIDER_X - 6, cy)
+        pdf.setStrokeColorRGB(0, 0, 0)
+        cy -= 8
+
+        # "Ulasan" / "Remarks" label — on its own line
+        pdf.setFont("Helvetica-Bold", 9)
+        pdf.drawString(TEXT_X, cy, labels.get("remarks", "Ulasan" if language != "en" else "Remarks"))
+        cy -= 14  # drop a full line so bullets start BELOW the label
+        pdf.setFont("Helvetica", 9)
+
+        # Render each bullet on its own line with a small gap between
+        raw_remarks = defect.get("remarks", "")
+        bullets = [ln.strip() for ln in raw_remarks.split("\n") if ln.strip()]
+        BULLET_INDENT = TEXT_X + 10  # slight indent under the label
+        for bullet in bullets:
+            cy = draw_wrapped_text(
+                pdf, bullet, BULLET_INDENT, cy, VALUE_WIDTH + (VALUE_X - BULLET_INDENT),
+                "Helvetica", 9, 14
+            )
+            cy -= 4  # small gap between bullets
 
     # Extra fields (appendix-specific)
     if extra_fields:
@@ -505,7 +558,7 @@ def draw_defect_card(pdf, defect, y, width, language, labels, role, evidence_dir
     if has_image:
         IMG_COL_X = DIVIDER_X + 8
         IMG_COL_W = CARD_WIDTH - (IMG_COL_X - CARD_MARGIN) - 10
-        img_h = min(150, card_height - 20)
+        img_h = min(240, card_height - 20)
         img_y = y - (card_height / 2) - (img_h / 2)
         try:
             pdf.drawImage(
@@ -1170,72 +1223,204 @@ def generate_tribunal_pdf(defects, report_data, language, ai_report_text, labels
 
         lines = clean_text.split('\n')
 
-        prev_line_is_sub_item = False
+        BOTTOM_MARGIN   = 60   # minimum y before forcing a new page
+        BODY_LINE_H     = 15   # line height for body / key-value lines
+        BULLET_LINE_H   = 14   # line height for bullet lines
+        DEFECT_LINE_H   = 15
+        BODY_INDENT     = LEFT_MARGIN + 20
+        BULLET_INDENT   = LEFT_MARGIN + 28
+        KV_LABEL_W      = 130  # approximate width reserved for key label
+        KV_VALUE_X      = LEFT_MARGIN + 20 + KV_LABEL_W
+
+        # ── Pattern helpers ───────────────────────────────────────────────
+        _re_numbered    = re.compile(r"^(\d+)\.\s+(.+)")
+        _re_defect_sub  = re.compile(r"^([a-z])\.\s+((?:Kecacatan|Defect) ID .+)", re.IGNORECASE)
+        _re_kv          = re.compile(r"^([^:]{3,40}):\s*(.*)$")
+        _re_bullet      = re.compile(r"^[-•]\s+(.+)")
+
+        # ── Page-break helpers ────────────────────────────────────────────
+        def _new_page():
+            """Emit a page, reset y to top margin."""
+            nonlocal y
+            draw_footer(pdf, width, labels)
+            pdf.showPage()
+            y = height - 50
+
+        def _count_wrap_lines(text, font_name, font_size, avail_w):
+            """Estimate how many wrapped lines `text` needs."""
+            words = text.split()
+            if not words:
+                return 0
+            lines_n, cur = 0, ""
+            for word in words:
+                candidate = (cur + " " + word).strip()
+                if pdf.stringWidth(candidate, font_name, font_size) <= avail_w:
+                    cur = candidate
+                else:
+                    lines_n += 1
+                    cur = word
+            return lines_n + (1 if cur else 0)
+
+        def _needs_break(extra_lines, line_h, pre_gap=0):
+            """Return True if content won't fit without a page break."""
+            return (y - pre_gap - extra_lines * line_h) < BOTTOM_MARGIN
+
+        def _draw_wrapped(text, x, avail_w, font_name, font_size, line_h, justify=False):
+            """Word-wrap text, splitting cleanly across pages as needed."""
+            nonlocal y
+            words = text.split()
+            cur = ""
+            for word in words:
+                candidate = (cur + " " + word).strip()
+                if pdf.stringWidth(candidate, font_name, font_size) <= avail_w:
+                    cur = candidate
+                else:
+                    if cur:
+                        if justify:
+                            draw_justified_line(pdf, cur, x, y, avail_w, font_name, font_size)
+                        else:
+                            pdf.drawString(x, y, cur)
+                        y -= line_h
+                        if y < BOTTOM_MARGIN:
+                            _new_page()
+                        pdf.setFont(font_name, font_size)
+                    cur = word
+            if cur:
+                if y < BOTTOM_MARGIN:
+                    _new_page()
+                    pdf.setFont(font_name, font_size)
+                pdf.drawString(x, y, cur)
+                y -= line_h
+                if y < BOTTOM_MARGIN:
+                    _new_page()
+                pdf.setFont(font_name, font_size)
+
+        # ── Main rendering loop ───────────────────────────────────────────
         for raw_line in lines:
             stripped = raw_line.strip()
+
+            # ── Blank line → tiny gap (never forces page break alone) ─────
             if not stripped:
-                if y < 80:
-                    draw_footer(pdf, width, labels)
-                    pdf.showPage()
-                    y = height - 50
-                    pdf.setFont("Helvetica", 9)
-                y -= 10
-                prev_line_is_sub_item = False
+                if y - 5 >= BOTTOM_MARGIN:
+                    y -= 5
                 continue
 
-            is_numbered_header = bool(re.match(r"^\d+\.\s+", stripped))
-            is_sub_item = bool(re.match(r"^\s*[-•]\s+", stripped)) or (prev_line_is_sub_item and not is_numbered_header)
-
-            if is_numbered_header:
-                pdf.setFont("Helvetica-Bold", 9)
-                x_pos = LEFT_MARGIN
-            elif is_sub_item:
-                pdf.setFont("Helvetica-Bold", 9)
-                x_pos = LEFT_MARGIN + 20
-            else:
-                pdf.setFont("Helvetica", 9)
-                x_pos = PARAGRAPH_INDENT
-
-            prev_line_is_sub_item = is_sub_item
-
-            # Pre-check before a new defect section (keep block intact)
-            if re.match(r"^[a-z]\.\s+(Kecacatan ID|Defect ID)", stripped):
-                if y < 120:
-                    draw_footer(pdf, width, labels)
-                    pdf.showPage()
-                    y = height - 50
-                    pdf.setFont("Helvetica", 9)
-
-            words = stripped.split()
-            current_line = ""
-
-            for word in words:
-                test_line = current_line + " " + word if current_line else word
-                if pdf.stringWidth(test_line, "Helvetica", 9) <= TEXT_WIDTH:
-                    current_line = test_line
+            # ── Numbered section header (e.g. "1. Tujuan Laporan") ────────
+            m_num = _re_numbered.match(stripped)
+            if m_num:
+                # Need room for: gap(10) + header(16) + at least 1 body line(15)
+                required = 10 + 16 + BODY_LINE_H
+                if _needs_break(1, required):
+                    _new_page()
                 else:
-                    if is_numbered_header:
-                        pdf.drawString(x_pos, y, current_line)
-                    else:
-                        draw_justified_line(pdf, current_line, x_pos, y, TEXT_WIDTH, "Helvetica", 9)
-                    
-                    y -= LINE_HEIGHT
-                    if y < 80:
-                        draw_footer(pdf, width, labels)
-                        pdf.showPage()
-                        y = height - 50
-                        pdf.setFont("Helvetica", 9)
-                    
-                    current_line = word
+                    y -= 10  # breathing space only when staying on same page
+                pdf.setFont("Helvetica-Bold", 10)
+                pdf.drawString(LEFT_MARGIN, y, f"{m_num.group(1)}. {m_num.group(2)}")
+                y -= 16
+                if y < BOTTOM_MARGIN:
+                    _new_page()
+                pdf.setFont("Helvetica", 9)
+                continue
 
-            if current_line:
-                pdf.drawString(x_pos, y, current_line)
-                y -= LINE_HEIGHT
-                if y < 80:
-                    draw_footer(pdf, width, labels)
-                    pdf.showPage()
-                    y = height - 50
+            # ── Defect sub-header (e.g. "a. Kecacatan ID 5:") ─────────────
+            m_def = _re_defect_sub.match(stripped)
+            if m_def:
+                # Need room for: gap(8) + sub-header(14) + at least 2 field lines(15 each)
+                required = 8 + 14 + 2 * DEFECT_LINE_H
+                if _needs_break(1, required):
+                    _new_page()
+                else:
+                    y -= 8
+                pdf.setFont("Helvetica-Bold", 9)
+                pdf.drawString(LEFT_MARGIN + 10, y, stripped)
+                y -= 14
+                if y < BOTTOM_MARGIN:
+                    _new_page()
+                pdf.setFont("Helvetica", 9)
+                continue
+
+            # ── Bullet line (e.g. "- Klasifikasi: …") ─────────────────────
+            m_bull = _re_bullet.match(stripped)
+            if m_bull:
+                bullet_text = "•  " + m_bull.group(1)
+                avail = RIGHT_MARGIN - BULLET_INDENT
+                n = _count_wrap_lines(bullet_text, "Helvetica", 9, avail)
+                if _needs_break(n, BULLET_LINE_H):
+                    _new_page()
+                pdf.setFont("Helvetica", 9)
+                _draw_wrapped(bullet_text, BULLET_INDENT, avail, "Helvetica", 9, BULLET_LINE_H)
+                continue
+
+            # ── Key-Value pair (e.g. "Unit : Bandar Seri …") ──────────────
+            m_kv = _re_kv.match(stripped)
+            if m_kv:
+                key_raw = m_kv.group(1).strip()
+                val_raw = (m_kv.group(2) or "").strip()
+
+                # ── Special case: value is a bullet (e.g. "Ulasan: - Klasifikasi: …")
+                # Draw the label on its own line, then render the bullet below it.
+                if val_raw.startswith("- ") or val_raw.startswith("• "):
+                    if _needs_break(2, DEFECT_LINE_H):
+                        _new_page()
+                    pdf.setFont("Helvetica-Bold", 9)
+                    pdf.drawString(BODY_INDENT, y, key_raw + " :")
+                    y -= DEFECT_LINE_H  # move to next line before the bullet
+                    if y < BOTTOM_MARGIN:
+                        _new_page()
                     pdf.setFont("Helvetica", 9)
+                    # strip the leading dash and render as bullet
+                    bullet_content = val_raw.lstrip("- ").lstrip("• ").strip()
+                    bullet_text = "•  " + bullet_content
+                    avail_b = RIGHT_MARGIN - BULLET_INDENT
+                    _draw_wrapped(bullet_text, BULLET_INDENT, avail_b, "Helvetica", 9, BULLET_LINE_H)
+                    continue
+
+                # ── Normal KV: label on left, value on right, same line ───
+                avail_kv = RIGHT_MARGIN - KV_VALUE_X
+                n_kv = _count_wrap_lines(val_raw, "Helvetica", 9, avail_kv) if val_raw else 1
+                if _needs_break(n_kv, DEFECT_LINE_H):
+                    _new_page()
+                pdf.setFont("Helvetica-Bold", 9)
+                pdf.drawString(BODY_INDENT, y, key_raw + " :")
+                pdf.setFont("Helvetica", 9)
+                if val_raw:
+                    words = val_raw.split()
+                    cur = ""
+                    for word in words:
+                        candidate = (cur + " " + word).strip()
+                        if pdf.stringWidth(candidate, "Helvetica", 9) <= avail_kv:
+                            cur = candidate
+                        else:
+                            if cur:
+                                pdf.drawString(KV_VALUE_X, y, cur)
+                                y -= DEFECT_LINE_H
+                                if y < BOTTOM_MARGIN:
+                                    _new_page()
+                                pdf.setFont("Helvetica", 9)
+                            cur = word
+                    if cur:
+                        pdf.drawString(KV_VALUE_X, y, cur)
+                        y -= DEFECT_LINE_H
+                        if y < BOTTOM_MARGIN:
+                            _new_page()
+                        pdf.setFont("Helvetica", 9)
+                else:
+                    pdf.drawString(KV_VALUE_X, y, "-")
+                    y -= DEFECT_LINE_H
+                    if y < BOTTOM_MARGIN:
+                        _new_page()
+                    pdf.setFont("Helvetica", 9)
+                continue
+
+            # ── Body paragraph (everything else) ──────────────────────────
+            avail = RIGHT_MARGIN - BODY_INDENT
+            n_body = _count_wrap_lines(stripped, "Helvetica", 9, avail)
+            # If the full paragraph fits on this page, keep it together
+            if _needs_break(n_body, BODY_LINE_H) and n_body <= 6:
+                _new_page()
+            pdf.setFont("Helvetica", 9)
+            _draw_wrapped(stripped, BODY_INDENT, avail, "Helvetica", 9, BODY_LINE_H, justify=True)
+
 
     # ============================================
     # APPENDIX: CLOSED CASE DETAILS (Card Layout)

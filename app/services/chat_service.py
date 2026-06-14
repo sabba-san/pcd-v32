@@ -273,6 +273,71 @@ class ChatService:
             return f"Analysis Error: {str(e)}"
 
     @classmethod
+    def analyze_image_for_ulasan(cls, base64_image, language="ms"):
+        """
+        Analyze a defect image using a concise 5-point prompt suitable for
+        the Borang 1 PDF "Ulasan" (remarks) field.
+        Returns the same dict format as analyze_image().
+
+        Args:
+            base64_image: Base64-encoded image string.
+            language: 'ms' for Bahasa Melayu (default), 'en' for English.
+        """
+        client = cls.get_client()
+        if not client:
+            return {"success": False, "error": "client_error", "message": "AI Client not initialized."}
+
+        if language == "en":
+            prompt = (
+                "You are a Malaysian property defect inspector. Analyze the provided defect photo "
+                "and produce EXACTLY 5 bullet points in plain English. "
+                "Do NOT write paragraphs — keep each point to an absolute maximum of 8 words. "
+                "CRITICAL: Never use LaTeX, math notation, dollar signs, or boxed formatting.\n\n"
+                "Format exactly like this:\n"
+                "- Classification: [short text]\n"
+                "- Evidence: [short text]\n"
+                "- Severity: [short text]\n"
+                "- HDA 1966: [short text]\n"
+                "- Action: [short text]"
+            )
+        else:
+            prompt = (
+                "Anda adalah pemeriksa kecacatan hartanah Malaysia. Analisis gambar dan berikan TEPAT 5 isi penting dalam Bahasa Melayu.\n"
+                "AMARAN KERAS: JANGAN tulis perenggan. Setiap isi HANYA perlukan 5 hingga 8 patah perkataan sahaja.\n"
+                "DILARANG menggunakan LaTeX atau simbol matematik.\n\n"
+                "Format wajib (mesti sebijik macam ni):\n"
+                "- Klasifikasi: [Teks pendek]\n"
+                "- Bukti: [Teks pendek]\n"
+                "- Tahap: [Teks pendek]\n"
+                "- HDA 1966: [Teks pendek]\n"
+                "- Tindakan: [Teks pendek]"
+            )
+        try:
+            resp = client.chat.completions.create(
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64_image}"
+                        }},
+                    ],
+                }],
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                temperature=0.1,
+            )
+            return {"success": True, "data": resp.choices[0].message.content}
+        except groq.NotFoundError as e:
+            logging.error(f"Groq model not found (404): {e}")
+            return {"success": False, "error": "model_not_found", "message": "The AI vision model is unavailable."}
+        except groq.APIError as e:
+            logging.error(f"Groq API error ({e.status_code}): {e}")
+            return {"success": False, "error": "api_error", "message": f"AI service returned an error (HTTP {e.status_code})."}
+        except Exception as e:
+            logging.error(f"Vision AI unexpected error: {e}")
+            return {"success": False, "error": "unknown", "message": "Vision AI service encountered an unexpected error."}
+
+    @classmethod
     def analyze_image(cls, base64_image):
         client = cls.get_client()
         if not client:
