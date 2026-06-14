@@ -3,6 +3,7 @@ import os
 import json
 import logging
 
+import groq
 from groq import Groq
 import pypdf
 
@@ -279,17 +280,34 @@ class ChatService:
 
         prompt = (
             "You are examining a photo of a potential property defect in Malaysia.\n"
-            "1. Describe in detail what you see in the image (location, type of damage, "
-            "severity, materials affected).\n"
-            "2. Classify the visible issue: hairline crack / structural crack / water stain / "
-            "tile hollow / peeling paint / leaking / uneven surface / other.\n"
-            "3. Estimate approximate severity: minor / moderate / serious.\n"
-            "4. Based on Malaysian Housing Development Act and common DLP practice:\n"
-            "   - Is this the type of defect that is USUALLY covered during the 24-month "
-            "Defect Liability Period?\n"
-            "   - Give short reasoning using typical DLP rules.\n"
-            "5. Suggest next steps for the user.\n"
-            "Image description task only — do not give definitive legal ruling."
+            "IMPORTANT: Respond in plain English only. Do NOT use LaTeX, math notation, "
+            "dollar signs, or boxed notation (e.g. $\\boxed{...}$). Use plain text only.\n\n"
+            "Format your response using exactly these seven step headings:\n\n"
+            "Step 1: Analyze the Image\n"
+            "Describe what you see in the image overall — location, people, setting.\n\n"
+            "Step 2: Describe the Damage\n"
+            "Describe the damage in detail: location on the property, type of damage, "
+            "and materials affected (e.g. drywall, plaster, tiles, wiring).\n\n"
+            "Step 3: Classify the Visible Issue\n"
+            "Classify the issue as one of: hairline crack, structural crack, water stain, "
+            "tile hollow, peeling paint, leaking, uneven surface, or other. Briefly explain.\n\n"
+            "Step 4: Estimate Approximate Severity\n"
+            "State the severity as exactly one of: minor, moderate, or serious — written in "
+            "plain text (e.g. 'The severity of the issue appears to be serious.'). "
+            "Do NOT use any math or boxed notation.\n\n"
+            "Step 5: Determine if Covered Under DLP\n"
+            "Based on the Malaysian Housing Development Act and common DLP practices, "
+            "state whether this defect is typically covered during the 24-month DLP.\n\n"
+            "Step 6: Reasoning for DLP Coverage\n"
+            "Provide short reasoning explaining why this defect would or would not be "
+            "covered under the Malaysian Housing Development Act and DLP guidelines.\n\n"
+            "Step 7: Suggest Next Steps\n"
+            "List 3-4 practical next steps the property owner should take.\n\n"
+            "After Step 7, on a new line write exactly:\n"
+            "The final answer is: [severity]\n"
+            "where [severity] is replaced with the plain-text severity word (minor, moderate, or serious) "
+            "that you determined in Step 4. Do NOT use any special symbols, dollar signs, or boxes.\n\n"
+            "Note: This is a visual assessment only — do not give a definitive legal ruling."
         )
         try:
             resp = client.chat.completions.create(

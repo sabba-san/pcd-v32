@@ -875,9 +875,16 @@ class DLPChatbotApp {
                 this.scanResult.innerHTML = `<span style="color:#ef4444;">Error: ${data.error}</span>`;
             } else {
                 let formattedText = data.response;
+                // Convert markdown headings
                 formattedText = formattedText.replace(/^### (.*$)/gim, '<h3>$1</h3>');
                 formattedText = formattedText.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+                // Convert "Step N: Title" lines → styled blue section heading
+                formattedText = formattedText.replace(/^Step\s+(\d+):\s*(.+)$/gim, '<h3>Step $1: $2</h3>');
+                // Convert standalone "N: Title" lines → styled blue section heading
+                formattedText = formattedText.replace(/^(\d+):\s+([A-Z][^\n]+)$/gim, '<h3>$1: $2</h3>');
                 formattedText = formattedText.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+                // Strip LaTeX boxed notation just in case: $\boxed{...}$
+                formattedText = formattedText.replace(/\$\\boxed\{([^}]+)\}\$/gim, '$1');
                 formattedText = formattedText.replace(/\n/gim, '<br>');
                 
                 this.scanResult.innerHTML = formattedText;
