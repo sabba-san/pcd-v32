@@ -195,3 +195,60 @@ def api_save_formal_notice():
         from ..extensions import db
         db.session.rollback()
         return jsonify({"error": f"Server Error: {str(e)}"}), 500
+
+
+# ── Legal: Human-in-the-Loop verification ──────────────────────────────
+
+@module1.route('/legal/verify_defect/<int:defect_id>', methods=['POST'])
+def api_legal_verify_defect(defect_id):
+    """Lawyer verifies a defect: optionally overrides defect_type / severity
+    and records legal remarks.  Only accessible by users with user_type=='lawyer'.
+    """
+    from flask_login import current_user
+    if not current_user.is_authenticated:
+        return jsonify({"error": "Unauthorised"}), 401
+    if current_user.user_type != 'lawyer':
+        return jsonify({"error": "Forbidden — only lawyers can verify defects"}), 403
+
+    from ..models import Defect
+    from ..extensions import db
+
+    defect = Defect.query.get(defect_id)
+    if defect is None:
+        return jsonify({"error": "Defect not found"}), 404
+
+    # Only the assigned lawyer may verify this defect
+    if defect.assigned_lawyer_id and defect.assigned_lawyer_id != current_user.id:
+        return jsonify({"error": "You are not the assigned lawyer for this defect"}), 403
+
+    data = request.get_json(silent=True) or {}
+
+    manual_defect_type = (data.get('manual_defect_type') or '').strip()
+    manual_severity    = (data.get('manual_severity')    or '').strip()
+    legal_remarks      = (data.get('legal_remarks')      or '').strip()
+
+    # Apply overrides if provided
+    if manual_defect_type:
+        defect.defect_type = manual_defect_type
+    if manual_severity:
+        defect.severity = manual_severity
+    if legal_remarks:
+        defect.legal_remarks = legal_remarks
+
+    defect.is_verified    = True
+    defect.verified_by_id = current_user.id
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+    return jsonify({
+        "status":       "verified",
+        "defect_id":    defect_id,
+        "is_verified":  True,
+        "defect_type":  defect.defect_type,
+        "severity":     defect.severity,
+        "legal_remarks": defect.legal_remarks or "",
+    }), 200

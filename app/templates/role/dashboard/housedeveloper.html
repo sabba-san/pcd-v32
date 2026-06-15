@@ -323,7 +323,24 @@
                                         {{ defect.display_status or defect.status or 'Reported' }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4 text-sm text-slate-400">-</td>
+                                <td class="px-4 py-4">
+                                    {% if defect.is_verified %}
+                                    <div class="flex flex-col gap-1">
+                                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-700 w-fit">
+                                            <span class="material-symbols-outlined text-[12px]" style="font-variation-settings:'FILL' 1">verified</span>
+                                            Verified
+                                        </span>
+                                        {% if defect.legal_remarks %}
+                                        <span class="text-[11px] text-slate-500 italic leading-snug max-w-[160px]">{{ defect.legal_remarks }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 w-fit">
+                                        <span class="material-symbols-outlined text-[12px]">pending</span>
+                                        Pending
+                                    </span>
+                                    {% endif %}
+                                </td>
                                 <td class="px-8 py-4 text-right">
                                     <a href="{{ defect.image_url if defect.image_url else url_for('module3.dashboard') }}"
                                        {% if defect.image_url %}target="_blank"{% endif %}

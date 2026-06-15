@@ -388,7 +388,6 @@
                         <tr class="bg-surface-container-highest/30">
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">ID</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Project / Taman</th>
-                            <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">IC</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">PHOTO</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Description</th>
                             <th class="m3-td text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Status</th>
@@ -447,7 +446,7 @@ window.M3_CONFIG = {
     initial_court_location:{{ (claim_input.court_location if claim_input and claim_input.court_location else '') | tojson }},
 };
 window.STATE_COURT_MAP = {{ state_court_map | tojson }};
-window.M3_TABLE_COLS = 8;
+window.M3_TABLE_COLS = 7;
 
 window.allDefects = [
 {% for d in defects %}
@@ -500,11 +499,10 @@ window.buildRow = function(d, statusClass) {
     return `
         <td class="m3-td">#${d.id}</td>
         <td class="m3-td">${projectLabel}</td>
-        <td class="m3-td">${d.ic_number || '-'}</td>
         <td class="m3-td">${photoHtml}</td>
         <td class="m3-td" style="max-width:260px;">${descText}</td>
         <td class="m3-td"><span class="m3-badge ${statusClass}">${d.display_status || d.status || 'Reported'}</span></td>
-        <td class="m3-td" style="max-width:180px;">${d.remarks || '-'}</td>
+        <td class="m3-td" style="max-width:220px;white-space:pre-line;">${d.remarks || '-'}</td>
         <td class="m3-td">
             <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
                 <button onclick="openRemarkModal(${d.id})"

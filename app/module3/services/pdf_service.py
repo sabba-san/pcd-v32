@@ -432,18 +432,11 @@ def draw_defect_card(pdf, defect, y, width, language, labels, role, evidence_dir
         y = height - 50
         did_page_break = True
 
-    # --- Draw card border (light fill + rounded rect) ---
-    pdf.setFillColorRGB(0.98, 0.98, 0.98)
-    pdf.setStrokeColorRGB(0.61, 0.64, 0.69)
-    pdf.roundRect(CARD_MARGIN, y - card_height, CARD_WIDTH, card_height, 4, fill=1, stroke=1)
-    pdf.setFillColorRGB(0, 0, 0)
+    # --- Draw a thin top separator line to visually separate defect cards ---
+    pdf.setStrokeColorRGB(0.75, 0.75, 0.75)
+    pdf.line(CARD_MARGIN, y, CARD_MARGIN + CARD_WIDTH, y)
     pdf.setStrokeColorRGB(0, 0, 0)
-
-    # --- Draw vertical divider if image exists ---
-    if has_image:
-        pdf.setStrokeColorRGB(0.8, 0.8, 0.8)
-        pdf.line(DIVIDER_X, y - 8, DIVIDER_X, y - card_height + 8)
-        pdf.setStrokeColorRGB(0, 0, 0)
+    pdf.setFillColorRGB(0, 0, 0)
 
     # ================================================================
     # Draw text fields (left column)

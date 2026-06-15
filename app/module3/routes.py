@@ -1070,7 +1070,9 @@ def get_defects_for_role(role):
                        COALESCE(s.name, '') AS scan_name,
                        d.scan_id,
                        COALESCE(d.image_path, '') AS image_path,
-                       COALESCE(u.ic_number, '') AS ic_number
+                       COALESCE(u.ic_number, '') AS ic_number,
+                       COALESCE(d.is_verified, FALSE) AS is_verified,
+                       COALESCE(d.legal_remarks, '') AS legal_remarks
                 FROM defects d
                 LEFT JOIN scans s ON d.scan_id = s.id
                 LEFT JOIN users u ON d.user_id = u.id
@@ -1104,6 +1106,9 @@ def get_defects_for_role(role):
             scan_id = row[13]
             image_path = row[14] or ''
             ic_number  = row[15] or ''
+            # is_verified and legal_remarks are only present for Developer role (columns 16, 17)
+            is_verified_val  = bool(row[16]) if len(row) > 16 else False
+            legal_remarks_val = row[17] if len(row) > 17 else ''
             raw_unit  = row[1]
             # project_name: explicit unit first, then scan name (taman), then location/element
             project_name = (
@@ -1132,6 +1137,8 @@ def get_defects_for_role(role):
                 "image_path":     image_path,
                 "image_url":      url_for('module2.serve_defect_image', defect_id=row[0]) if image_path else "",
                 "ic_number":      ic_number,
+                "is_verified":    is_verified_val,
+                "legal_remarks":  legal_remarks_val or "",
             }
 
             defect["hda_compliant"] = calculate_hda_compliance(
