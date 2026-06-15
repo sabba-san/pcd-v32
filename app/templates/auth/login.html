@@ -107,8 +107,16 @@
                     <!-- Password Field -->
                     <div class="space-y-2">
                         <label class="block text-sm font-semibold text-slate-700" for="password">Password</label>
-                        <input class="w-full bg-input-bg border-0 focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-4 transition-all outline-none text-slate-900 placeholder-slate-400"
-                               id="password" name="password" placeholder="••••••••" type="password">
+                        <div class="relative">
+                            <input class="w-full bg-input-bg border-0 focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-4 pr-12 transition-all outline-none text-slate-900 placeholder-slate-400"
+                                   id="password" name="password" placeholder="••••••••" type="password">
+                            <button type="button" id="toggle-password"
+                                    onclick="togglePassword()"
+                                    class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-slate-400 hover:text-primary transition-colors focus:outline-none"
+                                    aria-label="Toggle password visibility">
+                                <span id="eye-icon" class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 0, 'wght' 400;">visibility</span>
+                            </button>
+                        </div>
                     </div>
                     <!-- Action Button -->
                     <button class="w-full bg-primary hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 group" type="submit">
@@ -175,6 +183,18 @@
 <script>
     // Auto-clear chat history / localStorage on logout/login to ensure isolated user state
     localStorage.clear();
+
+    function togglePassword() {
+        var input = document.getElementById('password');
+        var icon  = document.getElementById('eye-icon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.textContent = 'visibility_off';
+        } else {
+            input.type = 'password';
+            icon.textContent = 'visibility';
+        }
+    }
 </script>
 
     <!-- TOAST NOTIFICATIONS -->
