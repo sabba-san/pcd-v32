@@ -158,7 +158,7 @@
 <!-- 3D Viewer Container (Babylon.js Surface) -->
 <div class="flex-grow relative bg-slate-100 overflow-hidden">
 <!-- Babylon JS Canvas -->
-<canvas id="renderCanvas" class="absolute inset-0 w-full h-full z-0 cursor-crosshair"></canvas>
+<canvas id="renderCanvas" tabindex="0" class="absolute inset-0 w-full h-full z-0 cursor-crosshair outline-none"></canvas>
 
 <!-- Loading Overlay -->
 <div id="loadingOverlay" class="absolute inset-0 z-50 bg-slate-100/80 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-300">
@@ -954,21 +954,64 @@ class="w-80 bg-slate-50 flex flex-col border-l border-slate-200 shadow-[-4px_0_1
         // Attach unified pointer handler
         scene.onPointerDown = _onScenePointerDown;
 
-        // UniversalCamera allows WASD free-roam
+        // UniversalCamera — mouse look via attachControl, WASD via manual window listeners
         camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 10, -20), scene);
         camera.setTarget(BABYLON.Vector3.Zero());
-        camera.attachControl(canvas, true);
-        
-        // Add WASD/QE controls
-        camera.keysUp.push(87);    // W
-        camera.keysDown.push(83);  // S
-        camera.keysLeft.push(65);  // A
-        camera.keysRight.push(68); // D
-        camera.keysUpward.push(69); // E
-        camera.keysDownward.push(81); // Q
-        
-        camera.speed = 1.0; 
+        camera.attachControl(canvas, true);  // keeps mouse-look working
+
+        // Remove Babylon's built-in keyboard input so canvas focus is NOT required
+        camera.inputs.removeByType("FreeCameraKeyboardMoveInput");
+
         camera.minZ = 0.1;
+
+        // ── WASD movement + Arrow key rotation (window-level, no canvas focus needed) ──
+        let wasdSpeed = 0.15; // scaled after model loads
+        // Movement keys
+        const wasd = { w:false, a:false, s:false, d:false, q:false, e:false };
+        // Rotation keys (arrow keys)
+        const rot  = { left:false, right:false, up:false, down:false };
+
+        function _inputFocused() {
+            const t = (document.activeElement || document.body).tagName;
+            return t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT';
+        }
+
+        window.addEventListener('keydown', function(ev) {
+            if (_inputFocused()) return; // typing in search/form — do nothing
+            switch (ev.code) {
+                // Movement
+                case 'KeyW': wasd.w = true; ev.preventDefault(); break;
+                case 'KeyA': wasd.a = true; ev.preventDefault(); break;
+                case 'KeyS': wasd.s = true; ev.preventDefault(); break;
+                case 'KeyD': wasd.d = true; ev.preventDefault(); break;
+                case 'KeyQ': wasd.q = true; ev.preventDefault(); break;
+                case 'KeyE': wasd.e = true; ev.preventDefault(); break;
+                // Rotation (look around)
+                case 'ArrowLeft':  rot.left  = true; ev.preventDefault(); break;
+                case 'ArrowRight': rot.right = true; ev.preventDefault(); break;
+                case 'ArrowUp':    rot.up    = true; ev.preventDefault(); break;
+                case 'ArrowDown':  rot.down  = true; ev.preventDefault(); break;
+            }
+        });
+        window.addEventListener('keyup', function(ev) {
+            switch (ev.code) {
+                case 'KeyW': wasd.w = false; break;
+                case 'KeyA': wasd.a = false; break;
+                case 'KeyS': wasd.s = false; break;
+                case 'KeyD': wasd.d = false; break;
+                case 'KeyQ': wasd.q = false; break;
+                case 'KeyE': wasd.e = false; break;
+                case 'ArrowLeft':  rot.left  = false; break;
+                case 'ArrowRight': rot.right = false; break;
+                case 'ArrowUp':    rot.up    = false; break;
+                case 'ArrowDown':  rot.down  = false; break;
+            }
+        });
+        // Clear all keys if tab loses focus (prevents stuck movement/rotation)
+        window.addEventListener('blur', function() {
+            wasd.w = wasd.a = wasd.s = wasd.d = wasd.q = wasd.e = false;
+            rot.left = rot.right = rot.up = rot.down = false;
+        });
 
         const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
         light.intensity = 0.95;
@@ -1011,9 +1054,9 @@ class="w-80 bg-slate-50 flex flex-col border-l border-slate-200 shadow-[-4px_0_1
                 const modelExtent  = globalMin && globalMax ? globalMax.subtract(globalMin) : new BABYLON.Vector3(1, 1, 1);
                 maxModelDim        = Math.max(modelExtent.x, modelExtent.y, modelExtent.z);
 
-                // Auto-frame camera on the model and tune speed based on model size
+                // Auto-frame camera and scale WASD speed to model size
                 resetCamera();
-                camera.speed = maxModelDim * 0.015; // Set WASD walking speed proportional to the house
+                wasdSpeed = Math.max(0.05, maxModelDim * 0.012);
 
                 // ── Plot Defect Markers ──────────────────────────────────────────
                 const rawDefects = [
@@ -1130,8 +1173,40 @@ class="w-80 bg-slate-50 flex flex-col border-l border-slate-200 shadow-[-4px_0_1
         }
 
         scene.registerBeforeRender(() => {
+            // Update coordinate HUD
             const pos = camera.position;
-            document.getElementById('cameraInfo').innerText = `X: ${pos.x.toFixed(2)} | Y: ${pos.y.toFixed(2)} | Z: ${pos.z.toFixed(2)}`;
+            document.getElementById('cameraInfo').innerText =
+                `X: ${pos.x.toFixed(2)} | Y: ${pos.y.toFixed(2)} | Z: ${pos.z.toFixed(2)}`;
+
+            if (_inputFocused()) return; // user is typing — skip all camera input
+
+            // ── Arrow key rotation (look around to see any wall/ceiling/floor) ──
+            // Modifies camera.rotation directly — same values that mouse drag sets.
+            const rotSpeed = 0.028; // radians per frame (smooth)
+            if (rot.left)  camera.rotation.y -= rotSpeed;
+            if (rot.right) camera.rotation.y += rotSpeed;
+            if (rot.up)    camera.rotation.x -= rotSpeed;
+            if (rot.down)  camera.rotation.x += rotSpeed;
+            // Clamp pitch so camera never flips upside-down
+            camera.rotation.x = Math.max(-Math.PI / 2 + 0.05,
+                                         Math.min( Math.PI / 2 - 0.05, camera.rotation.x));
+
+            // ── WASD position movement ─────────────────────────────────────
+            if (!wasd.w && !wasd.a && !wasd.s && !wasd.d && !wasd.q && !wasd.e) return;
+
+            // camera.getDirection() reads live camera.rotation (set by mouse/arrows).
+            // We only move position — rotation is untouched, mouse look still works.
+            const fwd   = camera.getDirection(BABYLON.Vector3.Forward());
+            const right = camera.getDirection(BABYLON.Vector3.Right());
+            const up    = BABYLON.Vector3.Up();
+            const spd   = wasdSpeed;
+
+            if (wasd.w) camera.position.addInPlace(fwd.scale(spd));
+            if (wasd.s) camera.position.addInPlace(fwd.scale(-spd));
+            if (wasd.a) camera.position.addInPlace(right.scale(-spd));
+            if (wasd.d) camera.position.addInPlace(right.scale(spd));
+            if (wasd.e) camera.position.addInPlace(up.scale(spd));
+            if (wasd.q) camera.position.addInPlace(up.scale(-spd));
         });
 
         engine.runRenderLoop(() => { scene.render(); });
