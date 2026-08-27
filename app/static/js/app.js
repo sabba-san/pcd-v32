@@ -869,7 +869,15 @@ class DLPChatbotApp {
                 body: JSON.stringify({ image: this.currentBase64Image })
             });
             
-            const data = await response.json();
+            let data;
+            const textResponse = await response.text();
+            try {
+                data = JSON.parse(textResponse);
+            } catch (parseErr) {
+                console.error("Non-JSON response:", textResponse);
+                let snippet = textResponse.substring(0, 150).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                throw new Error(`Server returned HTML instead of JSON. Snippet: ${snippet}`);
+            }
             
             if(data.error) {
                 this.scanResult.innerHTML = `<span style="color:#ef4444;">Error: ${data.error}</span>`;
