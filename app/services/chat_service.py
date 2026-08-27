@@ -211,7 +211,7 @@ class ChatService:
         try:
             completion = client.chat.completions.create(
                 messages=messages,
-                model="openai/gpt-oss-20b",
+                model="llama3-8b-8192",
                 temperature=0.3,
                 max_tokens=300,
             )
@@ -238,7 +238,7 @@ class ChatService:
         try:
             stream = client.chat.completions.create(
                 messages=messages,
-                model="openai/gpt-oss-20b",
+                model="llama3-8b-8192",
                 temperature=0.3,
                 max_tokens=300,
                 stream=True,
@@ -265,7 +265,7 @@ class ChatService:
                     "role": "user",
                     "content": f"Analyze this legal text briefly:\n\n{document_text}"
                 }],
-                model="openai/gpt-oss-20b",
+                model="llama3-8b-8192",
                 temperature=0.1,
             )
             return resp.choices[0].message.content
@@ -323,7 +323,7 @@ class ChatService:
                         }},
                     ],
                 }],
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model="llama-3.2-11b-vision-preview",
                 temperature=0.1,
             )
             return {"success": True, "data": resp.choices[0].message.content}
@@ -385,7 +385,7 @@ class ChatService:
                         }},
                     ],
                 }],
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model="llama-3.2-11b-vision-preview",
                 temperature=0.1,
             )
             return {"success": True, "data": resp.choices[0].message.content}
@@ -425,7 +425,7 @@ class ChatService:
             )
             resp = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="openai/gpt-oss-20b",
+                model="llama3-8b-8192",
                 temperature=0.1,
             )
             return resp.choices[0].message.content
