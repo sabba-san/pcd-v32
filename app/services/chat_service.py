@@ -211,7 +211,7 @@ class ChatService:
         try:
             completion = client.chat.completions.create(
                 messages=messages,
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 temperature=0.3,
                 max_tokens=300,
             )
@@ -238,7 +238,7 @@ class ChatService:
         try:
             stream = client.chat.completions.create(
                 messages=messages,
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 temperature=0.3,
                 max_tokens=300,
                 stream=True,
@@ -265,7 +265,7 @@ class ChatService:
                     "role": "user",
                     "content": f"Analyze this legal text briefly:\n\n{document_text}"
                 }],
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 temperature=0.1,
             )
             return resp.choices[0].message.content
@@ -425,7 +425,7 @@ class ChatService:
             )
             resp = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 temperature=0.1,
             )
             return resp.choices[0].message.content
