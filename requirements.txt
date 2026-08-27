@@ -17,3 +17,4 @@ pygltflib
 reportlab
 whitenoise
 boto3
+google-genai

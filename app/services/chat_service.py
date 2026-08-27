@@ -7,6 +7,13 @@ import groq
 from groq import Groq
 import pypdf
 
+try:
+    from google import genai
+    from google.genai import types as genai_types
+except ImportError:
+    genai = None
+    genai_types = None
+
 from ..chatbot_component.dlp_knowledge_base import load_pdf_knowledge
 
 PDF_CONTEXT = load_pdf_knowledge()
@@ -47,6 +54,28 @@ class ChatService:
             logging.error(f"Groq Initialization Error: {e}")
             cls._client = None
         return cls._client
+
+    # ── Gemini client (vision) ────────────────────────────────────────────
+
+    _gemini_client = None
+
+    @classmethod
+    def get_gemini_client(cls):
+        if cls._gemini_client is not None:
+            return cls._gemini_client
+        if genai is None:
+            logging.error("google-genai package is not installed.")
+            return None
+        api_key = (os.getenv("GEMINI_API_KEY") or "").strip().strip('"').strip("'").strip()
+        if not api_key:
+            logging.error("GEMINI_API_KEY not set.")
+            return None
+        try:
+            cls._gemini_client = genai.Client(api_key=api_key)
+        except Exception as e:
+            logging.error(f"Gemini Initialization Error: {e}")
+            cls._gemini_client = None
+        return cls._gemini_client
 
     # ── RAG retrieval ─────────────────────────────────────────────────────
 
@@ -283,9 +312,10 @@ class ChatService:
             base64_image: Base64-encoded image string.
             language: 'ms' for Bahasa Melayu (default), 'en' for English.
         """
-        client = cls.get_client()
-        if not client:
-            return {"success": False, "error": "client_error", "message": "AI Client not initialized."}
+        import base64 as b64
+        gemini = cls.get_gemini_client()
+        if not gemini:
+            return {"success": False, "error": "client_error", "message": "AI Vision Client not initialized. Check GEMINI_API_KEY."}
 
         if language == "en":
             prompt = (
@@ -313,35 +343,23 @@ class ChatService:
                 "- Tindakan: [Teks pendek]"
             )
         try:
-            resp = client.chat.completions.create(
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {
-                            "url": f"data:image/jpeg;base64,{base64_image}"
-                        }},
-                    ],
-                }],
-                model="llama-3.2-11b-vision-preview",
-                temperature=0.1,
+            image_bytes = b64.b64decode(base64_image)
+            image_part = genai_types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
+            resp = gemini.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=[prompt, image_part],
             )
-            return {"success": True, "data": resp.choices[0].message.content}
-        except groq.NotFoundError as e:
-            logging.error(f"Groq model not found (404): {e}")
-            return {"success": False, "error": "model_not_found", "message": "The AI vision model is unavailable."}
-        except groq.APIError as e:
-            logging.error(f"Groq API error ({e.status_code}): {e}")
-            return {"success": False, "error": "api_error", "message": f"AI service returned an error (HTTP {e.status_code})."}
+            return {"success": True, "data": resp.text}
         except Exception as e:
-            logging.error(f"Vision AI unexpected error: {e}")
-            return {"success": False, "error": "unknown", "message": "Vision AI service encountered an unexpected error."}
+            logging.error(f"Gemini Vision AI error: {e}")
+            return {"success": False, "error": "unknown", "message": f"Vision AI service error: {str(e)}"}
 
     @classmethod
     def analyze_image(cls, base64_image):
-        client = cls.get_client()
-        if not client:
-            return "Error: AI Client not initialized."
+        import base64 as b64
+        gemini = cls.get_gemini_client()
+        if not gemini:
+            return {"success": False, "error": "client_error", "message": "AI Vision Client not initialized. Check GEMINI_API_KEY."}
 
         prompt = (
             "You are examining a photo of a potential property defect in Malaysia.\n"
@@ -375,29 +393,16 @@ class ChatService:
             "Note: This is a visual assessment only — do not give a definitive legal ruling."
         )
         try:
-            resp = client.chat.completions.create(
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {
-                            "url": f"data:image/jpeg;base64,{base64_image}"
-                        }},
-                    ],
-                }],
-                model="llama-3.2-11b-vision-preview",
-                temperature=0.1,
+            image_bytes = b64.b64decode(base64_image)
+            image_part = genai_types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
+            resp = gemini.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=[prompt, image_part],
             )
-            return {"success": True, "data": resp.choices[0].message.content}
-        except groq.NotFoundError as e:
-            logging.error(f"Groq model not found (404): {e}")
-            return {"success": False, "error": "model_not_found", "message": "The AI vision model is unavailable. Please check the model ID or contact support."}
-        except groq.APIError as e:
-            logging.error(f"Groq API error ({e.status_code}): {e}")
-            return {"success": False, "error": "api_error", "message": f"AI service returned an error (HTTP {e.status_code}). Please try again later."}
+            return {"success": True, "data": resp.text}
         except Exception as e:
-            logging.error(f"Vision AI unexpected error: {e}")
-            return {"success": False, "error": "unknown", "message": f"Vision AI service encountered an unexpected error."}
+            logging.error(f"Gemini Vision AI error: {e}")
+            return {"success": False, "error": "unknown", "message": f"Vision AI service error: {str(e)}"}
 
     @classmethod
     def analyze_pdf(cls, pdf_bytes):
