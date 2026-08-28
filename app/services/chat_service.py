@@ -346,7 +346,7 @@ class ChatService:
             image_bytes = b64.b64decode(base64_image)
             image_part = genai_types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
             resp = gemini.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-3.6-flash",
                 contents=[prompt, image_part],
             )
             return {"success": True, "data": resp.text}
@@ -396,7 +396,7 @@ class ChatService:
             image_bytes = b64.b64decode(base64_image)
             image_part = genai_types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
             resp = gemini.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-3.6-flash",
                 contents=[prompt, image_part],
             )
             return {"success": True, "data": resp.text}
