@@ -29,5 +29,6 @@ dependencies:
     - reportlab
     - whitenoise
     - boto3
+    - google-genai
 
   # add other pip deps here
