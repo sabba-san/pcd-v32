@@ -836,11 +836,27 @@ class DLPChatbotApp {
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                this.currentBase64Image = e.target.result;
-                this.imagePreview.src = this.currentBase64Image;
-                this.uploadArea.style.display = 'none';
-                this.previewArea.style.display = 'block';
-                this.scanResult.style.display = 'none'; 
+                // Compress image via canvas to keep payload small
+                const img = new Image();
+                img.onload = () => {
+                    const MAX_DIM = 1024;
+                    let w = img.width, h = img.height;
+                    if (w > MAX_DIM || h > MAX_DIM) {
+                        if (w > h) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
+                        else        { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    this.currentBase64Image = canvas.toDataURL('image/jpeg', 0.7);
+                    this.imagePreview.src = this.currentBase64Image;
+                    this.uploadArea.style.display = 'none';
+                    this.previewArea.style.display = 'block';
+                    this.scanResult.style.display = 'none';
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -875,7 +891,7 @@ class DLPChatbotApp {
                 data = JSON.parse(textResponse);
             } catch (parseErr) {
                 console.error("Non-JSON response:", textResponse);
-                let snippet = textResponse.substring(0, 150).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                let snippet = textResponse.substring(0, 500).replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 throw new Error(`Server returned HTML instead of JSON. Snippet: ${snippet}`);
             }
             
